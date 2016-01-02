@@ -1,0 +1,101 @@
+// Copyright © 2015 Hansoft AB 
+// Distributed under the MIT license, see license text in LICENSE.Malterlib
+
+Import "../Core/Lib_Malterlib.MTarget"
+
+%Group "{Malterlib}/{Lib_Malterlib_Daemon}"
+{
+	%Group Daemon
+	{
+		%Group Include
+		{
+			Compile.Type "C++"
+			{
+				!!DocumentationEnabled true
+			}
+			%File "Include/Mib/Daemon/^*"
+		}
+		%File "Source/*"
+		%Group Platform
+		{
+			%File "Source/Platform/*"
+			{
+				Compile.Disabled true
+				{
+					!PlatformFamily "@(PlatformFamilyFromImpFile)"
+				}
+			}
+		}
+		%Group Documentation
+		{
+			%File "Documentation/*"
+		}
+	}
+}
+
+
+Property
+{
+	MalterlibLibrary_Daemon true
+	{
+		&
+		{
+			MalterlibLibrary_Daemon ""
+			MalterlibLibrary_All true
+		}
+	}
+	MalterlibSubLibraries "Daemon;@(MalterlibSubLibraries)"
+	{
+		!!MalterlibLibrary_Daemon true
+	}
+//	MalterlibSubLibrarySeparate_Lib_Malterlib_Daemon true
+	MalterlibIncludeRoots "@('Include'->MakeAbsolute());@(MalterlibIncludeRoots)"
+	{
+		!!MalterlibLibrary_Daemon true
+	}
+}
+
+%Group "{Test}/{Malterlib_Helper_Daemon}"
+{
+	Target
+	{
+		Type "Executable"
+	}
+	Property
+	{
+		MalterlibTestOwnMain true
+	}
+	%Group "Source"
+	{
+		%File Test/Test_Malterlib_Daemon_Main.cpp
+	}
+}
+
+Property
+{
+	!!MalterlibEnableInternalTests true
+	
+	MalterlibTests "Malterlib_Helper_Daemon;@(MalterlibTests)"
+	MalterlibTestExtraGroups_Malterlib_Helper_Daemon "{Test}/{Malterlib_Helper_Daemon}"
+	MalterlibTestAutoAdd_Malterlib_Helper_Daemon false
+}
+
+%Group "{Test}/{Malterlib_Daemon}"
+{
+	%Group "Source"
+	{
+		%File Test/Test_Malterlib_Daemon.cpp
+	}
+	%Dependency "Malterlib_Helper_Daemon=Exe_Test_Malterlib_Helper_Daemon"
+	{
+		Dependency.Link "false"
+	}
+}
+
+Property
+{
+	!!MalterlibEnableInternalTests true
+	
+	MalterlibTests "Malterlib_Daemon;@(MalterlibTests)"
+	MalterlibTestExtraGroups_Malterlib_Daemon "{Test}/{Malterlib_Daemon}"
+}
