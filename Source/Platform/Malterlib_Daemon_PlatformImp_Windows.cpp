@@ -2,15 +2,10 @@
 // Distributed under the MIT license, see license text in LICENSE.Malterlib
 
 #include <Mib/Daemon/Daemon>
+#include <Mib/Core/PlatformSpecific/WindowsString>
+#include <Mib/Core/PlatformSpecific/WindowsError>
+#include <Mib/Core/PlatformSpecific/Windows>
 #include <Windows.h>
-
-namespace NMSVCRuntime
-{
-	bint fg_IsVista();
-}
-
-NMib::NStr::CWStr fg_StrToWindows(const NMib::NStr::CStr &_Str);
-NMib::NStr::CFStr256 fg_Win32_GetLastErrorStr(uint32 _Error);
 
 namespace NMib
 {
@@ -66,12 +61,12 @@ namespace NMib
 
 			EActionResult f_Run()
 			{
-				NStr::CWStr Temp = fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName());
+				NStr::CWStr Temp = NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName());
 				SERVICE_TABLE_ENTRYW DispatchTable[] = { { (ch16 *)Temp.f_GetStr(), CService::CDetails::fsp_ServiceStart}, { nullptr, nullptr} }; 
 
 				if (!StartServiceCtrlDispatcherW( DispatchTable)) 
 				{ 
-					f_ReportError(NStr::CStr::CFormat("StartServiceCtrlDispatcher error: {}") << fg_Win32_GetLastErrorStr(0));
+					f_ReportError(NStr::CStr::CFormat("StartServiceCtrlDispatcher error: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 					return EActionResult_Failure;
 				}
 				return EActionResult_Success;
@@ -110,7 +105,7 @@ namespace NMib
 				SC_HANDLE schSCManager = f_OpenSCManager();
 				if (!schSCManager)
 				{
-					f_ReportError(NStr::CStr::CFormat("Unable to open service manager: {}") << fg_Win32_GetLastErrorStr(0));
+					f_ReportError(NStr::CStr::CFormat("Unable to open service manager: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 					return EActionResult_Failure;
 				}
 				
@@ -123,7 +118,7 @@ namespace NMib
 					)
 				;
 
-				SC_HANDLE schService = OpenServiceW(schSCManager, fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName()), SERVICE_START | SERVICE_QUERY_STATUS);
+				SC_HANDLE schService = OpenServiceW(schSCManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName()), SERVICE_START | SERVICE_QUERY_STATUS);
 
 				if (schService)
 				{
@@ -139,7 +134,7 @@ namespace NMib
 
 					if (!QueryServiceStatus(schService, &Status))
 					{
-						f_ReportError(NStr::CStr::CFormat("Unable to query service manager: {}") << fg_Win32_GetLastErrorStr(0));
+						f_ReportError(NStr::CStr::CFormat("Unable to query service manager: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 						return EActionResult_Failure;
 					}
 
@@ -150,7 +145,7 @@ namespace NMib
 
 					if (!StartService(schService, 0, nullptr))
 					{
-						f_ReportError(NStr::CStr::CFormat("Unable to start service: {}") << fg_Win32_GetLastErrorStr(0));
+						f_ReportError(NStr::CStr::CFormat("Unable to start service: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 						return EActionResult_Failure;
 					}
 
@@ -166,7 +161,7 @@ namespace NMib
 				}
 				else
 				{	
-					f_ReportError(NStr::CStr::CFormat("Unable to start service: {}") << fg_Win32_GetLastErrorStr(0));
+					f_ReportError(NStr::CStr::CFormat("Unable to start service: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 					return EActionResult_Failure;
 				}
 
@@ -191,7 +186,7 @@ namespace NMib
 				SC_HANDLE schSCManager = f_OpenSCManager();
 				if (!schSCManager)
 				{
-					f_ReportError(NStr::CStr::CFormat("Unable to open service manager: {}") << fg_Win32_GetLastErrorStr(0));
+					f_ReportError(NStr::CStr::CFormat("Unable to open service manager: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 					return EActionResult_Failure;
 				}
 
@@ -204,7 +199,7 @@ namespace NMib
 					)
 				;
 
-				SC_HANDLE schService = OpenServiceW(schSCManager, fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName()), SERVICE_STOP | SERVICE_QUERY_STATUS);
+				SC_HANDLE schService = OpenServiceW(schSCManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName()), SERVICE_STOP | SERVICE_QUERY_STATUS);
 
 				if (schService)
 				{
@@ -222,7 +217,7 @@ namespace NMib
 
 					if (!QueryServiceStatus(schService, &Status))
 					{
-						f_ReportError(NStr::CStr::CFormat("Unable to query service manager: {}") << fg_Win32_GetLastErrorStr(0));
+						f_ReportError(NStr::CStr::CFormat("Unable to query service manager: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 						return EActionResult_Failure;
 					}
 
@@ -237,7 +232,7 @@ namespace NMib
 
 							if (Error != ERROR_SERVICE_NOT_ACTIVE)
 							{
-								f_ReportError(NStr::CStr::CFormat("Unable to stop service: {}") << fg_Win32_GetLastErrorStr(0));
+								f_ReportError(NStr::CStr::CFormat("Unable to stop service: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 								return EActionResult_Failure;
 							}
 							else if (!_bWait)
@@ -291,7 +286,7 @@ namespace NMib
 				}
 				else
 				{	
-					f_ReportError(NStr::CStr::CFormat("Unable to stop service: {}") << fg_Win32_GetLastErrorStr(0));
+					f_ReportError(NStr::CStr::CFormat("Unable to stop service: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 					return EActionResult_Failure;
 				}
 
@@ -305,7 +300,7 @@ namespace NMib
 				SC_HANDLE schSCManager = f_OpenSCManager();
 				if (!schSCManager)
 				{
-					f_ReportError(NStr::CStr::CFormat("Unable to open service manager: {}") << fg_Win32_GetLastErrorStr(0));
+					f_ReportError(NStr::CStr::CFormat("Unable to open service manager: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 					return EActionResult_Failure;
 				}
 				auto CleanupServiceManager = fg_OnScopeExit
@@ -319,7 +314,7 @@ namespace NMib
 
 				if (_bCheckForExisting)
 				{
-					SC_HANDLE schService = OpenServiceW(schSCManager, fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName()), SERVICE_QUERY_CONFIG | SERVICE_CHANGE_CONFIG);
+					SC_HANDLE schService = OpenServiceW(schSCManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName()), SERVICE_QUERY_CONFIG | SERVICE_CHANGE_CONFIG);
 
 					if (schService)
 					{
@@ -351,7 +346,7 @@ namespace NMib
 								{
 									for (mint i = 0; i < nDeps; ++i)
 									{
-										NStr::CWStr Temp = fg_StrToWindows(lDependencies[i]);
+										NStr::CWStr Temp = NStr::NPlatform::fg_StrToWindows(lDependencies[i]);
 										Deps.f_Insert(Temp.f_GetStr(), Temp.f_GetLen() + 1);
 									}
 									Deps.f_Insert(ch16(0));
@@ -359,7 +354,7 @@ namespace NMib
 
 
 								{
-									if (!ChangeServiceConfigW(schService, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE, fg_StrToWindows(fp_GetAddCommandLine()), nullptr, nullptr, !Deps.f_IsEmpty() ? Deps.f_GetArray() : nullptr, nullptr, nullptr, nullptr))
+									if (!ChangeServiceConfigW(schService, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE, NStr::NPlatform::fg_StrToWindows(fp_GetAddCommandLine()), nullptr, nullptr, !Deps.f_IsEmpty() ? Deps.f_GetArray() : nullptr, nullptr, nullptr, nullptr))
 									{
 										DMibTrace("Could not change service config\n", 0);
 									}
@@ -373,13 +368,13 @@ namespace NMib
 				}
 
 				{
-					SC_HANDLE schService = OpenServiceW(schSCManager, fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName()), DELETE);
+					SC_HANDLE schService = OpenServiceW(schSCManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName()), DELETE);
 
 					if (schService)
 					{
 						if (!DeleteService(schService))
 						{
-							f_ReportError(NStr::CStr::CFormat("Unable to delete service: {}") << fg_Win32_GetLastErrorStr(0));
+							f_ReportError(NStr::CStr::CFormat("Unable to delete service: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 							return EActionResult_Failure;
 						}
 					}
@@ -392,22 +387,22 @@ namespace NMib
 				{
 					for (mint i = 0; i < nDeps; ++i)
 					{
-						NStr::CWStr Temp = fg_StrToWindows(lDependencies[i]);
+						NStr::CWStr Temp = NStr::NPlatform::fg_StrToWindows(lDependencies[i]);
 						Deps.f_Insert(Temp.f_GetStr(), Temp.f_GetLen() + 1);
 					}
 					Deps.f_Insert(ch16(0));
 				}
 
-				NStr::CWStr ServiceGroup = fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceGroup());
+				NStr::CWStr ServiceGroup = NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceGroup());
 				SC_HANDLE schService = CreateServiceW( 
 					schSCManager,              // SCManager database 
-					fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName()),              // name of service 
-					fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceDisplayName()),           // service name to display 
+					NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName()),              // name of service 
+					NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceDisplayName()),           // service name to display 
 					SERVICE_ALL_ACCESS,        // desired access 
 					SERVICE_WIN32_OWN_PROCESS | (mp_pOwner->f_GetServiceParams().f_GetInteractive() ? SERVICE_INTERACTIVE_PROCESS : 0), // service type 
 					SERVICE_AUTO_START,      // start type 
 					SERVICE_ERROR_NORMAL,      // error control type 
-					fg_StrToWindows(fp_GetAddCommandLine()),        // service's binary 
+					NStr::NPlatform::fg_StrToWindows(fp_GetAddCommandLine()),        // service's binary 
 					!mp_pOwner->f_GetServiceParams().f_GetServiceGroup().f_IsEmpty() ? ServiceGroup.f_GetStr() : nullptr,          // no load ordering group 
 					nullptr,                      // no tag identifier 
 					!Deps.f_IsEmpty() ? Deps.f_GetArray() : nullptr,                      // no dependencies 
@@ -416,7 +411,7 @@ namespace NMib
 
 				if (schService == nullptr) 
 				{
-					f_ReportError(NStr::CStr::CFormat("Error returned when creating service {}\r\n{}") << fp_GetAddCommandLine() << fg_Win32_GetLastErrorStr(0) );
+					f_ReportError(NStr::CStr::CFormat("Error returned when creating service {}\r\n{}") << fp_GetAddCommandLine() << NMib::NPlatform::fg_Win32_GetLastErrorStr(0) );
 					return EActionResult_Failure;
 				}
 				else 
@@ -456,7 +451,7 @@ namespace NMib
 				SC_HANDLE schSCManager = f_OpenSCManager();
 				if (!schSCManager)
 				{
-					f_ReportError(NStr::CStr::CFormat("Unable to open service manager: {}") << fg_Win32_GetLastErrorStr(0));
+					f_ReportError(NStr::CStr::CFormat("Unable to open service manager: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 					return EActionResult_Failure;
 				}
 				auto CleanupServiceManager = fg_OnScopeExit
@@ -468,7 +463,7 @@ namespace NMib
 					)
 				;
 
-				SC_HANDLE schService = OpenServiceW(schSCManager, fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName()), DELETE);
+				SC_HANDLE schService = OpenServiceW(schSCManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName()), DELETE);
 				if (schService)
 				{
 					auto CleanupService = fg_OnScopeExit
@@ -481,7 +476,7 @@ namespace NMib
 					;
 					if (!DeleteService(schService))
 					{
-						f_ReportError(NStr::CStr::CFormat("Unable to delete service: {}") << fg_Win32_GetLastErrorStr(0));
+						f_ReportError(NStr::CStr::CFormat("Unable to delete service: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 						return EActionResult_Failure;
 					}
 				}
@@ -497,7 +492,7 @@ namespace NMib
 				SC_HANDLE schSCManager = f_OpenSCManager();
 				if (!schSCManager)
 				{
-					f_ReportError(NStr::CStr::CFormat("Unable to open service manager: {}") << fg_Win32_GetLastErrorStr(0));
+					f_ReportError(NStr::CStr::CFormat("Unable to open service manager: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 					return EActionResult_Failure;
 				}
 				auto CleanupServiceManager = fg_OnScopeExit
@@ -509,7 +504,7 @@ namespace NMib
 					)
 				;
 
-				SC_HANDLE schService = OpenServiceW(schSCManager, fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName()), SERVICE_QUERY_CONFIG | SERVICE_CHANGE_CONFIG);
+				SC_HANDLE schService = OpenServiceW(schSCManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName()), SERVICE_QUERY_CONFIG | SERVICE_CHANGE_CONFIG);
 
 				if (schService)
 				{
@@ -534,14 +529,14 @@ namespace NMib
 			void f_UpdateService(SC_HANDLE _Service)
 			{
 				SERVICE_DESCRIPTIONW Description;
-				NStr::CWStr Temp = fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceDescription());
+				NStr::CWStr Temp = NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceDescription());
 				Description.lpDescription = (ch16 *)Temp.f_GetStr();
 				ChangeServiceConfig2W(_Service, SERVICE_CONFIG_DESCRIPTION, &Description);
 
 				SERVICE_FAILURE_ACTIONSW RestartActions;
 
 				RestartActions.dwResetPeriod = 60*60*24;
-				Temp = fg_StrToWindows(NStr::CStr("Rebooting the server in response to crash of ") + mp_pOwner->f_GetServiceParams().f_GetServiceDisplayName() + " crash.");
+				Temp = NStr::NPlatform::fg_StrToWindows(NStr::CStr("Rebooting the server in response to crash of ") + mp_pOwner->f_GetServiceParams().f_GetServiceDisplayName() + " crash.");
 				RestartActions.lpRebootMsg = (ch16 *)Temp.f_GetStr();
 				RestartActions.lpCommand = str_utf16("");
 				RestartActions.cActions = 3;
@@ -556,7 +551,7 @@ namespace NMib
 
 				ChangeServiceConfig2W(_Service, SERVICE_CONFIG_FAILURE_ACTIONS, &RestartActions);
 
-				if (NMSVCRuntime::fg_IsVista())
+				if (NMib::NPlatform::fg_IsVista())
 				{
 					SERVICE_PRESHUTDOWN_INFO PreShutDown;
 					PreShutDown.dwPreshutdownTimeout = 12*60*60*1000;
@@ -728,7 +723,7 @@ namespace NMib
 				msp_ServiceStatus.dwServiceType        = SERVICE_WIN32_OWN_PROCESS; 
 				msp_ServiceStatus.dwCurrentState       = SERVICE_START_PENDING; 
 				msp_ServiceStatus.dwControlsAccepted   = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_PAUSE_CONTINUE | SERVICE_ACCEPT_SHUTDOWN;
-				if (NMSVCRuntime::fg_IsVista())
+				if (NMib::NPlatform::fg_IsVista())
 				{
 					msp_ServiceStatus.dwControlsAccepted |= SERVICE_ACCEPT_PRESHUTDOWN;
 
@@ -739,7 +734,7 @@ namespace NMib
 				msp_ServiceStatus.dwWaitHint           = 0; 
 
 				msp_ServiceStatusHandle = RegisterServiceCtrlHandlerExW( 
-					fg_StrToWindows(msp_pThis->mp_pOwner->f_GetServiceParams().f_GetServiceName()), 
+					NStr::NPlatform::fg_StrToWindows(msp_pThis->mp_pOwner->f_GetServiceParams().f_GetServiceName()), 
 					&CDetails::fsp_ServiceCtrlHandler,
 					msp_pThis); 
 
