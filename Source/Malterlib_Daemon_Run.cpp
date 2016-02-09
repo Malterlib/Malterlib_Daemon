@@ -88,6 +88,7 @@ namespace NMib
 									)
 								)
 							;
+							return EActionResult_Failure;
 						}
 
 						return EActionResult_Success;
@@ -144,10 +145,7 @@ namespace NMib
 					return 1;
 				}
 				else
-				{
-					fg_ReportError("Error", "Service error");
 					return 1;
-				}
 			}
 			return 0;
 		}		
