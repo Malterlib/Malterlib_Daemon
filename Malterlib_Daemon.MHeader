@@ -77,7 +77,6 @@ Property
 	
 	MalterlibTests "Malterlib_Helper_Daemon;@(MalterlibTests)"
 	MalterlibTestExtraGroups_Malterlib_Helper_Daemon "{Test}/{Malterlib_Helper_Daemon}"
-	MalterlibTestDependencies_Malterlib_Daemon "Lib_Malterlib_Concurrency"
 	MalterlibTestAutoAdd_Malterlib_Helper_Daemon false
 }
 
