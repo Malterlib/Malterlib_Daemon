@@ -91,7 +91,9 @@ namespace NMib
 			void* f_GetNativeHandle() const;
 
 			NStr::CStr f_GetCustomActionKey() const;
+			void f_SetAction(EServiceAction _Action);
 			EServiceAction f_GetAction() const;
+			void f_SetActionParam(CServiceActionParam const &_Param);
 			CServiceActionParam const& f_GetActionParam() const;
 
 			NStr::CStr f_GetServiceGroup() const;
@@ -100,14 +102,16 @@ namespace NMib
 			bool f_GetKeepRunning() const;
 			bool f_GetDaemonize() const;
 
-			void f_SetServiceName(NStr::CStr const& _ServiceName);
+			void f_SetServiceName(NStr::CStr const &_ServiceName, bool _bCustom = true);
 			NStr::CStr f_GetServiceName() const;
 			NStr::CStr f_GetServiceDisplayName() const;
 			NStr::CStr f_GetServiceDescription() const;
 			EServiceMode f_GetServiceMode() const;
 			void f_SetServiceMode(EServiceMode _Mode);
 
+			void f_SetRunAsUser(NStr::CStr const &_User);
 			NStr::CStr f_GetRunAsUser() const;
+			void f_SetRunAsGroup(NStr::CStr const &_Group);
 			NStr::CStr f_GetRunAsGroup() const;
 
 			NContainer::TCVector<NStr::CStr> const& f_GetServiceDependencies() const;
@@ -117,7 +121,9 @@ namespace NMib
 			NStr::CStr f_GetCommandLine() const;
 			NStr::CStr f_GetLocalizedStr(NStr::CStr const& _Key) const;
 
+			void f_SetValueForKey(NStr::CStr const &_Key, NStr::CStr const &_Value);
 			NStr::CStr f_GetValueForKey(NStr::CStr const& _Key) const;
+			void f_SetKey(NStr::CStr const& _Key, bool _bKeySet);
 			bool f_IsKeySet(NStr::CStr const& _Key) const;
 
 			void f_SetAddCommandLine(NStr::CStr const& _CommandLine);
