@@ -399,6 +399,11 @@ namespace NMib
 			return mp_CustomAction;
 		}
 
+		void CServiceParams::f_SetAction(EServiceAction _Action)
+		{
+			mp_Action = _Action;
+		}
+
 		EServiceAction CServiceParams::f_GetAction() const
 		{
 			return mp_Action;
@@ -409,9 +414,14 @@ namespace NMib
 			return mp_pNativeHandle;
 		}
 
-		CServiceActionParam const& CServiceParams::f_GetActionParam() const
+		CServiceActionParam const &CServiceParams::f_GetActionParam() const
 		{
 			return mp_ActionParam;
+		}
+		
+		void CServiceParams::f_SetActionParam(CServiceActionParam const &_Param)
+		{
+			mp_ActionParam = _Param;
 		}
 
 		NStr::CStr CServiceParams::f_GetServiceGroup() const
@@ -454,9 +464,10 @@ namespace NMib
 			return mp_ServiceName;
 		}
 
-		void CServiceParams::f_SetServiceName(NStr::CStr const& _ServiceName)
+		void CServiceParams::f_SetServiceName(NStr::CStr const &_ServiceName, bool _bCustom)
 		{
 			mp_ServiceName = _ServiceName;
+			mp_bCustomServiceName = _bCustom;
 		}
 
 		NStr::CStr CServiceParams::f_GetServiceDisplayName() const
@@ -489,9 +500,19 @@ namespace NMib
 			return mp_CommandLine;
 		}
 
+		void CServiceParams::f_SetRunAsUser(NStr::CStr const &_User)
+		{
+			mp_RunAsUser = _User;
+		}
+		
 		NStr::CStr CServiceParams::f_GetRunAsUser() const
 		{
 			return mp_RunAsUser;
+		}
+		
+		void CServiceParams::f_SetRunAsGroup(NStr::CStr const &_Group)
+		{
+			mp_RunAsGroup = _Group;
 		}
 
 		NStr::CStr CServiceParams::f_GetRunAsGroup() const
@@ -525,7 +546,43 @@ namespace NMib
 			}
 			return false;
 		}
+		
+		void CServiceParams::f_SetKey(NStr::CStr const &_Key, bool _bKeySet)
+		{
+			for (auto iArg = mp_lRawArguments.f_GetIterator(); iArg; ++iArg)
+			{
+				if (*iArg == _Key)
+				{
+					if (!_bKeySet)
+						mp_lRawArguments.f_Remove(&*iArg - mp_lRawArguments.f_GetArray());
+					return;
+				}
+			}
+			if (_bKeySet)
+				mp_lRawArguments.f_Insert(_Key);
+		}
 
+		void CServiceParams::f_SetValueForKey(NStr::CStr const &_Key, NStr::CStr const &_Value)
+		{
+			for (auto iArg = mp_lRawArguments.f_GetIterator(); iArg; ++iArg)
+			{
+				if (*iArg == _Key)
+				{
+					++iArg;
+					if (iArg)
+					{
+						*iArg = _Value;
+						return;
+					}
+					mp_lRawArguments.f_Insert(_Value);
+					return ;
+				}
+			}
+			
+			mp_lRawArguments.f_Insert(_Key);
+			mp_lRawArguments.f_Insert(_Value);
+		}
+		
 		NStr::CStr CServiceParams::f_GetValueForKey(NStr::CStr const& _Key) const
 		{
 			for (auto iArg = mp_lRawArguments.f_GetIterator(); iArg; ++iArg)
