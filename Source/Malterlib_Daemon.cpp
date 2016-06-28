@@ -439,6 +439,11 @@ namespace NMib
 			return mp_bDisableWriteService;
 		}
 		
+		void CServiceParams::f_SetDisableWriteService(bool _bDisable)
+		{
+			mp_bDisableWriteService = _bDisable;
+		}
+		
 		bool CServiceParams::f_GetKeepRunning() const
 		{
 			return mp_bKeepRunning;

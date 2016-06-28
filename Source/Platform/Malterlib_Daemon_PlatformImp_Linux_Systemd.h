@@ -21,6 +21,8 @@ namespace NMib
 			
 			NStr::CStr mp_SystemdSystemUnitDirectory;
 			NStr::CStr mp_SystemdUserUnitDirectory;
+			NStr::CStr mp_SystemCtlExecutable;			
+			NStr::CStr mp_PkgConfigExecutable;			
 
 		public:
 			CSystemd(CService *);

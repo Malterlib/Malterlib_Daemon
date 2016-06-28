@@ -3,15 +3,28 @@
 
 #include "Malterlib_Daemon_PlatformImp_Linux_Systemd.h"
 #include <Mib/Process/ProcessLaunch>
+#include <Mib/Process/Platform>
 
-#define DPkgConfigExecutable "/usr/bin/pkg-config"
-#define DSystemctlExecutable "/usr/bin/systemctl"
+#define DPkgConfigExecutable "pkg-config"
+#define DSystemctlExecutable "systemctl"
+#define DSearchPaths NMib::NContainer::fg_CreateVector<NMib::NStr::CStr>("/usr/bin", "/bin")
 
 #define DSystemdSystemDirectory1 "/usr/lib/systemd/system"
 #define DSystemdSystemDirectory2 "/etc/systemd/system"
 
 #define DSystemdUserDirectory1 "/usr/lib/systemd/user"
 #define DSystemdUserDirectory2 "/etc/systemd/user"
+
+namespace NMib
+{
+	namespace NProcess
+	{
+		namespace NPlatform
+		{
+			NStr::CStr fg_FindExecutable(NStr::CStr const &_Path, bint _bAllowLocate, NMib::NFile::EFileAttrib _Type, NContainer::TCVector<NStr::CStr> const &_ExtraPaths);
+		}
+	}
+}
 
 namespace NMib
 {
@@ -104,7 +117,7 @@ namespace NMib
 		{
 			NStr::CStr Conf;
 			
-			Conf += NStr::CStr::CFormat("[Unit]\nDescription={}\n") << _Params.f_GetServiceDescription();
+			Conf += NStr::CStr::CFormat("[Unit]\nDescription={}\n") << _Params.f_GetServiceDisplayName();
 			Conf += NStr::CStr::CFormat("After=local-fs.target network.target\n") << 0;
 			Conf += "\n";
 			
@@ -137,7 +150,7 @@ namespace NMib
 			}
 					
 			NStr::CStr Command = NStr::CStr::CFormat("{}{} {}") << fs_GetSystemctlOptions(_Params) << (_bEnable ? "enable" : "disable") << _Params.f_GetServiceName();
-			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DSystemctlExecutable, Command, Result, Error, ExitCode) || ExitCode)
+			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode) || ExitCode)
 				return EActionResult_Failure;
 			
 			return EActionResult_Success;
@@ -152,7 +165,7 @@ namespace NMib
 			_bIsEnabled = false;
 			
 			NStr::CStr Command = NStr::CStr::CFormat(" is-enabled {}") << fs_GetUnitConfigFilename(_Params);
-			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DSystemctlExecutable, Command, Result, Error, ExitCode))
+			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode))
 			{
 				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Unable to check is-enabled {}: {}") << Command << Error);
 				return EActionResult_Failure;
@@ -165,20 +178,47 @@ namespace NMib
 
 		bint CSystemd::fs_IsSupported()
 		{
-			return NFile::CFile::fs_FileExists(NStr::CStr(DPkgConfigExecutable)) && NFile::CFile::fs_FileExists(NStr::CStr(DSystemctlExecutable));
+			return NFile::CFile::fs_FileExists
+				(
+					NProcess::NPlatform::fg_FindExecutable(DSystemctlExecutable, true, NMib::NFile::EFileAttrib_File | NMib::NFile::EFileAttrib_Executable, DSearchPaths)
+					, NMib::NFile::EFileAttrib_File | NMib::NFile::EFileAttrib_Executable
+				)
+			;
 		}
 
 		CSystemd::CSystemd(CService *_pOwner)
 			: CServiceSystemInterfaceShared(_pOwner)
 		{
 			{
+				NStr::CStr Executable = NProcess::NPlatform::fg_FindExecutable(DPkgConfigExecutable, true, NMib::NFile::EFileAttrib_File | NMib::NFile::EFileAttrib_Executable, DSearchPaths);
+				if (NFile::CFile::fs_FileExists(Executable, NMib::NFile::EFileAttrib_File | NMib::NFile::EFileAttrib_Executable))
+					mp_PkgConfigExecutable = Executable;
+			}
+			
+
+			{
+				NStr::CStr Executable = NProcess::NPlatform::fg_FindExecutable(DSystemctlExecutable, true, NMib::NFile::EFileAttrib_File | NMib::NFile::EFileAttrib_Executable, DSearchPaths);
+				if (NFile::CFile::fs_FileExists(Executable, NMib::NFile::EFileAttrib_File | NMib::NFile::EFileAttrib_Executable))
+					mp_SystemCtlExecutable = Executable;
+				else
+					DMibError("Cloud not find systemctl executable");
+			}
+			
+			{
 				NStr::CStr Result;
 				NStr::CStr Error;
 				uint32 ExitCode = 0;
 
-				NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DPkgConfigExecutable, "systemd --variable=systemdsystemunitdir", Result, Error, ExitCode);
-				if (!ExitCode && !Result.f_IsEmpty())
+				if 
+					(
+						!mp_PkgConfigExecutable.f_IsEmpty() 
+						&& NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_PkgConfigExecutable, "systemd --variable=systemdsystemunitdir", Result, Error, ExitCode) 
+						&& !ExitCode 
+						&& !Result.f_IsEmpty()
+					)
+				{
 					mp_SystemdSystemUnitDirectory = Result.f_Replace("\n", "");
+				}
 				else if (NFile::CFile::fs_FileExists(NStr::CStr(DSystemdSystemDirectory1)))
 					mp_SystemdSystemUnitDirectory = DSystemdSystemDirectory1;
 				else if (NFile::CFile::fs_FileExists(NStr::CStr(DSystemdSystemDirectory2)))
@@ -190,9 +230,16 @@ namespace NMib
 				NStr::CStr Error;
 				uint32 ExitCode = 0;
 
-				NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DPkgConfigExecutable, "systemd --variable=systemduserunitdir", Result, Error, ExitCode);
-				if (!ExitCode && !Result.f_IsEmpty())
+				if 
+					(
+						!mp_PkgConfigExecutable.f_IsEmpty() 
+						&& NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_PkgConfigExecutable, "systemd --variable=systemduserunitdir", Result, Error, ExitCode) 
+						&& !ExitCode 
+						&& !Result.f_IsEmpty()
+					)
+				{
 					mp_SystemdUserUnitDirectory = Result.f_Replace("\n", "");
+				}
 				else if (NFile::CFile::fs_FileExists(NStr::CStr(DSystemdUserDirectory1)))
 					mp_SystemdUserUnitDirectory = DSystemdUserDirectory1;
 				else if (NFile::CFile::fs_FileExists(NStr::CStr(DSystemdUserDirectory2)))
@@ -239,7 +286,7 @@ namespace NMib
 				
 				NStr::CStr Command = NStr::CStr::CFormat("{}show {} --property=MainPID") << fs_GetSystemctlOptions(_Params) << _Params.f_GetServiceName();
 
-				if (NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DSystemctlExecutable, Command, Result, Error, ExitCode))
+				if (NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode))
 				{
 					NStr::CStr MainPID;
 					(NStr::CStr::CParse("MainPID={}") >> MainPID).f_Parse(Result);
@@ -257,7 +304,7 @@ namespace NMib
 			uint32 ExitCode = 0;
 
 			NStr::CStr Command = NStr::CStr::CFormat("{}start {}") << fs_GetSystemctlOptions(_Params) << _Params.f_GetServiceName();
-			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DSystemctlExecutable, Command, Result, Error, ExitCode)
+			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode)
 				|| ExitCode
 				|| !Error.f_IsEmpty())
 			{
@@ -297,7 +344,7 @@ namespace NMib
 				uint32 ExitCode = 0;
 				
 				NStr::CStr Command = NStr::CStr::CFormat("{}show {} --property=MainPID") << fs_GetSystemctlOptions(_Params) << _Params.f_GetServiceName();
-				NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DSystemctlExecutable, Command, Result, Error, ExitCode);
+				NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode);
 
 				NStr::CStr MainPID;
 				(NStr::CStr::CParse("MainPID={}") >> MainPID).f_Parse(Result);
@@ -313,7 +360,7 @@ namespace NMib
 			uint32 ExitCode = 0;
 			
 			NStr::CStr Command = NStr::CStr::CFormat("{}stop {}") << fs_GetSystemctlOptions(_Params) << _Params.f_GetServiceName();
-			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DSystemctlExecutable, Command, Result, Error, ExitCode)
+			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode)
 				|| ExitCode
 				|| !Error.f_IsEmpty())
 			{

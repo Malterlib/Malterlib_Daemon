@@ -99,6 +99,7 @@ namespace NMib
 			NStr::CStr f_GetServiceGroup() const;
 			bool f_GetInteractive() const;
 			bool f_GetDisableWriteService() const;
+			void f_SetDisableWriteService(bool _bDisable);
 			bool f_GetKeepRunning() const;
 			bool f_GetDaemonize() const;
 
