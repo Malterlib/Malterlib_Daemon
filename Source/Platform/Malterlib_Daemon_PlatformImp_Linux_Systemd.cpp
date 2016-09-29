@@ -122,12 +122,14 @@ namespace NMib
 			Conf += "\n";
 			
 			Conf += NStr::CStr::CFormat("[Service]\nExecStart={}\n") << fs_GetExecutableCommand(_Params);
+			Conf += "KillMode=mixed\n";
 			Conf += NStr::CStr::CFormat("TimeoutStopSec={}\n") << 24*60*60;
 			Conf += NStr::CStr::CFormat("WorkingDirectory={}\n") << NFile::CFile::fs_GetPath(_Params.f_GetExecutablePath());
 			if (!_Params.f_GetRunAsUser().f_IsEmpty())
-			Conf += NStr::CStr::CFormat("User={}\n") << _Params.f_GetRunAsUser();
+				Conf += NStr::CStr::CFormat("User={}\n") << _Params.f_GetRunAsUser();
 			if (!_Params.f_GetRunAsGroup().f_IsEmpty())
-			Conf += NStr::CStr::CFormat("Group={}\n") << _Params.f_GetRunAsGroup();
+				Conf += NStr::CStr::CFormat("Group={}\n") << _Params.f_GetRunAsGroup();
+			Conf += "Restart=always\n";
 			Conf += "\n";
 			
 			Conf += NStr::CStr::CFormat("[Install]\nWantedBy=multi-user.target\n") << 0;
@@ -373,6 +375,44 @@ namespace NMib
 			return EActionResult_Success;
 		}
 
+		EActionResult CSystemd::f_Restart(CServiceParams const &_Params, bint _bWait)
+		{
+			if (!fp_CheckParamsSupported(_Params))
+				return EActionResult_Failure;
+			
+			if (_Params.f_GetKeepRunning())
+				return EActionResult_Success;
+			
+			bool bServiceExists;
+			if (f_Exists(_Params, bServiceExists) == EActionResult_Failure)
+				return EActionResult_Failure;
+			
+			if (!bServiceExists)
+			{
+				NStr::CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params.f_GetServiceMode());
+				NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetUnitConfigFilename(_Params);
+				
+				mp_pOwner->f_ReportInformation("Restart Service", NStr::CStr::CFormat("Service is not installed at '{}' so it has not been restarted") << LaunchFilePath);
+				return EActionResult_Success;
+			}
+			
+			NStr::CStr Result;
+			NStr::CStr Error;
+			uint32 ExitCode = 0;
+			
+			NStr::CStr Command = NStr::CStr::CFormat("{}restart {}") << fs_GetSystemctlOptions(_Params) << _Params.f_GetServiceName();
+			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode)
+				|| ExitCode
+				|| !Error.f_IsEmpty())
+			{
+				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Error restarting service {}\nCommand {} returned with code {}: {}") << _Params.f_GetServiceName() << Command << ExitCode << Error);
+				return EActionResult_Failure;
+			}
+
+			mp_pOwner->f_ReportInformation("Restart service", NStr::CStr::CFormat("Successfully restarted service {}") << _Params.f_GetServiceName());
+			return EActionResult_Success;
+		}
+
 		EActionResult CSystemd::f_Add(CServiceParams const &_Params, bint _bCheckForExisting)
 		{
 			if (!fp_CheckParamsSupported(_Params))
@@ -480,6 +520,11 @@ namespace NMib
 			return EActionResult_Failure;
 		}
 
+		bool CSystemd::f_SupportsAutoRestart() const
+		{
+			return true;
+		}
+		
 		EActionResult CSystemd::f_Exists(CServiceParams const &_Params, bool &_bExists) const
 		{
 			if (!fp_CheckParamsSupported(_Params))

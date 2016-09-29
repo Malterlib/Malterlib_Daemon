@@ -207,7 +207,41 @@ namespace NMib
 				
 			return EActionResult_Success;
 		}
+			
+		EActionResult CScript::f_Restart(CServiceParams const &_Params, bint _bWait)
+		{
+			if (!fp_CheckParamsSupported(_Params))
+				return EActionResult_Failure;
+			
+			if (_Params.f_GetKeepRunning())
+				return EActionResult_Success;
 
+			NStr::CStr ScriptFilePath = fp_GetScriptPath(_Params);
+
+			bool bServiceExists = false;
+			if (f_Exists(_Params, bServiceExists) == EActionResult_Failure)
+				return EActionResult_Failure;
+			
+			if (!bServiceExists)
+			{
+				mp_pOwner->f_ReportInformation("Restart Service", NStr::CStr::CFormat("Service is not installed at '{}' so it has not been restarted") << ScriptFilePath);
+				return EActionResult_Success;
+			}
+			
+			NStr::CStr Result;
+			NStr::CStr Error;
+			uint32 ExitCode = 0;
+			
+			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(ScriptFilePath, "restart", Result, Error, ExitCode)
+				|| ExitCode)
+			{
+				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Error restarting service {}\nReturned with code {}: {}") << ScriptFilePath << ExitCode << Error);
+				return EActionResult_Failure;
+			}
+				
+			return EActionResult_Success;
+		}
+		
 		NStr::CStr CScript::fp_CreateScriptFromParams(CServiceParams const &_Params) const
 		{
 			NStr::CStr Script;
@@ -534,6 +568,11 @@ namespace NMib
 			return EActionResult_Failure;
 		}
 
+		bool CScript::f_SupportsAutoRestart() const
+		{
+			return false;
+		}
+		
 		EActionResult CScript::f_Exists(CServiceParams const &_Params, bool &_bExists) const
 		{
 			if (!fp_CheckParamsSupported(_Params))

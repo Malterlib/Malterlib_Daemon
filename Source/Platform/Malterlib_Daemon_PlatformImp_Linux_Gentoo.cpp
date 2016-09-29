@@ -225,6 +225,39 @@ namespace NMib
 			mp_pOwner->f_ReportInformation("Stop service", NStr::CStr::CFormat("Service {} was successfully stopped") << ScriptFilePath);
 			return EActionResult_Success;
 		}
+		
+		EActionResult CGentoo::f_Restart(CServiceParams const &_Params, bint _bWait)
+		{
+			if (!fp_CheckParamsSupported(_Params))
+				return EActionResult_Failure;
+			
+			if (_Params.f_GetKeepRunning())
+				return EActionResult_Success;
+			
+			NStr::CStr ScriptFilePath = fp_GetScriptPath(_Params);
+			
+			bool bSerivceExists;
+			if (f_Exists(_Params, bSerivceExists) == EActionResult_Failure)
+				return EActionResult_Failure;
+			if (!bSerivceExists)
+			{
+				mp_pOwner->f_ReportInformation("Stop Service", NStr::CStr::CFormat("Service is not installed at '{}' so it was not restarted") << ScriptFilePath);
+				return EActionResult_Success;
+			}
+			
+			NStr::CStr Result;
+			NStr::CStr Error;
+			uint32 ExitCode = 0;
+			
+			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(ScriptFilePath, "restart", Result, Error, ExitCode) || ExitCode)
+			{
+				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Error restarting service {}\nReturned with code {}: {}") << ScriptFilePath << ExitCode << Error);
+				return EActionResult_Failure;
+			}
+				
+			mp_pOwner->f_ReportInformation("Restart service", NStr::CStr::CFormat("Service {} was successfully restarted") << ScriptFilePath);
+			return EActionResult_Success;
+		}
 
 		NStr::CStr CGentoo::fp_CreateScriptFromParams(CServiceParams const &_Params) const
 		{
@@ -418,6 +451,11 @@ namespace NMib
 			
 			mp_pOwner->f_ReportInformation("Remove Service", NStr::CStr::CFormat("Successfully removed service from {}") << ScriptFilePath);
 			return EActionResult_Success;
+		}
+
+		bool CGentoo::f_SupportsAutoRestart() const
+		{
+			return false;
 		}
 
 		EActionResult CGentoo::f_Exists(CServiceParams const &_Params, bool &_bExists) const

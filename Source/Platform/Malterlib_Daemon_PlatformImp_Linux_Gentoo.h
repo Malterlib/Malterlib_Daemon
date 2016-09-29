@@ -41,11 +41,14 @@ namespace NMib
 
 			virtual EActionResult f_Start(CServiceParams const &_Params) override;
 			virtual EActionResult f_Stop(CServiceParams const &_Params, bint _bWait = false) override;
+			virtual EActionResult f_Restart(CServiceParams const &_Params, bint _bWait = false) override;
 
 			virtual EActionResult f_Add(CServiceParams const &_Params, bint _bCheckForExisting = false) override;
 			virtual EActionResult f_Remove(CServiceParams const &_Params) override;
 
 			virtual EActionResult f_Exists(CServiceParams const &_Params, bool &_bExists) const override;
+
+			virtual bool f_SupportsAutoRestart() const override;
 		};
 
 	} // namespace NService

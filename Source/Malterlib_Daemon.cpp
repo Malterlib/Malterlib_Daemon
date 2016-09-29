@@ -675,9 +675,7 @@ namespace NMib
 				case EServiceAction_Restart:
 				{
 					bint bWait = mp_Params.f_GetActionParam().f_GetAsType<bool>();
-					CommandResult = f_Stop(bWait);
-					if (CommandResult == EActionResult_Success)
-						CommandResult = f_Start();
+					CommandResult = f_Restart(bWait);
 				}
 				break;
 				case EServiceAction_Stop:

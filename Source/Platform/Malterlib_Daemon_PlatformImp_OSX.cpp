@@ -14,6 +14,7 @@ namespace NMib
 	namespace NService
 	{
 		void fg_RunServiceStatusApp(NFunction::TCFunction<void ()> const& _fPause, NFunction::TCFunction<void ()> const& _fResume, NStr::CStr const &_ServiceName, NContainer::TCVector<uint8> const& _IconData);
+		void fg_CancelRunServiceStatusApp();
 		
 		NStr::CStr CService::fs_GetUniquePrefix()
 		{
@@ -259,6 +260,11 @@ namespace NMib
                 return EActionResult_Success;
 			}
 
+			static void fs_CancelServiceStatusHandler(int const sigid)
+			{
+				fg_CancelRunServiceStatusApp();
+			}
+			
 			EActionResult f_RunAsProgram()
 			{
 				fp_ServiceCreate();
@@ -270,6 +276,17 @@ namespace NMib
 					if (pIconData)
 						IconData = *pIconData;
 				}
+
+				auto pSigterm = signal(SIGTERM, (sig_t)fs_CancelServiceStatusHandler);
+				auto pSigint = signal(SIGINT, (sig_t)fs_CancelServiceStatusHandler);
+			
+				auto Cleanup
+					= g_OnScopeExit > [&]
+					{
+						signal(SIGTERM, pSigterm);
+						signal(SIGINT, pSigint);
+					}
+				;
 				
 				fg_RunServiceStatusApp
 					(
@@ -385,6 +402,14 @@ namespace NMib
 				}
 								
 				return EActionResult_Success;
+			}
+			
+			EActionResult f_Restart(bint _bWait)
+			{
+				EActionResult Result = f_Stop(_bWait);
+				if (Result != EActionResult_Success)
+					return Result;
+				return f_Start();
 			}
 			
 			void fg_SetDictionaryValue(CFMutableDictionaryRef &_Dict, NStr::CStr const &_Key, int _Value)
@@ -742,6 +767,11 @@ namespace NMib
 			return mp_pD->f_Stop(_bWait);
 		}
 
+		EActionResult CService::f_Restart(bool _bWait)
+		{
+			return mp_pD->f_Restart(_bWait);
+		}
+
 		EActionResult CService::f_Exists(bool &_bExists) const
 		{
 			return mp_pD->f_Exists(_bExists);
@@ -786,8 +816,16 @@ namespace NMib
 		{
 			return mp_pD->f_ReportErrorYesNo(_Error, _Default);
 		}
-
-
+		
+		void CService::fs_QuitDaemon()
+		{
+			CDetails::fs_SigTermHandler(SIGTERM);
+			fg_CancelRunServiceStatusApp();
+		}
+		bool CService::fs_SupportsAutoRestart()
+		{
+			return true;
+		}
 	} // namespace NService
 
 } // namespace NMib

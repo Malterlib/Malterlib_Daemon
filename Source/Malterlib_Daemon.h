@@ -70,7 +70,6 @@ namespace NMib
 		class CServiceParams
 		{
 		public:
-			
 			CServiceParams
 				(
 					NStr::CStr const& _ServiceName
@@ -146,7 +145,6 @@ namespace NMib
 			static bool fs_ParseOptionArgument(CCommandLineVector &_CommandLine, NStr::CStr & _Destination);
 
 		protected:
-			
 			NStr::CStr mp_ServiceName;
 			NStr::CStr mp_DisplayName;
 			NStr::CStr mp_ServiceDesc;
@@ -214,6 +212,7 @@ namespace NMib
 
 			EActionResult f_Start();
 			EActionResult f_Stop(bool _bWait = false);
+			EActionResult f_Restart(bool _bWait = false);
 
 			EActionResult f_Add(bool _bCheckForExisting = false);
 			EActionResult f_Remove();
@@ -232,6 +231,8 @@ namespace NMib
 			
 			static NStr::CStr fs_GetUniquePrefix();
 			static EServiceFeature fs_SupportedFeatures();
+			static void fs_QuitDaemon();
+			static bool fs_SupportsAutoRestart();
 
 		protected:
 

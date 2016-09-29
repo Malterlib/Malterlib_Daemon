@@ -254,6 +254,31 @@ namespace NMib
 			mp_pOwner->f_ReportInformation("Stop service", NStr::CStr::CFormat("Successfully stopped service {}") << _Params.f_GetServiceName());
 			return EActionResult_Success;
 		}
+		
+		EActionResult CUpstart::f_Restart(CServiceParams const &_Params, bint _bWait)
+		{
+			if (!fp_CheckParamsSupported(_Params))
+				return EActionResult_Failure;
+			
+			if (_Params.f_GetKeepRunning())
+				return EActionResult_Success;
+			
+			NStr::CStr Result;
+			NStr::CStr Error;
+			uint32 ExitCode = 0;
+			
+			NStr::CStr Command = NStr::CStr::CFormat("restart {}{}") << fp_GetInitctlOptions(_Params) << _Params.f_GetServiceName();
+			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DInitctlExecutable, Command, Result, Error, ExitCode)
+				|| ExitCode
+				|| !Error.f_IsEmpty())
+			{
+				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Error restarting service {}\nCommand {} returned with code {0}: {}") << _Params.f_GetServiceName() << Command << ExitCode << Error);
+				return EActionResult_Failure;
+			}
+
+			mp_pOwner->f_ReportInformation("Restart service", NStr::CStr::CFormat("Successfully restarted service {}") << _Params.f_GetServiceName());
+			return EActionResult_Success;
+		}
 
 		static NStr::CStr fs_CreateUpstartConfFromParams(CServiceParams const &_Params)
 		{
@@ -269,6 +294,8 @@ namespace NMib
 			Conf += NStr::CStr::CFormat("exec {}\n") << fs_GetExecutableCommand(_Params);
 			
 			Conf += NStr::CStr::CFormat("kill timeout {}\n") << 24*60*60;
+
+			Conf += NStr::CStr::CFormat("respawn\n");
 
 			return Conf;
 		}
@@ -360,6 +387,11 @@ namespace NMib
 			return EActionResult_Failure;
 		}
 
+		bool CUpstart::f_SupportsAutoRestart() const
+		{
+			return true;
+		}
+		
 		EActionResult CUpstart::f_Exists(CServiceParams const &_Params, bool &_bExists) const
 		{
 			if (!fp_CheckParamsSupported(_Params))

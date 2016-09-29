@@ -292,6 +292,14 @@ namespace NMib
 
 				return EActionResult_Success;
 			}
+			
+			EActionResult f_Restart(bint _bWait)
+			{
+				EActionResult Result = f_Stop(_bWait);
+				if (Result != EActionResult_Success)
+					return Result;
+				return f_Start();
+			}
 
 			EActionResult f_Add(bint _bCheckForExisting)
 			{
@@ -985,6 +993,11 @@ namespace NMib
 		EActionResult CService::f_Stop(bool _bWait)
 		{
 			return mp_pD->f_Stop(_bWait);
+		}
+
+		EActionResult CService::f_Restart(bool _bWait)
+		{
+			return mp_pD->f_Restart(_bWait);
 		}
 
 		EActionResult CService::f_Exists(bool &_bExists) const

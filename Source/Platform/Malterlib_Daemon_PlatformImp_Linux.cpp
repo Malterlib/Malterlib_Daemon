@@ -64,6 +64,20 @@ namespace NMib
 			{
 				msp_pThis = nullptr;
 			}
+		
+			static bool fs_SupportsAutoRestart()
+			{
+				if (!msp_pThis)
+					return false;
+				return msp_pThis->f_SupportsAutoRestart();
+			}
+			
+			bool f_SupportsAutoRestart() const
+			{
+				if (!mp_pServiceIntegration)
+					return false;
+				return mp_pServiceIntegration->f_SupportsAutoRestart(); 
+			}
 			
 			bool f_PrepareUserAndGroup(CServiceParams const &_Params)
 			{
@@ -176,6 +190,11 @@ namespace NMib
 			EActionResult f_Stop(bool _bWait)
 			{
 				return mp_pServiceIntegration->f_Stop(mp_pOwner->mp_Params, _bWait);
+			}
+			
+			EActionResult f_Restart(bool _bWait)
+			{
+				return mp_pServiceIntegration->f_Restart(mp_pOwner->mp_Params, _bWait);
 			}
 			
 			EActionResult f_Exists(bool &_bExists) const
@@ -861,6 +880,11 @@ namespace NMib
 			return mp_pD->f_Stop(_bWait);
 		}
 
+		EActionResult CService::f_Restart(bool _bWait)
+		{
+			return mp_pD->f_Restart(_bWait);
+		}
+
 		EActionResult CService::f_Exists(bool &_bExists) const
 		{
 			return mp_pD->f_Exists(_bExists);
@@ -905,8 +929,16 @@ namespace NMib
 		{
 			return f_GetServiceParams().f_ReportErrorYesNo(_Message, _Default);
 		}
+		
+		bool CService::fs_SupportsAutoRestart()
+		{
+			return CService::CDetails::fs_SupportsAutoRestart();
+		}
 
-
+		void CService::fs_QuitDaemon()
+		{
+			CDetails::fs_SigHandler(SIGTERM);
+		}
 	} // namespace NService
 
 } // namespace NMib
