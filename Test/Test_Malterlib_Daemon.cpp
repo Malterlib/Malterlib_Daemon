@@ -277,23 +277,41 @@ namespace
 			NMib::NStr::CStr ServiceDir = f_GetServiceDir();
 			NMib::NStr::CStr File = ServiceDir + "/Running";
 			
+			bool bExists = false;
+			
 			NMib::NThread::CEventAutoResetReportable FileChangeEvent;
-			NMib::NFile::CFileChangeNotification FileChangeNotification;
-			
-			FileChangeNotification.f_Open(ServiceDir, NMib::NFile::EFileChange_All, &FileChangeEvent);
-			
-			NMib::NTime::CClock Clock;
-			Clock.f_Start();
-			bool bExists = NMib::NFile::CFile::fs_FileExists(File);
-			while (!bExists)
+			if (NMib::NFile::CFileChangeNotification::fs_Supported())
 			{
-				FileChangeEvent.f_WaitTimeout(0.1f);
+				NMib::NFile::CFileChangeNotification FileChangeNotification;
+				
+				FileChangeNotification.f_Open(ServiceDir, NMib::NFile::EFileChange_All, &FileChangeEvent);
+				
+				NMib::NTime::CClock Clock;
+				Clock.f_Start();
 				bExists = NMib::NFile::CFile::fs_FileExists(File);
-				if (Clock.f_GetTime() > 10.0)
-					break;
+				while (!bExists)
+				{
+					FileChangeEvent.f_WaitTimeout(0.1f);
+					bExists = NMib::NFile::CFile::fs_FileExists(File);
+					if (Clock.f_GetTime() > 10.0)
+						break;
+				}
+				
+				FileChangeNotification.f_Close();
 			}
-			
-			FileChangeNotification.f_Close();
+			else
+			{
+				NMib::NTime::CClock Clock;
+				Clock.f_Start();
+				bool bExists = NMib::NFile::CFile::fs_FileExists(File);
+				while (!bExists)
+				{
+					NMib::NSys::fg_Thread_Sleep(0.1f);
+					bExists = NMib::NFile::CFile::fs_FileExists(File);
+					if (Clock.f_GetTime() > 10.0)
+						break;
+				}
+			}
 			bExists = NMib::NFile::CFile::fs_FileExists(File);
 						
 			DMibTest(DMibExpr(bExists) == DMibExpr(true));
