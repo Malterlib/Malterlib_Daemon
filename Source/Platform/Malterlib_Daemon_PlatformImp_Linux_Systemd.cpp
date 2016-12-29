@@ -21,7 +21,7 @@ namespace NMib
 	{
 		namespace NPlatform
 		{
-			NStr::CStr fg_FindExecutable(NStr::CStr const &_Path, bint _bAllowLocate, NMib::NFile::EFileAttrib _Type, NContainer::TCVector<NStr::CStr> const &_ExtraPaths);
+			NStr::CStr fg_FindExecutable(NStr::CStr const &_Path, bint _bAllowLocate, NMib::NFile::EFileAttrib _Type, NContainer::TCVector<NStr::CStr> const &_ExtraPaths, NStr::CStr const &_LocalPaths = {});
 		}
 	}
 }
