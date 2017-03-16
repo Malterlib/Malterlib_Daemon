@@ -1045,6 +1045,15 @@ namespace NMib
 			return mp_pD->f_ReportErrorYesNo(_Error, _Default);
 		}
 
+		void CService::fs_QuitDaemon()
+		{
+			DMibError("Not implemented");
+		}
+
+		bool CService::fs_SupportsAutoRestart()
+		{
+			return false;
+		}
 	} // namespace NService
 
 } // namespace NMib
