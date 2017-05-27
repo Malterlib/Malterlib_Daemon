@@ -905,7 +905,7 @@ namespace NMib
 			return mp_pD->f_Run();
 		}
 
-		EActionResult CService::f_RunAsProgram()
+		EActionResult CService::f_RunAsProgram(bool _bDebug)
 		{
 			return mp_pD->f_Run();
 		}

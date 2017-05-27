@@ -5,6 +5,7 @@
 #include <Mib/Core/PlatformSpecific/WindowsString>
 #include <Mib/Core/PlatformSpecific/WindowsError>
 #include <Mib/Core/PlatformSpecific/Windows>
+#include <Mib/Process/Platform>
 #include <Windows.h>
 
 namespace NMib
@@ -72,20 +73,27 @@ namespace NMib
 				return EActionResult_Success;
 			}
 
-			EActionResult f_RunAsProgram()
+			EActionResult f_RunAsProgram(bool _bDebug)
 			{
 				fp_ServiceCreate();
 
-				HICON Icon = LoadIcon((HINSTANCE)mp_pOwner->f_GetServiceParams().f_GetNativeHandle(), MAKEINTRESOURCE(101));
-				msp_TaskIcon.f_Init(Icon);
-				
-				// Just spin in eternity
-				while (1)
+				if (_bDebug)
 				{
-					if (msp_TaskIcon.f_Update())
-						break;
+					HICON Icon = LoadIcon((HINSTANCE)mp_pOwner->f_GetServiceParams().f_GetNativeHandle(), MAKEINTRESOURCE(101));
+					msp_TaskIcon.f_Init(Icon);
+				
+					// Just spin in eternity
+					while (1)
+					{
+						if (msp_TaskIcon.f_Update())
+							break;
 
-					Sleep(50);
+						Sleep(50);
+					}
+				}
+				else
+				{
+					NProcess::NPlatform::fg_Process_WaitForTermination();
 				}
 
 				fp_ServiceDestroy();
@@ -1020,9 +1028,9 @@ namespace NMib
 			return mp_pD->f_Run();
 		}
 
-		EActionResult CService::f_RunAsProgram()
+		EActionResult CService::f_RunAsProgram(bool _bDebug)
 		{
-			return mp_pD->f_RunAsProgram();
+			return mp_pD->f_RunAsProgram(_bDebug);
 		}
 
 		bool CService::f_IsShutdown() const

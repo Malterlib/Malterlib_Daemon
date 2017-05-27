@@ -692,7 +692,12 @@ namespace NMib
 				break;
 				case EServiceAction_RunAsProgram:
 				{
-					CommandResult = f_RunAsProgram();
+					CommandResult = f_RunAsProgram(true);
+				}
+				break;
+				case EServiceAction_RunAsProgramNoDebug:
+				{
+					CommandResult = f_RunAsProgram(false);
 				}
 				break;
 				case EServiceAction_Exists:

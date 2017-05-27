@@ -265,8 +265,11 @@ namespace NMib
 				fg_CancelRunServiceStatusApp();
 			}
 			
-			EActionResult f_RunAsProgram()
+			EActionResult f_RunAsProgram(bool _bDebug)
 			{
+				if (!_bDebug)
+					return f_Run();
+
 				fp_ServiceCreate();
 				
 				NContainer::TCVector<uint8> IconData;
@@ -792,9 +795,9 @@ namespace NMib
 			return mp_pD->f_Run();
 		}
 
-		EActionResult CService::f_RunAsProgram()
+		EActionResult CService::f_RunAsProgram(bool _bDebug)
 		{
-			return mp_pD->f_RunAsProgram();
+			return mp_pD->f_RunAsProgram(_bDebug);
 		}
 
 		bool CService::f_IsShutdown() const

@@ -32,6 +32,7 @@ namespace NMib
 			EServiceAction_Stop,
 			EServiceAction_Run,
 			EServiceAction_RunAsProgram,
+			EServiceAction_RunAsProgramNoDebug,
 			EServiceAction_Exists,
 			EServiceAction_Restart,
 		};
@@ -223,7 +224,7 @@ namespace NMib
 
 			EActionResult f_Run();
 
-			EActionResult f_RunAsProgram();
+			EActionResult f_RunAsProgram(bool _bDebug);
 
 			EActionResult f_Exists(bool &_bExists) const;
 
