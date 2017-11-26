@@ -238,13 +238,11 @@ namespace NMib
 			
 			EActionResult f_Run()
 			{
-				fp_ServiceCreate();
-
                 mp_InterruptedEvent.f_ResetSignaled();
-                
+
 				auto pSigterm = signal(SIGTERM, (sig_t)fs_SigTermHandler);
 				auto pSigint = signal(SIGINT, (sig_t)fs_SigTermHandler);
-			
+
 				auto Cleanup
 					= g_OnScopeExit > [&]
 					{
@@ -252,6 +250,8 @@ namespace NMib
 						signal(SIGINT, pSigint);
 					}
 				;
+
+				fp_ServiceCreate();
 
                 mp_InterruptedEvent.f_Wait();
                 
@@ -270,6 +270,17 @@ namespace NMib
 				if (!_bDebug)
 					return f_Run();
 
+				auto pSigterm = signal(SIGTERM, (sig_t)fs_CancelServiceStatusHandler);
+				auto pSigint = signal(SIGINT, (sig_t)fs_CancelServiceStatusHandler);
+
+				auto Cleanup
+					= g_OnScopeExit > [&]
+					{
+						signal(SIGTERM, pSigterm);
+						signal(SIGINT, pSigint);
+					}
+				;
+
 				fp_ServiceCreate();
 				
 				NContainer::TCVector<uint8> IconData;
@@ -280,17 +291,6 @@ namespace NMib
 						IconData = *pIconData;
 				}
 
-				auto pSigterm = signal(SIGTERM, (sig_t)fs_CancelServiceStatusHandler);
-				auto pSigint = signal(SIGINT, (sig_t)fs_CancelServiceStatusHandler);
-			
-				auto Cleanup
-					= g_OnScopeExit > [&]
-					{
-						signal(SIGTERM, pSigterm);
-						signal(SIGINT, pSigint);
-					}
-				;
-				
 				fg_RunServiceStatusApp
 					(
 						[&]()
@@ -376,18 +376,32 @@ namespace NMib
 				bool bResult = false;
 				NStr::CStr Result;
 				NStr::CStr Error;
+
+				uint32 Pid = 0;
 				
 				{
 					NStr::CStr ListResult;
 					NStr::CStr ListError;
+
+					NStr::CStr ServiceName = fs_GetFullServiceName(mp_pOwner->mp_Params);
 					
-					NStr::CStr Command = NStr::CStr::CFormat("list {}") << fs_GetFullServiceName(mp_pOwner->mp_Params);
+					NStr::CStr Command = NStr::CStr::CFormat("list {}") << ServiceName;
 					fs_SystemCall("/bin/launchctl", Command, &ListResult, &ListError);
 					
-					NStr::CStr LoadedLabel = NStr::CStr::CFormat("\"Label\" = \"{}\"") << fs_GetFullServiceName(mp_pOwner->mp_Params);
-								
-					if (ListResult.f_Find("PID") == -1 &&
-						ListResult.f_FindNoCase(LoadedLabel) == -1)
+					NStr::CStr LoadedLabel = NStr::CStr::CFormat("\"Label\" = \"{}\";") << ServiceName;
+
+					bool bFoundLabel = false;
+
+					for (auto &Line : ListResult.f_SplitLine())
+					{
+						auto TrimmedLine = Line.f_Trim();
+						if (TrimmedLine == LoadedLabel)
+							bFoundLabel = true;
+
+						(NStr::CStr::CParse("\"PID\" = {};") >> Pid).f_Parse(TrimmedLine);
+					}
+
+					if (Pid == 0 && !bFoundLabel)
 					{
 						// The service is not loaded
 						return EActionResult_Success;
@@ -403,7 +417,7 @@ namespace NMib
 					f_ReportError(Error.f_Trim());
 					return EActionResult_Failure;
 				}
-								
+
 				return EActionResult_Success;
 			}
 			

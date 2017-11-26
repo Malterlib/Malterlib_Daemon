@@ -697,17 +697,11 @@ namespace NMib
 		private:
 			EActionResult fp_RunService()
 			{
-				fp_ServiceCreate();
-				
-				if (!mp_pImp->f_ServiceValidate(mp_pOwner))
-					return EActionResult_Failure;
-				
 				auto pSigterm = signal(SIGTERM, (sig_t) fs_SigHandler);
 				auto pSigint = signal(SIGINT, (sig_t) fs_SigHandler);
 				auto pSigstp = signal(SIGTSTP, (sig_t) fs_SigHandler);
 				auto pSigcont = signal(SIGCONT, (sig_t) fs_SigHandler);
 
-				
 				auto Cleanup
 					= g_OnScopeExit > [&]
 					{
@@ -717,7 +711,12 @@ namespace NMib
 						signal(SIGCONT, pSigcont);
 					}
 				;
+
+				fp_ServiceCreate();
 				
+				if (!mp_pImp->f_ServiceValidate(mp_pOwner))
+					return EActionResult_Failure;
+
 				bool bExit = false;
 				while(!bExit)
 				{
