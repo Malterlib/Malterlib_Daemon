@@ -278,6 +278,7 @@ namespace
 			NMib::NStr::CStr File = ServiceDir + "/Running";
 			
 			bool bExists = false;
+			bool bTimedOut = false;
 			
 			NMib::NThread::CEventAutoResetReportable FileChangeEvent;
 			if (NMib::NFile::CFileChangeNotification::fs_Supported())
@@ -293,8 +294,11 @@ namespace
 				{
 					FileChangeEvent.f_WaitTimeout(0.1f);
 					bExists = NMib::NFile::CFile::fs_FileExists(File);
-					if (Clock.f_GetTime() > 10.0)
+					if (Clock.f_GetTime() > 120.0)
+					{
+						bTimedOut = true;
 						break;
+					}
 				}
 				
 				FileChangeNotification.f_Close();
@@ -308,12 +312,17 @@ namespace
 				{
 					NMib::NSys::fg_Thread_Sleep(0.1f);
 					bExists = NMib::NFile::CFile::fs_FileExists(File);
-					if (Clock.f_GetTime() > 10.0)
+					if (Clock.f_GetTime() > 120.0)
+					{
+						bTimedOut = true;
 						break;
+					}
 				}
 			}
 			bExists = NMib::NFile::CFile::fs_FileExists(File);
 						
+			DMibExpectFalse(bTimedOut);
+
 			DMibTest(DMibExpr(bExists) == DMibExpr(true));
 			
 			if (bExists)
