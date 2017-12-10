@@ -83,11 +83,13 @@ namespace
 				NMib::NStr::CStr ServiceFile = NMib::NFile::CFile::fs_GetFile(NMib::NFile::CFile::fs_GetProgramPath()).f_Replace("Test_Malterlib_Daemon", "Test_Malterlib_Helper_Daemon");
 				NMib::NStr::CStr SourceFile = NMib::NFile::CFile::fs_GetProgramDirectory() + "/" + ServiceFile;
 				NMib::NStr::CStr DestFile = ServiceDir + "/" + ServiceFile;
-				if (NMib::NFile::CFile::fs_FileExists(ServiceDir))
+				for (mint i = 0; i < 5; ++i)
 				{
 					try
 					{
-						NMib::NFile::CFile::fs_DeleteDirectoryRecursive(ServiceDir);
+						if (NMib::NFile::CFile::fs_FileExists(ServiceDir))
+							NMib::NFile::CFile::fs_DeleteDirectoryRecursive(ServiceDir);
+						break;
 					}
 					catch (NMib::NFile::CExceptionFile const &)
 					{
@@ -127,14 +129,18 @@ namespace
 		{
 			for (auto &Dir : m_CreatedDirs)
 			{
-				try
+				for (mint i = 0; i < 5; ++i)
 				{
-					NMib::NFile::CFile::fs_DeleteDirectoryRecursive(Dir);
+					try
+					{
+						if (NMib::NFile::CFile::fs_FileExists(Dir))
+							NMib::NFile::CFile::fs_DeleteDirectoryRecursive(Dir);
+						break;
+					}
+					catch (NMib::NFile::CExceptionFile const &)
+					{
+					}
 				}
-				catch (NMib::NFile::CExceptionFile const &)
-				{
-				}
-				
 			}
 		}
 		
