@@ -5,6 +5,7 @@
 #include <Mib/Core/PlatformSpecific/WindowsString>
 #include <Mib/Core/PlatformSpecific/WindowsError>
 #include <Mib/Core/PlatformSpecific/Windows>
+#include <Mib/Core/PlatformSpecific/WindowsFilePath>
 #include <Mib/Process/Platform>
 #include <Windows.h>
 
@@ -717,7 +718,7 @@ namespace NMib
 
 			NStr::CStr fp_GetAddCommandLine() const
 			{
-				NStr::CStr Strings = NSys::NFile::fg_GetProgramPath();
+				NStr::CStr Strings = NFile::NPlatform::fg_ConvertToWindowsPath(NSys::NFile::fg_GetProgramPath(), false);
 
 				if (Strings[0] != '"')
 					Strings = NStr::CStr("\"") + Strings + "\"";
