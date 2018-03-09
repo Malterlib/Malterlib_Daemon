@@ -7,7 +7,10 @@
 #include <Mib/Core/PlatformSpecific/Windows>
 #include <Mib/Core/PlatformSpecific/WindowsFilePath>
 #include <Mib/Process/Platform>
+#include <Mib/Cryptography/RandomID>
 #include <Windows.h>
+#include <LsaLookup.h>
+#include <Ntsecapi.h>
 
 namespace NMib
 {
@@ -59,6 +62,106 @@ namespace NMib
 				mp_pStopThread.f_Clear();
 				mp_pStopReportThread.f_Clear();
 				msp_pThis = nullptr;
+			}
+
+			bool f_PrepareUserAndGroup(CServiceParams const &_Params, NMib::NStr::CWStr &o_RunAsUser, NMib::NStr::CWStrSecure &o_RunAsUserPassword)
+			{
+				NStr::CStr StdOut, StdErr;
+				
+				NStr::CStr GroupName = _Params.f_GetRunAsGroup();
+				NStr::CStr UserName = _Params.f_GetRunAsUser();
+				
+				if (!GroupName.f_IsEmpty())
+				{
+					NStr::CStr ReturnGID;
+				
+					try
+					{
+						if (!NSys::fg_UserManagement_GroupExists(GroupName, ReturnGID))
+							NSys::fg_UserManagement_CreateGroup(GroupName, ReturnGID);
+					}
+					catch (NMib::NException::CException &_Exception)
+					{
+						mp_pOwner->f_ReportError(NStr::CStr::CFormat("Exception when creating group named {}\n{}") << GroupName << _Exception.f_GetErrorStr());
+						if (NMib::NProcess::NPlatform::fg_Process_GetElevation() == NMib::NProcess::EProcessElevation_IsNotElevated)
+							mp_pOwner->f_ReportError("Perhaps you need to run as administrator?");
+						return false;
+					}
+				}
+				
+				if (!UserName.f_IsEmpty())
+				{
+					NStr::CStr ReturnUID;
+
+					NMib::NStr::CWStrSecure UserWindows = UserName;
+					o_RunAsUser = ".\\" + UserName;
+					
+					try
+					{
+						if (!NSys::fg_UserManagement_UserExists(UserName, ReturnUID))
+						{
+							o_RunAsUserPassword = NCryptography::fg_HighEntropyRandomID("23456789ABCDEFGHJKLMNPQRSTWXYZabcdefghijkmnopqrstuvwxyz&=*!@~^") + "2Dg&";
+							NSys::fg_UserManagement_CreateUser(GroupName, UserName, o_RunAsUserPassword, _Params.f_GetServiceDescription(), NFile::CFile::fs_GetProgramDirectory(), ReturnUID);
+
+							auto CleanupUser = g_OnScopeExit > [&]
+								{
+									try
+									{
+										NSys::fg_UserManagement_DeleteUser(UserName);
+									}
+									catch (NException::CException const &)
+									{
+									}
+								}
+							;
+
+							SID_NAME_USE AccountType;
+							NMib::NStr::CWStr ReferencedDomainName;
+
+							SE_SID UserSID;
+							uint32 ReferencedDomainNameSize = 8192;
+							uint32 SidSize = sizeof(UserSID);
+							if (!LookupAccountNameW(nullptr, UserWindows.f_GetStr(), &UserSID.Sid, &SidSize, ReferencedDomainName.f_GetStr(8192+1), &ReferencedDomainNameSize, &AccountType))
+								DMibError((NMib::NStr::CFStr256::CFormat("Windows returned an error from LookupAccountNameW(Add login as service privilege): {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr()).f_GetStr());
+
+							LSA_OBJECT_ATTRIBUTES Attributes;
+							NMem::fg_MemClear(Attributes);
+
+							LSA_HANDLE PolicyHandle;
+
+							NTSTATUS Status = LsaOpenPolicy(nullptr, &Attributes, POLICY_CREATE_ACCOUNT | POLICY_LOOKUP_NAMES, &PolicyHandle);
+							if (Status)
+								DMibError((NMib::NStr::CFStr256::CFormat("Windows returned an error from LsaOpenPolicy(Add login as service privilege): {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(Status)).f_GetStr());
+
+							auto Cleanup = g_OnScopeExit > [&]
+								{
+									LsaClose(PolicyHandle);
+								}
+							;
+
+							LSA_UNICODE_STRING PrivilegeString;
+
+							PrivilegeString.Buffer = L"SeServiceLogonRight";
+							PrivilegeString.Length = NMib::NStr::fg_StrLen(PrivilegeString.Buffer) * sizeof(ch16);
+						    PrivilegeString.MaximumLength = (PrivilegeString.Length + 1) * sizeof(ch16);
+
+							Status = LsaAddAccountRights(PolicyHandle, &UserSID.Sid, &PrivilegeString, 1);
+							if (Status)
+								DMibError((NMib::NStr::CFStr256::CFormat("Windows returned an error from LsaAddAccountRights(Add login as service privilege): {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(Status)).f_GetStr());
+
+							CleanupUser.f_Clear();
+						}
+					}
+					catch (NMib::NException::CException &_Exception)
+					{
+						mp_pOwner->f_ReportError(NStr::CStr::CFormat("Unable to create user named {}\n{}") << UserName << _Exception.f_GetErrorStr());
+						if (NMib::NProcess::NPlatform::fg_Process_GetElevation() == NMib::NProcess::EProcessElevation_IsNotElevated)
+							mp_pOwner->f_ReportError("Perhaps you need to use sudo?");
+						return false;
+					}
+				}
+
+				return true;
 			}
 
 			EActionResult f_Run()
@@ -314,12 +417,14 @@ namespace NMib
 			{
 				if (!fp_CheckParamsSupported(fp_GetServiceParams()))
 					return EActionResult_Failure;
+
 				SC_HANDLE schSCManager = f_OpenSCManager();
 				if (!schSCManager)
 				{
 					f_ReportError(NStr::CStr::CFormat("Unable to open service manager: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 					return EActionResult_Failure;
 				}
+
 				auto CleanupServiceManager = fg_OnScopeExit
 					(
 						[&]
@@ -328,6 +433,12 @@ namespace NMib
 						}
 					)
 				;
+
+				NMib::NStr::CWStr RunAsUser;
+				NMib::NStr::CWStrSecure RunAsUserPasssword;
+
+				if ((!mp_pOwner->mp_Params.f_GetRunAsUser().f_IsEmpty() || !mp_pOwner->mp_Params.f_GetRunAsGroup().f_IsEmpty()) && !f_PrepareUserAndGroup(mp_pOwner->mp_Params, RunAsUser, RunAsUserPasssword))
+					return EActionResult_Failure;
 
 				if (_bCheckForExisting)
 				{
@@ -343,9 +454,11 @@ namespace NMib
 								}
 							)
 						;
+
 						QUERY_SERVICE_CONFIG *pQueryConfig;
 						uint32 NeededSize = 0;
 						QueryServiceConfig(schService, nullptr, 0, &NeededSize);
+
 						{
 							NContainer::TCVector<uint8> Vector;
 							Vector.f_SetLen(NeededSize);
@@ -353,10 +466,7 @@ namespace NMib
 
 							if (QueryServiceConfig(schService, pQueryConfig, NeededSize, &NeededSize))
 							{
-								//					CStr BinaryPath = pQueryConfig->lpBinaryPathName;
-								//					if (BinaryPath != lpszBinaryPathName)
-
-								NContainer::TCVector<NStr::CStr> const& lDependencies = mp_pOwner->f_GetServiceParams().f_GetServiceDependencies();
+								NContainer::TCVector<NStr::CStr> const &lDependencies = mp_pOwner->f_GetServiceParams().f_GetServiceDependencies();
 								NContainer::TCVector<ch16> Deps;
 								mint nDeps = lDependencies.f_GetLen();
 								if (nDeps)
@@ -369,20 +479,36 @@ namespace NMib
 									Deps.f_Insert(ch16(0));
 								}
 
-
 								{
-									if (!ChangeServiceConfigW(schService, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE, NStr::NPlatform::fg_StrToWindows(fp_GetAddCommandLine()), nullptr, nullptr, !Deps.f_IsEmpty() ? Deps.f_GetArray() : nullptr, nullptr, nullptr, nullptr))
+									if 
+										(
+											!ChangeServiceConfigW
+											(
+												schService
+												, SERVICE_NO_CHANGE
+												, SERVICE_NO_CHANGE
+												, SERVICE_NO_CHANGE
+												, NStr::NPlatform::fg_StrToWindows(fp_GetAddCommandLine())
+												, nullptr
+												, nullptr
+												, !Deps.f_IsEmpty() ? Deps.f_GetArray() : nullptr
+												, !RunAsUser.f_IsEmpty() ? RunAsUser.f_GetStr() : nullptr
+												, !RunAsUserPasssword.f_IsEmpty() ? RunAsUserPasssword.f_GetStr() : nullptr
+												, nullptr
+											)
+										)
 									{
 										DMibTrace("Could not change service config\n", 0);
 									}
 								}
-
 							}
 						}
+
 						f_UpdateService(schService);
 						return EActionResult_Success;
 					}
 				}
+
 
 				{
 					SC_HANDLE schService = OpenServiceW(schSCManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName()), DELETE);
@@ -411,20 +537,23 @@ namespace NMib
 				}
 
 				NStr::CWStr ServiceGroup = NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceGroup());
-				SC_HANDLE schService = CreateServiceW( 
-					schSCManager,              // SCManager database 
-					NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName()),              // name of service 
-					NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceDisplayName()),           // service name to display 
-					SERVICE_ALL_ACCESS,        // desired access 
-					SERVICE_WIN32_OWN_PROCESS | (mp_pOwner->f_GetServiceParams().f_GetInteractive() ? SERVICE_INTERACTIVE_PROCESS : 0), // service type 
-					SERVICE_AUTO_START,      // start type 
-					SERVICE_ERROR_NORMAL,      // error control type 
-					NStr::NPlatform::fg_StrToWindows(fp_GetAddCommandLine()),        // service's binary 
-					!mp_pOwner->f_GetServiceParams().f_GetServiceGroup().f_IsEmpty() ? ServiceGroup.f_GetStr() : nullptr,          // no load ordering group 
-					nullptr,                      // no tag identifier 
-					!Deps.f_IsEmpty() ? Deps.f_GetArray() : nullptr,                      // no dependencies 
-					nullptr,                      // LocalSystem account 
-					nullptr);                     // no password 
+				SC_HANDLE schService = CreateServiceW
+					( 
+						schSCManager              // SCManager database 
+						, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName())              // name of service 
+						, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceDisplayName())           // service name to display 
+						, SERVICE_ALL_ACCESS        // desired access 
+						, SERVICE_WIN32_OWN_PROCESS | (mp_pOwner->f_GetServiceParams().f_GetInteractive() ? SERVICE_INTERACTIVE_PROCESS : 0) // service type 
+						, SERVICE_AUTO_START      // start type 
+						, SERVICE_ERROR_NORMAL      // error control type 
+						, NStr::NPlatform::fg_StrToWindows(fp_GetAddCommandLine())        // service's binary 
+						, !mp_pOwner->f_GetServiceParams().f_GetServiceGroup().f_IsEmpty() ? ServiceGroup.f_GetStr() : nullptr          // no load ordering group 
+						, nullptr                      // no tag identifier 
+						, !Deps.f_IsEmpty() ? Deps.f_GetArray() : nullptr                      // no dependencies 
+						, !RunAsUser.f_IsEmpty() ? RunAsUser.f_GetStr() : nullptr
+						, !RunAsUserPasssword.f_IsEmpty() ? RunAsUserPasssword.f_GetStr() : nullptr
+					)
+				;
 
 				if (schService == nullptr) 
 				{
@@ -433,6 +562,7 @@ namespace NMib
 				}
 				else 
 					DMibTrace("Creation of service successful", 0);
+
 				auto CleanupService = fg_OnScopeExit
 					(
 						[&]
