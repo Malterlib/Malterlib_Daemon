@@ -1,4 +1,4 @@
-﻿// Copyright © 2015 Hansoft AB 
+// Copyright © 2015 Hansoft AB 
 // Distributed under the MIT license, see license text in LICENSE.Malterlib
 
 #include <Mib/Daemon/Daemon>
@@ -175,6 +175,12 @@ namespace NMib
 					return EActionResult_Failure;
 				}
 				return EActionResult_Success;
+			}
+
+			static void fs_AbortDebug()
+			{
+				msp_TaskIcon.m_bAbortDebug = true;
+				PostMessage(msp_TaskIcon.m_hReportWnd, WM_NULL, 0, 0);
 			}
 
 			EActionResult f_RunAsProgram(bool _bDebug)
@@ -726,11 +732,10 @@ namespace NMib
 			public:
 
 				NOTIFYICONDATA m_NotifyIconData;
-				bint m_bInit;
+				bool m_bInit = false;
+				bool m_bAbortDebug = false;
 				CTaskIconCleaner()
 				{
-					m_bInit = false;
-
 				}
 
 				HWND m_hReportWnd;
@@ -774,7 +779,7 @@ namespace NMib
 						POINT Pos;
 						GetCursorPos(&Pos);
 						TrackPopupMenu(hMenu, TPM_BOTTOMALIGN | TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_RIGHTBUTTON, Pos.x, Pos.y, 0, _hWnd, nullptr);
-						PostMessage(_hWnd, WM_NULL, 0, 0);
+ 						PostMessage(_hWnd, WM_NULL, 0, 0);
 						DestroyMenu(hMenu);
 
 						return true;
@@ -785,7 +790,6 @@ namespace NMib
 
 				void f_Init(HICON _hIcon)
 				{
-
 					if (!m_bInit)
 					{
 						m_bInit = true;
@@ -829,7 +833,7 @@ namespace NMib
 					TranslateMessage(&Message);
 					DispatchMessage(&Message);
 
-					return false;
+					return m_bAbortDebug;
 				}
 
 				~CTaskIconCleaner()
@@ -1186,7 +1190,8 @@ namespace NMib
 
 		void CService::fs_QuitDaemon()
 		{
-			DMibError("Not implemented");
+			CService::CDetails::fs_AbortDebug();
+			NProcess::NPlatform::fg_Process_AbortWaitForTermination();
 		}
 
 		bool CService::fs_SupportsAutoRestart()
