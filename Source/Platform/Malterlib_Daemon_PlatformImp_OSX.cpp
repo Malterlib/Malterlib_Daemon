@@ -212,7 +212,7 @@ namespace NMib
 				try
 				{
 					if (!NSys::fg_UserManagement_UserExists(UserName, ReturnUID))
-						NSys::fg_UserManagement_CreateUser(GroupName, UserName, "", UserName, NFile::CFile::fs_GetProgramDirectory(), ReturnUID);
+						NSys::fg_UserManagement_CreateUser(GroupName, UserName, "", UserName, NFile::CFile::fs_GetProgramDirectory(), ReturnUID, NSys::EUserManagementCreateUserFlag_None);
 				}
 				catch (NMib::NException::CException &_Exception)
 				{

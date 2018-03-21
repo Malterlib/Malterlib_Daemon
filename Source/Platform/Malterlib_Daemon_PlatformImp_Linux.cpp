@@ -120,11 +120,23 @@ namespace NMib
 				// Create user if not exists
 				
 				NStr::CStr ReturnUID;
-				
+
 				try
 				{
 					if (!NSys::fg_UserManagement_UserExists(UserName, ReturnUID))
-						NSys::fg_UserManagement_CreateUser(GroupName, UserName, "", _Params.f_GetServiceDescription(), NFile::CFile::fs_GetProgramDirectory(), ReturnUID);
+					{
+						NSys::fg_UserManagement_CreateUser
+							(
+							 	GroupName
+							 	, UserName
+							 	, ""
+							 	, _Params.f_GetServiceDescription()
+							 	, NFile::CFile::fs_GetProgramDirectory()
+							 	, ReturnUID
+							 	, NSys::EUserManagementCreateUserFlag_None
+							)
+						;
+					}
 				}
 				catch (NMib::NException::CException &_Exception)
 				{

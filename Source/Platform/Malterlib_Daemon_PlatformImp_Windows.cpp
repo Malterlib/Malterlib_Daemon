@@ -101,7 +101,17 @@ namespace NMib
 						if (!NSys::fg_UserManagement_UserExists(UserName, ReturnUID))
 						{
 							o_RunAsUserPassword = NCryptography::fg_HighEntropyRandomID("23456789ABCDEFGHJKLMNPQRSTWXYZabcdefghijkmnopqrstuvwxyz&=*!@~^") + "2Dg&";
-							NSys::fg_UserManagement_CreateUser(GroupName, UserName, o_RunAsUserPassword, _Params.f_GetServiceDescription(), NFile::CFile::fs_GetProgramDirectory(), ReturnUID);
+							NSys::fg_UserManagement_CreateUser
+								(
+								 	GroupName
+								 	, UserName
+								 	, o_RunAsUserPassword
+								 	, _Params.f_GetServiceDescription()
+								 	, NFile::CFile::fs_GetProgramDirectory()
+								 	, ReturnUID
+								 	, NSys::EUserManagementCreateUserFlag_None
+								)
+							;
 
 							auto CleanupUser = g_OnScopeExit > [&]
 								{
