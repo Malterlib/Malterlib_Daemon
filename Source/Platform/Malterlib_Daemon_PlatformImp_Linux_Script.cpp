@@ -86,7 +86,7 @@ namespace NMib
 		}
 
 		CScript::CScript(CService *_pOwner)
-			: CServiceSystemInterfaceShared(_pOwner)
+			: CServiceSystemInterfaceShared(_pOwner, ESupportedFeature_None)
 			, mp_ScriptRegistrationMethod(EScriptRegistrationMethod_None)
 		{
 			try

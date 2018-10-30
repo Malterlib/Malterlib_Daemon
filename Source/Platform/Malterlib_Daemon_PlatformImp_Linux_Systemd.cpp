@@ -189,7 +189,7 @@ namespace NMib
 		}
 
 		CSystemd::CSystemd(CService *_pOwner)
-			: CServiceSystemInterfaceShared(_pOwner)
+			: CServiceSystemInterfaceShared(_pOwner, ESupportedFeature_LocalUser | ESupportedFeature_AllUsers)
 		{
 			{
 				NStr::CStr Executable = NProcess::NPlatform::fg_FindExecutable(DPkgConfigExecutable, true, NMib::NFile::EFileAttrib_File | NMib::NFile::EFileAttrib_Executable, DSearchPaths);

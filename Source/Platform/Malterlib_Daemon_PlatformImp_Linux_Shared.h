@@ -13,11 +13,19 @@ namespace NMib
 		class CServiceSystemInterfaceShared : public CServiceSystemInterface
 		{
 		protected:
-			CService *mp_pOwner;
-			
-			CServiceSystemInterfaceShared(CService *_pOwner);
-			
+			enum ESupportedFeature
+			{
+				ESupportedFeature_None = 0
+				, ESupportedFeature_LocalUser = DMibBit(0)
+				, ESupportedFeature_AllUsers = DMibBit(1)
+			};
+				
+			CServiceSystemInterfaceShared(CService *_pOwner, ESupportedFeature _SupportedFeatures);
+
 			bool fp_CheckParamsSupported(CServiceParams const &_Params) const;
+
+			CService *mp_pOwner;
+			ESupportedFeature mp_SupportedFeatures = ESupportedFeature_None;
 		};
 		
 	} // namespace NService

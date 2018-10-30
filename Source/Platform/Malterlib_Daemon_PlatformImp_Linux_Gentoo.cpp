@@ -105,7 +105,7 @@ namespace NMib
 		}
 
 		CGentoo::CGentoo(CService *_pOwner)
-			: CServiceSystemInterfaceShared(_pOwner)
+			: CServiceSystemInterfaceShared(_pOwner, ESupportedFeature_None)
 		{
 			if (NFile::CFile::fs_FileExists(NStr::CStr(DInitD)))
 				mp_ScriptDirectory = DInitD;

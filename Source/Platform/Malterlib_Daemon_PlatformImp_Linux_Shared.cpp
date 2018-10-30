@@ -7,8 +7,9 @@ namespace NMib
 {
 	namespace NService
 	{
-		CServiceSystemInterfaceShared::CServiceSystemInterfaceShared(CService *_pOwner)
+		CServiceSystemInterfaceShared::CServiceSystemInterfaceShared(CService *_pOwner, ESupportedFeature _SupportedFeatures)
 			: mp_pOwner(_pOwner)
+			, mp_SupportedFeatures(_SupportedFeatures)
 		{
 		}
 
@@ -48,14 +49,20 @@ namespace NMib
 			{
 			case EServiceMode_AllUsers:
 				{
-					mp_pOwner->f_ReportError("User services (-AllUsers) are not supported on this platform");
-					bRet = false;
+					if (!(mp_SupportedFeatures & ESupportedFeature_AllUsers))
+					{
+						mp_pOwner->f_ReportError("User services (-AllUsers) are not supported on this platform");
+						bRet = false;
+					}
 				}
 				break;
 			case EServiceMode_LocalUser:
 				{
-					mp_pOwner->f_ReportError("Local user services (-LocalUser) are not supported on this platform");
-					bRet = false;
+					if (!(mp_SupportedFeatures & ESupportedFeature_LocalUser))
+					{
+						mp_pOwner->f_ReportError("Local user services (-LocalUser) are not supported on this platform");
+						bRet = false;
+					}
 				}
 				break;
 			}

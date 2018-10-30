@@ -35,7 +35,7 @@ namespace NMib
 		}
 				
 		CUpstart::CUpstart(CService *_pOwner)
-			: CServiceSystemInterfaceShared(_pOwner)
+			: CServiceSystemInterfaceShared(_pOwner, ESupportedFeature_LocalUser | ESupportedFeature_AllUsers)
 			, mp_bSupportsUserFlag(false)
 		{
 			
