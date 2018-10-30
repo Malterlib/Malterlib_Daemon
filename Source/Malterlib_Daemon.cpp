@@ -34,6 +34,7 @@ namespace NMib
 			, mp_bCustomServiceName(false)
 			, mp_bDisableWriteService(false)
 			, mp_bKeepRunning(false)
+			, mp_bDetachConsole(false)
 			, mp_bDaemonize(false)
 		{
 		}
@@ -274,6 +275,12 @@ namespace NMib
 					}
 				;
 				
+				OptionHandlers["DetachConsole"] = [&](CCommandLineVector &_Cmd)
+					{
+						mp_bDetachConsole = true;
+					}
+				;
+				
 				OptionHandlers["Daemonize"] = [&](CCommandLineVector &_Cmd)
 					{
 						mp_bDaemonize  = true;
@@ -447,6 +454,16 @@ namespace NMib
 		bool CServiceParams::f_GetKeepRunning() const
 		{
 			return mp_bKeepRunning;
+		}
+
+		void CServiceParams::f_SetDetachConsole(bool _bValue)
+		{
+			mp_bDetachConsole = _bValue;
+		}
+
+		bool CServiceParams::f_GetDetachConsole() const
+		{
+			return mp_bDetachConsole;
 		}
 		
 		bool CServiceParams::f_GetDaemonize() const

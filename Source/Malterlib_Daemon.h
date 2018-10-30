@@ -1,4 +1,4 @@
-﻿// Copyright © 2015 Hansoft AB 
+// Copyright © 2015 Hansoft AB 
 // Distributed under the MIT license, see license text in LICENSE.Malterlib
 
 #pragma once
@@ -105,6 +105,9 @@ namespace NMib
 			bool f_GetKeepRunning() const;
 			bool f_GetDaemonize() const;
 
+			void f_SetDetachConsole(bool _bValue);
+			bool f_GetDetachConsole() const;
+
 			void f_SetServiceName(NStr::CStr const &_ServiceName, bool _bCustom = true);
 			NStr::CStr f_GetServiceName() const;
 			NStr::CStr f_GetServiceDisplayName() const;
@@ -151,11 +154,6 @@ namespace NMib
 			NStr::CStr mp_ServiceName;
 			NStr::CStr mp_DisplayName;
 			NStr::CStr mp_ServiceDesc;
-			bint mp_bInteractive;
-			bint mp_bCustomServiceName;
-			bint mp_bDisableWriteService;
-			bint mp_bKeepRunning;
-			bint mp_bDaemonize;
 			EServiceMode mp_ServiceMode;
 			NStr::CStr mp_ServiceGroup;
 			NContainer::TCVector<NStr::CStr> mp_ServiceDependencies;
@@ -183,6 +181,13 @@ namespace NMib
 			NStr::CStr mp_AddCommandLine;
 			
 			void* mp_pNativeHandle;	
+
+			bool mp_bInteractive;
+			bool mp_bCustomServiceName;
+			bool mp_bDisableWriteService;
+			bool mp_bKeepRunning;
+			bool mp_bDetachConsole;
+			bool mp_bDaemonize;
 				
 			NMib::NStr::CStr fp_CleanServiceName(NMib::NStr::CStr const &_ServiceName);
 			void fp_CopyElementsToCommandLine(CCommandLineVector const &_CommandLine);

@@ -10,6 +10,9 @@ namespace NMib::NService
 		if (!fp_CheckParamsSupported(fp_GetServiceParams()))
 			return EActionResult_Failure;
 
+		if (fp_GetServiceParams().f_GetServiceMode() != EServiceMode_Global)
+			return fp_UserDaemonStart();
+
 		SC_HANDLE schSCManager = fp_OpenSCManager();
 
 		if (!schSCManager)
@@ -80,6 +83,9 @@ namespace NMib::NService
 		if (!fp_CheckParamsSupported(fp_GetServiceParams()))
 			return EActionResult_Failure;
 				
+		if (fp_GetServiceParams().f_GetServiceMode() != EServiceMode_Global)
+			return fp_UserDaemonStop(_bWait);
+
 		bool bServiceExists;
 		if (f_Exists(bServiceExists) == EActionResult_Failure)
 			return EActionResult_Failure;

@@ -10,6 +10,9 @@ namespace NMib::NService
 		if (!fp_CheckParamsSupported(fp_GetServiceParams()))
 			return EActionResult_Failure;
 
+		if (fp_GetServiceParams().f_GetServiceMode() != EServiceMode_Global)
+			return fp_UserDaemonAdd(_bCheckForExisting);
+
 		SC_HANDLE schSCManager = fp_OpenSCManager();
 		if (!schSCManager)
 		{
@@ -173,6 +176,9 @@ namespace NMib::NService
 		if (!fp_CheckParamsSupported(fp_GetServiceParams()))
 			return EActionResult_Failure;
 				
+		if (fp_GetServiceParams().f_GetServiceMode() != EServiceMode_Global)
+			return fp_UserDaemonRemove();
+
 		bool bServiceExists;
 		if (f_Exists(bServiceExists) == EActionResult_Failure)
 			return EActionResult_Failure;
@@ -260,6 +266,10 @@ namespace NMib::NService
 	{
 		if (!fp_CheckParamsSupported(fp_GetServiceParams()))
 			return EActionResult_Failure;
+
+		if (fp_GetServiceParams().f_GetServiceMode() != EServiceMode_Global)
+			return fp_UserDaemonExists(_bExists);
+
 		_bExists = false;
 		SC_HANDLE schSCManager = fp_OpenSCManager();
 		if (!schSCManager)

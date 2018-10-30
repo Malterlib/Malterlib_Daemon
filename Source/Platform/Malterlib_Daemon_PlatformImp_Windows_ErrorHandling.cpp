@@ -10,9 +10,17 @@ namespace NMib::NService
 		bool bRet = true;
 		switch (_Params.f_GetServiceMode())
 		{
+		case EServiceMode_LocalUser:
+			{
+				if (_Params.f_GetRunAsUser() || _Params.f_GetRunAsGroup())
+					mp_pOwner->f_ReportError("User services (--mode user) cannot specify another user or group to run as");
+				bRet = false;
+			}
+			break;
 		case EServiceMode_AllUsers:
 			{
-				mp_pOwner->f_ReportError("User services (-AllUsers) are not supported on this platform");
+				if (_Params.f_GetRunAsUser() || _Params.f_GetRunAsGroup())
+					mp_pOwner->f_ReportError("User services (--mode all-users) cannot specify another user or group to run as");
 				bRet = false;
 			}
 			break;

@@ -62,6 +62,12 @@ namespace NMib::NService
 
 		SC_HANDLE fp_OpenSCManager() const;
 
+		EActionResult fp_UserDaemonExists(bool &_bExists) const;
+		EActionResult fp_UserDaemonStart();
+		EActionResult fp_UserDaemonStop(bint _bWait);
+		EActionResult fp_UserDaemonAdd(bint _bCheckForExisting);
+		EActionResult fp_UserDaemonRemove();
+
 		void fp_UpdateService(SC_HANDLE _Service);
 		bool fp_PrepareUserAndGroup(CServiceParams const &_Params, NMib::NStr::CWStr &o_RunAsUser, NMib::NStr::CWStrSecure &o_RunAsUserPassword);
 		NStr::CStr fp_GetAddCommandLine() const;
