@@ -13,15 +13,19 @@ namespace NMib::NService
 		case EServiceMode_LocalUser:
 			{
 				if (_Params.f_GetRunAsUser() || _Params.f_GetRunAsGroup())
+				{
 					mp_pOwner->f_ReportError("User services (--mode user) cannot specify another user or group to run as");
-				bRet = false;
+					bRet = false;
+				}
 			}
 			break;
 		case EServiceMode_AllUsers:
 			{
 				if (_Params.f_GetRunAsUser() || _Params.f_GetRunAsGroup())
+				{
 					mp_pOwner->f_ReportError("User services (--mode all-users) cannot specify another user or group to run as");
-				bRet = false;
+					bRet = false;
+				}
 			}
 			break;
 		}
