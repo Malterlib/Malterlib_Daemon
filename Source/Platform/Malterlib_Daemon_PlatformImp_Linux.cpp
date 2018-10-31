@@ -191,6 +191,19 @@ namespace NMib
 					return false;
 				}
 
+				try
+				{
+					NFile::CFile::fs_SetOwner(NFile::CFile::fs_GetProgramDirectory(), UserName);
+					NFile::CFile::fs_SetGroup(NFile::CFile::fs_GetProgramDirectory(), GroupName);
+				}
+				catch (NFile::CExceptionFile const &_Exception)
+				{
+					mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to set permissions on daemon directory: {}") << _Exception.f_GetErrorStr());
+					if (NMib::NProcess::NPlatform::fg_Process_GetElevation() == NMib::NProcess::EProcessElevation_IsNotElevated)
+						mp_pOwner->f_ReportError("Perhaps you need to use sudo?");
+					return false;
+				}
+
 				return true;
 			}
 			
