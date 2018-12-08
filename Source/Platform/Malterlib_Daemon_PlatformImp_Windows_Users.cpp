@@ -3,9 +3,9 @@
 
 #include "Malterlib_Daemon_PlatformImp_Windows.h"
 
-namespace NMib::NService
+namespace NMib::NDaemon
 {
-	bool CService::CDetails::fp_PrepareUserAndGroup(CServiceParams const &_Params, NMib::NStr::CWStr &o_RunAsUser, NMib::NStr::CWStrSecure &o_RunAsUserPassword)
+	bool CDaemon::CDetails::fp_PrepareUserAndGroup(CDaemonParams const &_Params, NMib::NStr::CWStr &o_RunAsUser, NMib::NStr::CWStrSecure &o_RunAsUserPassword)
 	{
 		NStr::CStr StdOut, StdErr;
 				
@@ -47,7 +47,7 @@ namespace NMib::NService
 							GroupName
 							, UserName
 							, o_RunAsUserPassword
-							, _Params.f_GetServiceDescription()
+							, _Params.f_GetDaemonDescription()
 							, NFile::CFile::fs_GetProgramDirectory()
 							, ReturnUID
 							, NSys::EUserManagementCreateUserFlag_None
@@ -76,7 +76,7 @@ namespace NMib::NService
 						DMibError((NMib::NStr::CFStr256::CFormat("Windows returned an error from LookupAccountNameW(Add login as service privilege): {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr()).f_GetStr());
 
 					LSA_OBJECT_ATTRIBUTES Attributes;
-					NMem::fg_MemClear(Attributes);
+					NMemory::fg_MemClear(Attributes);
 
 					LSA_HANDLE PolicyHandle;
 

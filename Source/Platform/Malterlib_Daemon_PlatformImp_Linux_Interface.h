@@ -4,27 +4,22 @@
 #pragma once
 #include <Mib/Daemon/Daemon>
 
-namespace NMib
+namespace NMib::NDaemon
 {
-	namespace NService
+	class CDaemonSystemInterface
 	{
-		class CServiceSystemInterface
-		{
-		public:
-			virtual ~CServiceSystemInterface() {};
+	public:
+		virtual ~CDaemonSystemInterface() {};
 
-			virtual EActionResult f_Start(CServiceParams const &_Params) = 0;
-			virtual EActionResult f_Stop(CServiceParams const &_Params, bint _bWait = false) = 0;
-			virtual EActionResult f_Restart(CServiceParams const &_Params, bint _bWait = false) = 0;
+		virtual EActionResult f_Start(CDaemonParams const &_Params) = 0;
+		virtual EActionResult f_Stop(CDaemonParams const &_Params, bint _bWait = false) = 0;
+		virtual EActionResult f_Restart(CDaemonParams const &_Params, bint _bWait = false) = 0;
 
-			virtual EActionResult f_Add(CServiceParams const &_Params, bint _bCheckForExisting = false) = 0;
-			virtual EActionResult f_Remove(CServiceParams const &_Params) = 0;
+		virtual EActionResult f_Add(CDaemonParams const &_Params, bint _bCheckForExisting = false) = 0;
+		virtual EActionResult f_Remove(CDaemonParams const &_Params) = 0;
 
-			virtual EActionResult f_Exists(CServiceParams const &_Params, bool &_bExists) const = 0;
-			
-			virtual bool f_SupportsAutoRestart() const = 0;
-		};
-		
-	} // namespace NService
+		virtual EActionResult f_Exists(CDaemonParams const &_Params, bool &_bExists) const = 0;
 
-} // namespace NMib
+		virtual bool f_SupportsAutoRestart() const = 0;
+	};
+}

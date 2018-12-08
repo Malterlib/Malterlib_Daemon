@@ -3,17 +3,17 @@
 
 #include "Malterlib_Daemon_PlatformImp_Windows.h"
 
-namespace NMib::NService
+namespace NMib::NDaemon
 {
-	SC_HANDLE CService::CDetails::fp_OpenSCManager() const
+	SC_HANDLE CDaemon::CDetails::fp_OpenSCManager() const
 	{
 		return OpenSCManager(nullptr, nullptr, SC_MANAGER_CREATE_SERVICE | DELETE | SERVICE_STOP | SERVICE_START | SERVICE_QUERY_STATUS);
 	}
 
-	EActionResult CService::CDetails::f_Run()
+	EActionResult CDaemon::CDetails::f_Run()
 	{
-		NStr::CWStr Temp = NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName());
-		SERVICE_TABLE_ENTRYW DispatchTable[] = { { (ch16 *)Temp.f_GetStr(), CService::CDetails::fsp_ServiceStart}, { nullptr, nullptr} }; 
+		NStr::CWStr Temp = NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName());
+		SERVICE_TABLE_ENTRYW DispatchTable[] = { { (ch16 *)Temp.f_GetStr(), CDaemon::CDetails::fsp_ServiceStart}, { nullptr, nullptr} }; 
 
 		if (!StartServiceCtrlDispatcherW( DispatchTable)) 
 		{ 
@@ -23,7 +23,7 @@ namespace NMib::NService
 		return EActionResult_Success;
 	}
 
-	void WINAPI CService::CDetails::fsp_ServiceStart(DWORD _nArgs, LPWSTR *_pArgs) 
+	void WINAPI CDaemon::CDetails::fsp_ServiceStart(DWORD _nArgs, LPWSTR *_pArgs) 
 	{ 
 		DWORD status; 
 		DWORD specificError; 
@@ -42,13 +42,13 @@ namespace NMib::NService
 		msp_ServiceStatus.dwWaitHint           = 0; 
 
 		msp_ServiceStatusHandle = RegisterServiceCtrlHandlerExW( 
-			NStr::NPlatform::fg_StrToWindows(msp_pThis->mp_pOwner->f_GetServiceParams().f_GetServiceName()), 
+			NStr::NPlatform::fg_StrToWindows(msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName()), 
 			&CDetails::fsp_ServiceCtrlHandler,
 			msp_pThis); 
 
 		if (msp_ServiceStatusHandle == (SERVICE_STATUS_HANDLE)0) 
 		{ 
-			DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetServiceParams().f_GetServiceName() + "] RegisterServiceCtrlHandler failed {}\n", GetLastError()); 
+			DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] RegisterServiceCtrlHandler failed {}\n", GetLastError()); 
 			return; 
 		} 
 
@@ -76,22 +76,22 @@ namespace NMib::NService
 		if (!SetServiceStatus (msp_ServiceStatusHandle, &msp_ServiceStatus)) 
 		{ 
 			status = GetLastError(); 
-			DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetServiceParams().f_GetServiceName() + "] SetServiceStatus error {}\n", status); 
+			DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", status); 
 		} 
 
 		// This is where the service does its work. 
-		DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetServiceParams().f_GetServiceName() + "] Returning the Main Thread\n", 0); 
+		DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] Returning the Main Thread\n", 0); 
 
 		return; 
 	} 
 
-	DWORD WINAPI CService::CDetails::fsp_ServiceInitialization(DWORD _nArgs, LPWSTR *_pArgs, DWORD *_pSpecificError) 
+	DWORD WINAPI CDaemon::CDetails::fsp_ServiceInitialization(DWORD _nArgs, LPWSTR *_pArgs, DWORD *_pSpecificError) 
 	{ 
-		msp_pThis->fp_ServiceCreate();
+		msp_pThis->fp_DaemonCreate();
 		return msp_pThis->mp_pImp == nullptr;
 	}
 
-	DWORD WINAPI CService::CDetails::fsp_ServiceCtrlHandler(DWORD _ControlCode, DWORD _EventType, void *_pEventData, void *_pContext)
+	DWORD WINAPI CDaemon::CDetails::fsp_ServiceCtrlHandler(DWORD _ControlCode, DWORD _EventType, void *_pEventData, void *_pContext)
 	{ 
 		DWORD status; 
 
@@ -103,7 +103,7 @@ namespace NMib::NService
 			// Do whatever it takes to pause here. 
 			if (msp_ServiceStatus.dwCurrentState == SERVICE_RUNNING)
 			{
-				msp_pThis->fp_ServicePause();
+				msp_pThis->fp_DaemonPause();
 				msp_ServiceStatus.dwCurrentState = SERVICE_PAUSED; 
 			}
 
@@ -113,7 +113,7 @@ namespace NMib::NService
 			// Do whatever it takes to continue here. 
 			if (msp_ServiceStatus.dwCurrentState == SERVICE_PAUSED)
 			{
-				msp_pThis->fp_ServiceResume();
+				msp_pThis->fp_DaemonResume();
 				msp_ServiceStatus.dwCurrentState = SERVICE_RUNNING; 
 			}
 			break; 
@@ -124,7 +124,7 @@ namespace NMib::NService
 			{
 				if (msp_ServiceStatus.dwCurrentState == SERVICE_PAUSED)
 				{
-					msp_pThis->fp_ServiceResume();
+					msp_pThis->fp_DaemonResume();
 				}
 
 				msp_bIsShutdown = true;
@@ -137,8 +137,8 @@ namespace NMib::NService
 					msp_ServiceStatus.dwCheckPoint    = 0; 
 					msp_ServiceStatus.dwWaitHint      = 10000;
 
-					msp_pThis->mp_pStopThread = NThread::CThreadObject::fs_StartThread([](NThread::CThreadObject *_pThread){return msp_pThis->fp_StopThread(_pThread);}, "CService_Destroy");
-					msp_pThis->mp_pStopReportThread = NThread::CThreadObject::fs_StartThread([](NThread::CThreadObject *_pThread){return msp_pThis->fp_StopReportThread(_pThread);}, "CService_DestroyReport");
+					msp_pThis->mp_pStopThread = NThread::CThreadObject::fs_StartThread([](NThread::CThreadObject *_pThread){return msp_pThis->fp_StopThread(_pThread);}, "CDaemon_Destroy");
+					msp_pThis->mp_pStopReportThread = NThread::CThreadObject::fs_StartThread([](NThread::CThreadObject *_pThread){return msp_pThis->fp_StopReportThread(_pThread);}, "CDaemon_DestroyReport");
 				}
 			}
 			break;
@@ -146,7 +146,7 @@ namespace NMib::NService
 		case SERVICE_CONTROL_STOP:
 			if (msp_ServiceStatus.dwCurrentState == SERVICE_PAUSED)
 			{
-				msp_pThis->fp_ServiceResume();
+				msp_pThis->fp_DaemonResume();
 			}
 
 			// Do whatever it takes to stop here. 
@@ -157,8 +157,8 @@ namespace NMib::NService
 				msp_ServiceStatus.dwCheckPoint    = 0; 
 				msp_ServiceStatus.dwWaitHint      = 10000;
 
-				msp_pThis->mp_pStopThread = NThread::CThreadObject::fs_StartThread([](NThread::CThreadObject *_pThread){return msp_pThis->fp_StopThread(_pThread);}, "CService_Destroy");
-				msp_pThis->mp_pStopReportThread = NThread::CThreadObject::fs_StartThread([](NThread::CThreadObject *_pThread){return msp_pThis->fp_StopReportThread(_pThread);}, "CService_DestroyReport");
+				msp_pThis->mp_pStopThread = NThread::CThreadObject::fs_StartThread([](NThread::CThreadObject *_pThread){return msp_pThis->fp_StopThread(_pThread);}, "CDaemon_Destroy");
+				msp_pThis->mp_pStopReportThread = NThread::CThreadObject::fs_StartThread([](NThread::CThreadObject *_pThread){return msp_pThis->fp_StopReportThread(_pThread);}, "CDaemon_DestroyReport");
 			}
 			break; 
 
@@ -173,7 +173,7 @@ namespace NMib::NService
 		if (!SetServiceStatus (msp_ServiceStatusHandle, &msp_ServiceStatus)) 
 		{ 
 			status = GetLastError(); 
-			DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetServiceParams().f_GetServiceName() + "] SetServiceStatus error {}\n", (status)); 
+			DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", (status)); 
 		}
 		return NO_ERROR;
 	}

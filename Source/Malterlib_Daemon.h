@@ -5,257 +5,251 @@
 
 #include <Mib/Storage/Variant>
 
-namespace NMib
+namespace NMib::NDaemon
 {
-	namespace NService
+	class CDaemon;
+
+	class CDaemonImp
 	{
-		class CService;
+	public:
 
-		class CServiceImp
-		{
-		public:
+		CDaemonImp() {}
+		virtual ~CDaemonImp() {}
 
-			CServiceImp() {}
-			virtual ~CServiceImp() {}
+		virtual void f_DaemonPause() {}
+		virtual void f_DaemonResume() {}
+		virtual bool f_DaemonValidate(CDaemon* _pDaemon) { return true; }
+	};
 
-			virtual void f_ServicePause() {}
-			virtual void f_ServiceResume() {}
-			virtual bool f_ServiceValidate(CService* _pService) { return true; }
-		};
+	enum EDaemonAction
+	{
+		EDaemonAction_Custom,
+		EDaemonAction_Add,
+		EDaemonAction_Remove,
+		EDaemonAction_Start,
+		EDaemonAction_Stop,
+		EDaemonAction_Run,
+		EDaemonAction_RunAsProgram,
+		EDaemonAction_RunAsProgramNoDebug,
+		EDaemonAction_Exists,
+		EDaemonAction_Restart,
+	};
 
-		enum EServiceAction
-		{
-			EServiceAction_Custom,
-			EServiceAction_Add,
-			EServiceAction_Remove,
-			EServiceAction_Start,
-			EServiceAction_Stop,
-			EServiceAction_Run,
-			EServiceAction_RunAsProgram,
-			EServiceAction_RunAsProgramNoDebug,
-			EServiceAction_Exists,
-			EServiceAction_Restart,
-		};
+	enum EReportError
+	{
+		EReportError_No,
+		EReportError_Yes,
+		EReportError_Cancel,
+	};
 
-		enum EReportError
-		{
-			EReportError_No,
-			EReportError_Yes,
-			EReportError_Cancel,
-		};
-		
-		enum EServiceMode
-		{
-			EServiceMode_Global,
-			EServiceMode_AllUsers,
-			EServiceMode_LocalUser
-		};
-		
-		enum EActionResult
-		{
-			EActionResult_Success = 0,
-			EActionResult_Failure = 1,
-			EActionResult_Test = 25		// For unit test
-		};
+	enum EDaemonMode
+	{
+		EDaemonMode_Global,
+		EDaemonMode_AllUsers,
+		EDaemonMode_LocalUser
+	};
 
-		typedef NContainer::TCVariant<void, bool> CServiceActionParam;
+	enum EActionResult
+	{
+		EActionResult_Success = 0,
+		EActionResult_Failure = 1,
+		EActionResult_Test = 25		// For unit test
+	};
 
-		class CServiceParams;
-		typedef NFunction::TCFunction<NPtr::TCUniquePointer<CServiceImp> ()> FImplementationFactory;
-		typedef NFunction::TCFunction<EActionResult (CServiceParams&, CService* _pService, bint& _bHandled)> FProcessCommand;
-		typedef NFunction::TCFunction<void (NStr::CStr const&)> FErrorReporter;
-		typedef NFunction::TCFunction<void (NStr::CStr const&, NStr::CStr const&)> FInformationReporter;
-		typedef NFunction::TCFunction<EReportError (NStr::CStr const&, EReportError)> FErrorReporterYesNo;
+	typedef NStorage::TCVariant<void, bool> CDaemonActionParam;
 
-		typedef NContainer::TCVector<NMib::NStr::CStr> CCommandLineVector;
-		typedef NContainer::TCMap<NStr::CStr, NFunction::TCFunction<void (CCommandLineVector &)>> COptionHandlerMap;
+	class CDaemonParams;
+	typedef NFunction::TCFunction<NStorage::TCUniquePointer<CDaemonImp> ()> FImplementationFactory;
+	typedef NFunction::TCFunction<EActionResult (CDaemonParams&, CDaemon* _pDaemon, bint& _bHandled)> FProcessCommand;
+	typedef NFunction::TCFunction<void (NStr::CStr const&)> FErrorReporter;
+	typedef NFunction::TCFunction<void (NStr::CStr const&, NStr::CStr const&)> FInformationReporter;
+	typedef NFunction::TCFunction<EReportError (NStr::CStr const&, EReportError)> FErrorReporterYesNo;
 
-		class CServiceParams
-		{
-		public:
-			CServiceParams
-				(
-					NStr::CStr const& _ServiceName
-					, NStr::CStr const& _DisplayName
-					, NStr::CStr const& _ServiceDesc
-					, void* _pNativeHandle
-					, FImplementationFactory const& _ImplementationFactory = fg_Default()
-					, FProcessCommand const& _ProcessCommand = fg_Default()
-					, FErrorReporter const& _ErrorReporter = fg_Default()
-					, FInformationReporter const& _InformationReporter = fg_Default()
-					, FErrorReporterYesNo const& _ErrorReporterYesNo = fg_Default()
-				)
-			;
+	typedef NContainer::TCVector<NMib::NStr::CStr> CCommandLineVector;
+	typedef NContainer::TCMap<NStr::CStr, NFunction::TCFunction<void (CCommandLineVector &)>> COptionHandlerMap;
 
-			~CServiceParams();
+	class CDaemonParams
+	{
+	public:
+		CDaemonParams
+			(
+				NStr::CStr const& _DaemonName
+				, NStr::CStr const& _DisplayName
+				, NStr::CStr const& _DaemonDesc
+				, void* _pNativeHandle
+				, FImplementationFactory const& _ImplementationFactory = fg_Default()
+				, FProcessCommand const& _ProcessCommand = fg_Default()
+				, FErrorReporter const& _ErrorReporter = fg_Default()
+				, FInformationReporter const& _InformationReporter = fg_Default()
+				, FErrorReporterYesNo const& _ErrorReporterYesNo = fg_Default()
+			)
+		;
 
-			void f_ParseCommandLine(NContainer::TCVector<NMib::NStr::CStr> const &_CommandLine);
-			void* f_GetNativeHandle() const;
+		~CDaemonParams();
 
-			NStr::CStr f_GetCustomActionKey() const;
-			void f_SetAction(EServiceAction _Action);
-			EServiceAction f_GetAction() const;
-			void f_SetActionParam(CServiceActionParam const &_Param);
-			CServiceActionParam const& f_GetActionParam() const;
+		void f_ParseCommandLine(NContainer::TCVector<NMib::NStr::CStr> const &_CommandLine);
+		void* f_GetNativeHandle() const;
 
-			NStr::CStr f_GetServiceGroup() const;
-			bool f_GetInteractive() const;
-			bool f_GetDisableWriteService() const;
-			void f_SetDisableWriteService(bool _bDisable);
-			bool f_GetKeepRunning() const;
-			bool f_GetDaemonize() const;
+		NStr::CStr f_GetCustomActionKey() const;
+		void f_SetAction(EDaemonAction _Action);
+		EDaemonAction f_GetAction() const;
+		void f_SetActionParam(CDaemonActionParam const &_Param);
+		CDaemonActionParam const& f_GetActionParam() const;
 
-			void f_SetDetachConsole(bool _bValue);
-			bool f_GetDetachConsole() const;
+		NStr::CStr f_GetDaemonGroup() const;
+		bool f_GetInteractive() const;
+		bool f_GetDisableWriteDaemon() const;
+		void f_SetDisableWriteDaemon(bool _bDisable);
+		bool f_GetKeepRunning() const;
+		bool f_GetDaemonize() const;
 
-			void f_SetServiceName(NStr::CStr const &_ServiceName, bool _bCustom = true);
-			NStr::CStr f_GetServiceName() const;
-			NStr::CStr f_GetServiceDisplayName() const;
-			NStr::CStr f_GetServiceDescription() const;
-			EServiceMode f_GetServiceMode() const;
-			void f_SetServiceMode(EServiceMode _Mode);
+		void f_SetDetachConsole(bool _bValue);
+		bool f_GetDetachConsole() const;
 
-			void f_SetRunAsUser(NStr::CStr const &_User);
-			NStr::CStr f_GetRunAsUser() const;
-			void f_SetRunAsGroup(NStr::CStr const &_Group);
-			NStr::CStr f_GetRunAsGroup() const;
+		void f_SetDaemonName(NStr::CStr const &_DaemonName, bool _bCustom = true);
+		NStr::CStr f_GetDaemonName() const;
+		NStr::CStr f_GetDaemonDisplayName() const;
+		NStr::CStr f_GetDaemonDescription() const;
+		EDaemonMode f_GetDaemonMode() const;
+		void f_SetDaemonMode(EDaemonMode _Mode);
 
-			NContainer::TCVector<NStr::CStr> const& f_GetServiceDependencies() const;
+		void f_SetRunAsUser(NStr::CStr const &_User);
+		NStr::CStr f_GetRunAsUser() const;
+		void f_SetRunAsGroup(NStr::CStr const &_Group);
+		NStr::CStr f_GetRunAsGroup() const;
 
-			NStr::CStr f_GetExecutablePath() const;
-			void f_SetExecutablePath(NStr::CStr const &_Path);
-			NStr::CStr f_GetCommandLine() const;
-			NStr::CStr f_GetLocalizedStr(NStr::CStr const& _Key) const;
+		NContainer::TCVector<NStr::CStr> const& f_GetDaemonDependencies() const;
 
-			void f_SetValueForKey(NStr::CStr const &_Key, NStr::CStr const &_Value);
-			NStr::CStr f_GetValueForKey(NStr::CStr const& _Key) const;
-			void f_SetKey(NStr::CStr const& _Key, bool _bKeySet);
-			bool f_IsKeySet(NStr::CStr const& _Key) const;
+		NStr::CStr f_GetExecutablePath() const;
+		void f_SetExecutablePath(NStr::CStr const &_Path);
+		NStr::CStr f_GetCommandLine() const;
+		NStr::CStr f_GetLocalizedStr(NStr::CStr const& _Key) const;
 
-			void f_SetAddCommandLine(NStr::CStr const& _CommandLine);
-			NStr::CStr f_GetAddCommandLine() const;
+		void f_SetValueForKey(NStr::CStr const &_Key, NStr::CStr const &_Value);
+		NStr::CStr f_GetValueForKey(NStr::CStr const& _Key) const;
+		void f_SetKey(NStr::CStr const& _Key, bool _bKeySet);
+		bool f_IsKeySet(NStr::CStr const& _Key) const;
 
-			bool f_WriteServiceNameFile(NMib::NStr::CStr &_Error) const;
-			
-			bool f_WriteServiceModeFile(NMib::NStr::CStr &_Error) const;
-			bool f_RemoveServiceModeFile(NMib::NStr::CStr &_Error) const;
+		void f_SetAddCommandLine(NStr::CStr const& _CommandLine);
+		NStr::CStr f_GetAddCommandLine() const;
 
-			NPtr::TCUniquePointer<CServiceImp> f_ImplementationFactory() const;
-			EActionResult f_ProcessCommand(CService* _pService, bint& _bHandled);
-			
-			void f_ReportError(NStr::CStr const& _Error) const;
-			void f_ReportInformation(NStr::CStr const& _Heading, NStr::CStr const& _Information) const;
-			EReportError f_ReportErrorYesNo(NStr::CStr const& _Error, EReportError _Default) const;
+		bool f_WriteDaemonNameFile(NMib::NStr::CStr &_Error) const;
 
-			static void fs_ParseOptions(COptionHandlerMap &, CCommandLineVector &_CommandLine);
-			static bool fs_ParseOptionArgument(CCommandLineVector &_CommandLine, NStr::CStr & _Destination);
+		bool f_WriteDaemonModeFile(NMib::NStr::CStr &_Error) const;
+		bool f_RemoveDaemonModeFile(NMib::NStr::CStr &_Error) const;
 
-		protected:
-			NStr::CStr mp_ServiceName;
-			NStr::CStr mp_DisplayName;
-			NStr::CStr mp_ServiceDesc;
-			EServiceMode mp_ServiceMode;
-			NStr::CStr mp_ServiceGroup;
-			NContainer::TCVector<NStr::CStr> mp_ServiceDependencies;
+		NStorage::TCUniquePointer<CDaemonImp> f_ImplementationFactory() const;
+		EActionResult f_ProcessCommand(CDaemon* _pDaemon, bint& _bHandled);
 
-			NStr::CStr mp_ExecutablePath;
-			NStr::CStr mp_CommandLine;
-			NContainer::TCVector<NMib::NStr::CStr> mp_lRawArguments;
+		void f_ReportError(NStr::CStr const& _Error) const;
+		void f_ReportInformation(NStr::CStr const& _Heading, NStr::CStr const& _Information) const;
+		EReportError f_ReportErrorYesNo(NStr::CStr const& _Error, EReportError _Default) const;
 
-			NStr::CStr mp_RunAsUser;
-			NStr::CStr mp_RunAsGroup;
+		static void fs_ParseOptions(COptionHandlerMap &, CCommandLineVector &_CommandLine);
+		static bool fs_ParseOptionArgument(CCommandLineVector &_CommandLine, NStr::CStr & _Destination);
 
-			EServiceAction mp_Action;
-			NStr::CStr mp_CustomAction;
-			CServiceActionParam mp_ActionParam;
+	protected:
+		NStr::CStr mp_DaemonName;
+		NStr::CStr mp_DisplayName;
+		NStr::CStr mp_DaemonDesc;
+		EDaemonMode mp_DaemonMode;
+		NStr::CStr mp_DaemonGroup;
+		NContainer::TCVector<NStr::CStr> mp_DaemonDependencies;
 
-			NContainer::TCMap<NStr::CStr, NStr::CStr> mp_LocalizedStrings;
-			
-			FImplementationFactory mp_fImplementationFactory;
-			FProcessCommand mp_fProcessCommand;
+		NStr::CStr mp_ExecutablePath;
+		NStr::CStr mp_CommandLine;
+		NContainer::TCVector<NMib::NStr::CStr> mp_lRawArguments;
 
-			FErrorReporter mp_fReportError;
-			FErrorReporterYesNo mp_fReportErrorYesNo;
-			FInformationReporter mp_fReportInformation;
+		NStr::CStr mp_RunAsUser;
+		NStr::CStr mp_RunAsGroup;
 
-			NStr::CStr mp_AddCommandLine;
-			
-			void* mp_pNativeHandle;	
+		EDaemonAction mp_Action;
+		NStr::CStr mp_CustomAction;
+		CDaemonActionParam mp_ActionParam;
 
-			bool mp_bInteractive;
-			bool mp_bCustomServiceName;
-			bool mp_bDisableWriteService;
-			bool mp_bKeepRunning;
-			bool mp_bDetachConsole;
-			bool mp_bDaemonize;
-				
-			NMib::NStr::CStr fp_CleanServiceName(NMib::NStr::CStr const &_ServiceName);
-			void fp_CopyElementsToCommandLine(CCommandLineVector const &_CommandLine);
-			
-			bool fp_Trace(NStr::CStr &_Error);
+		NContainer::TCMap<NStr::CStr, NStr::CStr> mp_LocalizedStrings;
 
-		};
-		
-		enum EServiceFeature
-		{
-			EServiceFeature_GlobalService = DMibBit(0)
-			, EServiceFeature_AllUsersService = DMibBit(1)
-			, EServiceFeature_LocalUserService = DMibBit(2)
-			, EServiceFeature_EscapedPathBroken = DMibBit(3)
-			, EServiceFeature_EscapeCharBroken = DMibBit(4)
-		};
+		FImplementationFactory mp_fImplementationFactory;
+		FProcessCommand mp_fProcessCommand;
 
-		class CService
-		{
-		public:
+		FErrorReporter mp_fReportError;
+		FErrorReporterYesNo mp_fReportErrorYesNo;
+		FInformationReporter mp_fReportInformation;
 
-			class CDetails;
+		NStr::CStr mp_AddCommandLine;
 
-			CService(CServiceParams const& _Params);
-			~CService();
+		void* mp_pNativeHandle;
 
-			CServiceParams const& f_GetServiceParams() const;
+		bool mp_bInteractive;
+		bool mp_bCustomDaemonName;
+		bool mp_bDisableWriteDaemon;
+		bool mp_bKeepRunning;
+		bool mp_bDetachConsole;
+		bool mp_bDaemonize;
 
-			EActionResult f_ProcessCommand();
+		NMib::NStr::CStr fp_CleanDaemonName(NMib::NStr::CStr const &_DaemonName);
+		void fp_CopyElementsToCommandLine(CCommandLineVector const &_CommandLine);
 
-			EActionResult f_Start();
-			EActionResult f_Stop(bool _bWait = false);
-			EActionResult f_Restart(bool _bWait = false);
+		bool fp_Trace(NStr::CStr &_Error);
 
-			EActionResult f_Add(bool _bCheckForExisting = false);
-			EActionResult f_Remove();
+	};
 
-			bool f_IsShutdown() const;
+	enum EDaemonFeature
+	{
+		EDaemonFeature_GlobalDaemon = DMibBit(0)
+		, EDaemonFeature_AllUsersDaemon = DMibBit(1)
+		, EDaemonFeature_LocalUserDaemon = DMibBit(2)
+		, EDaemonFeature_EscapedPathBroken = DMibBit(3)
+		, EDaemonFeature_EscapeCharBroken = DMibBit(4)
+	};
 
-			EActionResult f_Run();
+	class CDaemon
+	{
+	public:
 
-			EActionResult f_RunAsProgram(bool _bDebug);
+		class CDetails;
 
-			EActionResult f_Exists(bool &_bExists) const;
+		CDaemon(CDaemonParams const& _Params);
+		~CDaemon();
 
-			void f_ReportError(NStr::CStr const& _Error);
-			EReportError f_ReportErrorYesNo(NStr::CStr const& _Error, EReportError _Default);
-			void f_ReportInformation(NStr::CStr const& _Heading, NStr::CStr const& _Information);
-			
-			static NStr::CStr fs_GetUniquePrefix();
-			static EServiceFeature fs_SupportedFeatures();
-			static void fs_QuitDaemon();
-			static bool fs_SupportsAutoRestart();
+		CDaemonParams const& f_GetDaemonParams() const;
 
-		protected:
+		EActionResult f_ProcessCommand();
 
-			CServiceParams mp_Params;
-			NPtr::TCUniquePointer<CDetails> mp_pD;
+		EActionResult f_Start();
+		EActionResult f_Stop(bool _bWait = false);
+		EActionResult f_Restart(bool _bWait = false);
 
-		};
-		
-		aint fg_RunDaemon(NStr::CStr const &_DaemonIdentifier, NStr::CStr const &_Name, NStr::CStr const &_SupportEmail, FImplementationFactory const &_fImpFactory);
+		EActionResult f_Add(bool _bCheckForExisting = false);
+		EActionResult f_Remove();
 
-	} // namespace NService
+		bool f_IsShutdown() const;
 
-} // namespace NMib
+		EActionResult f_Run();
+
+		EActionResult f_RunAsProgram(bool _bDebug);
+
+		EActionResult f_Exists(bool &_bExists) const;
+
+		void f_ReportError(NStr::CStr const& _Error);
+		EReportError f_ReportErrorYesNo(NStr::CStr const& _Error, EReportError _Default);
+		void f_ReportInformation(NStr::CStr const& _Heading, NStr::CStr const& _Information);
+
+		static NStr::CStr fs_GetUniquePrefix();
+		static EDaemonFeature fs_SupportedFeatures();
+		static void fs_QuitDaemon();
+		static bool fs_SupportsAutoRestart();
+
+	protected:
+
+		CDaemonParams mp_Params;
+		NStorage::TCUniquePointer<CDetails> mp_pD;
+
+	};
+
+	aint fg_RunDaemon(NStr::CStr const &_DaemonIdentifier, NStr::CStr const &_Name, NStr::CStr const &_SupportEmail, FImplementationFactory const &_fImpFactory);
+}
 
 #ifndef DMibPNoShortCuts
-using namespace NMib::NService;
+		using namespace NMib::NDaemon;
 #endif
-

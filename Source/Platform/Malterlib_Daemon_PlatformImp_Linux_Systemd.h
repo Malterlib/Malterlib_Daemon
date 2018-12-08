@@ -4,44 +4,39 @@
 #include <Mib/Daemon/Daemon>
 #include "Malterlib_Daemon_PlatformImp_Linux_Shared.h"
 
-namespace NMib
+namespace NMib::NDaemon
 {
-	namespace NService
+	class CDaemon;
+
+	class CSystemd : public CDaemonSystemInterfaceShared
 	{
-		class CService;
+	private:
 
-		class CSystemd : public CServiceSystemInterfaceShared
-		{
-		private:
+		NStr::CStr fp_GetUnitConfigDirectory(EDaemonMode _Mode) const;
+		bool fp_IsUnitConfigThisExecutable(CDaemon *pOwner, CDaemonParams const &_Params) const;
+		EActionResult fp_SetUnitEnable(CDaemonParams const &_Params, bint _bEnable) const;
+		EActionResult fp_IsUnitEnabled(CDaemonParams const &_Params, bint& _bIsEnabled) const;
 
-			NStr::CStr fp_GetUnitConfigDirectory(EServiceMode _Mode) const;
-			bool fp_IsUnitConfigThisExecutable(CService *pOwner, CServiceParams const &_Params) const;
-			EActionResult fp_SetUnitEnable(CServiceParams const &_Params, bint _bEnable) const;
-			EActionResult fp_IsUnitEnabled(CServiceParams const &_Params, bint& _bIsEnabled) const;
-			
-			NStr::CStr mp_SystemdSystemUnitDirectory;
-			NStr::CStr mp_SystemdUserUnitDirectory;
-			NStr::CStr mp_SystemCtlExecutable;			
-			NStr::CStr mp_PkgConfigExecutable;			
+		NStr::CStr mp_SystemdSystemUnitDirectory;
+		NStr::CStr mp_SystemdUserUnitDirectory;
+		NStr::CStr mp_SystemCtlExecutable;
+		NStr::CStr mp_PkgConfigExecutable;
 
-		public:
-			CSystemd(CService *);
-			~CSystemd();
+	public:
+		CSystemd(CDaemon *);
+		~CSystemd();
 
-			static bint fs_IsSupported();
+		static bint fs_IsSupported();
 
-			virtual EActionResult f_Start(CServiceParams const &_Params) override;
-			virtual EActionResult f_Stop(CServiceParams const &_Params, bint _bWait = false) override;
-			virtual EActionResult f_Restart(CServiceParams const &_Params, bint _bWait = false) override;
+		virtual EActionResult f_Start(CDaemonParams const &_Params) override;
+		virtual EActionResult f_Stop(CDaemonParams const &_Params, bint _bWait = false) override;
+		virtual EActionResult f_Restart(CDaemonParams const &_Params, bint _bWait = false) override;
 
-			virtual EActionResult f_Add(CServiceParams const &_Params, bint _bCheckForExisting = false) override;
-			virtual EActionResult f_Remove(CServiceParams const &_Params) override;
+		virtual EActionResult f_Add(CDaemonParams const &_Params, bint _bCheckForExisting = false) override;
+		virtual EActionResult f_Remove(CDaemonParams const &_Params) override;
 
-			virtual EActionResult f_Exists(CServiceParams const &_Params, bool &_bExists) const override;
+		virtual EActionResult f_Exists(CDaemonParams const &_Params, bool &_bExists) const override;
 
-			virtual bool f_SupportsAutoRestart() const override;
-		};
-
-	} // namespace NService
-
-} // namespace NMib
+		virtual bool f_SupportsAutoRestart() const override;
+	};
+}

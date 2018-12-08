@@ -3,16 +3,16 @@
 
 #include "Malterlib_Daemon_PlatformImp_Windows.h"
 
-namespace NMib::NService
+namespace NMib::NDaemon
 {
-	NThread::CMutual CService::CDetails::msp_ServiceControlLock;
-	SERVICE_STATUS CService::CDetails::msp_ServiceStatus;
-	SERVICE_STATUS_HANDLE CService::CDetails::msp_ServiceStatusHandle;
-	CService::CDetails* CService::CDetails::msp_pThis = nullptr;
-	bint CService::CDetails::msp_bIsShutdown = false;
-	CService::CDetails::CTaskIconCleaner CService::CDetails::msp_TaskIcon;
+	NThread::CMutual CDaemon::CDetails::msp_ServiceControlLock;
+	SERVICE_STATUS CDaemon::CDetails::msp_ServiceStatus;
+	SERVICE_STATUS_HANDLE CDaemon::CDetails::msp_ServiceStatusHandle;
+	CDaemon::CDetails* CDaemon::CDetails::msp_pThis = nullptr;
+	bint CDaemon::CDetails::msp_bIsShutdown = false;
+	CDaemon::CDetails::CTaskIconCleaner CDaemon::CDetails::msp_TaskIcon;
 
-	CService::CDetails::CDetails(CService *_pOwner)
+	CDaemon::CDetails::CDetails(CDaemon *_pOwner)
 		: mp_pOwner(_pOwner)
 	{
 		if (msp_pThis)
@@ -21,24 +21,24 @@ namespace NMib::NService
 			msp_pThis = this;
 	}
 
-	CService::CDetails::~CDetails()
+	CDaemon::CDetails::~CDetails()
 	{
 		mp_pStopThread.f_Clear();
 		mp_pStopReportThread.f_Clear();
 		msp_pThis = nullptr;
 	}
 
-	CServiceParams const &CService::CDetails::fp_GetServiceParams() const
+	CDaemonParams const &CDaemon::CDetails::fp_GetDaemonParams() const
 	{
-		return msp_pThis->mp_pOwner->f_GetServiceParams();
+		return msp_pThis->mp_pOwner->f_GetDaemonParams();
 	}
 
-	bint CService::CDetails::f_IsShutdown() const
+	bint CDaemon::CDetails::f_IsShutdown() const
 	{
 		return msp_bIsShutdown;
 	}
 
-	NStr::CStr CService::CDetails::fp_GetAddCommandLine() const
+	NStr::CStr CDaemon::CDetails::fp_GetAddCommandLine() const
 	{
 		NStr::CStr Strings = NFile::NPlatform::fg_ConvertToWindowsPath(NSys::NFile::fg_GetProgramPath(), false);
 
@@ -46,45 +46,45 @@ namespace NMib::NService
 			Strings = NStr::CStr("\"") + Strings + "\"";
 
 		NStr::CStr CommandLine;
-		if (mp_pOwner->f_GetServiceParams().f_GetAddCommandLine() != "")
-			CommandLine = Strings + " " + mp_pOwner->f_GetServiceParams().f_GetAddCommandLine();
+		if (mp_pOwner->f_GetDaemonParams().f_GetAddCommandLine() != "")
+			CommandLine = Strings + " " + mp_pOwner->f_GetDaemonParams().f_GetAddCommandLine();
 		else
-			CommandLine = Strings + " -Service " + mp_pOwner->f_GetServiceParams().f_GetServiceName();
+			CommandLine = Strings + " -Service " + mp_pOwner->f_GetDaemonParams().f_GetDaemonName();
 
 		return CommandLine;
 	}
 
 
-	void CService::CDetails::fp_ServiceResume()
+	void CDaemon::CDetails::fp_DaemonResume()
 	{
 		if (mp_pImp)
-			mp_pImp->f_ServiceResume();
+			mp_pImp->f_DaemonResume();
 	}
 
-	void CService::CDetails::fp_ServicePause()
+	void CDaemon::CDetails::fp_DaemonPause()
 	{
 		if (mp_pImp)
-			mp_pImp->f_ServicePause();
+			mp_pImp->f_DaemonPause();
 	}
 
-	void CService::CDetails::fp_ServiceCreate()
+	void CDaemon::CDetails::fp_DaemonCreate()
 	{
-		mp_pImp = mp_pOwner->f_GetServiceParams().f_ImplementationFactory();
+		mp_pImp = mp_pOwner->f_GetDaemonParams().f_ImplementationFactory();
 	}
 
-	void CService::CDetails::fp_ServiceDestroy()
+	void CDaemon::CDetails::fp_DaemonDestroy()
 	{
 		if (mp_pImp)
 			mp_pImp = nullptr;
 	}
 
-	aint CService::CDetails::fp_StopThread(NThread::CThreadObject *)
+	aint CDaemon::CDetails::fp_StopThread(NThread::CThreadObject *)
 	{
 		msp_pThis->mp_pImp = nullptr;
 		return 0;
 	}
 
-	aint CService::CDetails::fp_StopReportThread(NThread::CThreadObject *_pThread)
+	aint CDaemon::CDetails::fp_StopReportThread(NThread::CThreadObject *_pThread)
 	{
 		while (1)
 		{
@@ -94,12 +94,12 @@ namespace NMib::NService
 				msp_ServiceStatus.dwWin32ExitCode = 0; 
 				msp_ServiceStatus.dwCurrentState  = SERVICE_STOPPED; 
 
-				DMibDTrace("Service stopped: {}" DMibNewLine, msp_ServiceStatus.dwCheckPoint);
+				DMibDTrace("Daemon stopped: {}" DMibNewLine, msp_ServiceStatus.dwCheckPoint);
 
 				if (!SetServiceStatus (msp_ServiceStatusHandle, &msp_ServiceStatus))
 				{ 
 					HRESULT status = GetLastError(); 
-					DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetServiceParams().f_GetServiceName() + "] SetServiceStatus error {}\n", status); 
+					DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", status); 
 				}
 				return 0;
 			}
@@ -110,12 +110,12 @@ namespace NMib::NService
 				msp_ServiceStatus.dwCurrentState  = SERVICE_STOP_PENDING; 
 				++msp_ServiceStatus.dwCheckPoint; 
 				msp_ServiceStatus.dwWaitHint      += 1500;
-				DMibDTrace("Service stop pending: {}" DMibNewLine, msp_ServiceStatus.dwCheckPoint);
+				DMibDTrace("Daemon stop pending: {}" DMibNewLine, msp_ServiceStatus.dwCheckPoint);
 
 				if (!SetServiceStatus (msp_ServiceStatusHandle, &msp_ServiceStatus))
 				{ 
 					HRESULT status = GetLastError(); 
-					DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetServiceParams().f_GetServiceName() + "] SetServiceStatus error {}\n", status); 
+					DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", status); 
 				}
 			}
 			WaitForSingleObject(mp_pStopThread->f_GetThread(), 1000);

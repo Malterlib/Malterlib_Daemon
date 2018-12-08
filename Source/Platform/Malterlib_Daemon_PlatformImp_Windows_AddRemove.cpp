@@ -3,14 +3,14 @@
 
 #include "Malterlib_Daemon_PlatformImp_Windows.h"
 
-namespace NMib::NService
+namespace NMib::NDaemon
 {
-	EActionResult CService::CDetails::f_Add(bint _bCheckForExisting)
+	EActionResult CDaemon::CDetails::f_Add(bint _bCheckForExisting)
 	{
-		if (!fp_CheckParamsSupported(fp_GetServiceParams()))
+		if (!fp_CheckParamsSupported(fp_GetDaemonParams()))
 			return EActionResult_Failure;
 
-		if (fp_GetServiceParams().f_GetServiceMode() != EServiceMode_Global)
+		if (fp_GetDaemonParams().f_GetDaemonMode() != EDaemonMode_Global)
 			return fp_UserDaemonAdd(_bCheckForExisting);
 
 		SC_HANDLE schSCManager = fp_OpenSCManager();
@@ -37,7 +37,7 @@ namespace NMib::NService
 
 		if (_bCheckForExisting)
 		{
-			SC_HANDLE schService = OpenServiceW(schSCManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName()), SERVICE_QUERY_CONFIG | SERVICE_CHANGE_CONFIG);
+			SC_HANDLE schService = OpenServiceW(schSCManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName()), SERVICE_QUERY_CONFIG | SERVICE_CHANGE_CONFIG);
 
 			if (schService)
 			{
@@ -55,13 +55,13 @@ namespace NMib::NService
 				QueryServiceConfig(schService, nullptr, 0, &NeededSize);
 
 				{
-					NContainer::TCVector<uint8> Vector;
+					NContainer::CByteVector Vector;
 					Vector.f_SetLen(NeededSize);
 					pQueryConfig = (QUERY_SERVICE_CONFIG *)Vector.f_GetArray();
 
 					if (QueryServiceConfig(schService, pQueryConfig, NeededSize, &NeededSize))
 					{
-						NContainer::TCVector<NStr::CStr> const &lDependencies = mp_pOwner->f_GetServiceParams().f_GetServiceDependencies();
+						NContainer::TCVector<NStr::CStr> const &lDependencies = mp_pOwner->f_GetDaemonParams().f_GetDaemonDependencies();
 						NContainer::TCVector<ch16> Deps;
 						mint nDeps = lDependencies.f_GetLen();
 						if (nDeps)
@@ -93,7 +93,7 @@ namespace NMib::NService
 									)
 								)
 							{
-								DMibTrace("Could not change service config\n", 0);
+								DMibTrace("Could not change daemon config\n", 0);
 							}
 						}
 					}
@@ -106,19 +106,19 @@ namespace NMib::NService
 
 
 		{
-			SC_HANDLE schService = OpenServiceW(schSCManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName()), DELETE);
+			SC_HANDLE schService = OpenServiceW(schSCManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName()), DELETE);
 
 			if (schService)
 			{
 				if (!DeleteService(schService))
 				{
-					f_ReportError(NStr::CStr::CFormat("Unable to delete service: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
+					f_ReportError(NStr::CStr::CFormat("Unable to delete daemon: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 					return EActionResult_Failure;
 				}
 			}
 		}
 
-		NContainer::TCVector<NStr::CStr> const& lDependencies = mp_pOwner->f_GetServiceParams().f_GetServiceDependencies();
+		NContainer::TCVector<NStr::CStr> const& lDependencies = mp_pOwner->f_GetDaemonParams().f_GetDaemonDependencies();
 		NContainer::TCVector<ch16> Deps;
 		mint nDeps = lDependencies.f_GetLen();
 		if (nDeps)
@@ -131,18 +131,18 @@ namespace NMib::NService
 			Deps.f_Insert(ch16(0));
 		}
 
-		NStr::CWStr ServiceGroup = NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceGroup());
+		NStr::CWStr ServiceGroup = NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonGroup());
 		SC_HANDLE schService = CreateServiceW
 			( 
 				schSCManager              // SCManager database 
-				, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName())              // name of service 
-				, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceDisplayName())           // service name to display 
+				, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName())              // name of daemon
+				, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonDisplayName())           // daemon name to display
 				, SERVICE_ALL_ACCESS        // desired access 
-				, SERVICE_WIN32_OWN_PROCESS | (mp_pOwner->f_GetServiceParams().f_GetInteractive() ? SERVICE_INTERACTIVE_PROCESS : 0) // service type 
+				, SERVICE_WIN32_OWN_PROCESS | (mp_pOwner->f_GetDaemonParams().f_GetInteractive() ? SERVICE_INTERACTIVE_PROCESS : 0) // daemon type
 				, SERVICE_AUTO_START      // start type 
 				, SERVICE_ERROR_NORMAL      // error control type 
 				, NStr::NPlatform::fg_StrToWindows(fp_GetAddCommandLine())        // service's binary 
-				, !mp_pOwner->f_GetServiceParams().f_GetServiceGroup().f_IsEmpty() ? ServiceGroup.f_GetStr() : nullptr          // no load ordering group 
+				, !mp_pOwner->f_GetDaemonParams().f_GetDaemonGroup().f_IsEmpty() ? ServiceGroup.f_GetStr() : nullptr          // no load ordering group 
 				, nullptr                      // no tag identifier 
 				, !Deps.f_IsEmpty() ? Deps.f_GetArray() : nullptr                      // no dependencies 
 				, !RunAsUser.f_IsEmpty() ? RunAsUser.f_GetStr() : nullptr
@@ -152,11 +152,11 @@ namespace NMib::NService
 
 		if (schService == nullptr) 
 		{
-			f_ReportError(NStr::CStr::CFormat("Error returned when creating service {}\r\n{}") << fp_GetAddCommandLine() << NMib::NPlatform::fg_Win32_GetLastErrorStr(0) );
+			f_ReportError(NStr::CStr::CFormat("Error returned when creating daemon {}\r\n{}") << fp_GetAddCommandLine() << NMib::NPlatform::fg_Win32_GetLastErrorStr(0) );
 			return EActionResult_Failure;
 		}
 		else 
-			DMibTrace("Creation of service successful", 0);
+			DMibTrace("Creation of daemon successful", 0);
 
 		auto CleanupService = fg_OnScopeExit
 			(
@@ -171,21 +171,21 @@ namespace NMib::NService
 		return EActionResult_Success;
 	}
 
-	EActionResult CService::CDetails::f_Remove()
+	EActionResult CDaemon::CDetails::f_Remove()
 	{
-		if (!fp_CheckParamsSupported(fp_GetServiceParams()))
+		if (!fp_CheckParamsSupported(fp_GetDaemonParams()))
 			return EActionResult_Failure;
 				
-		if (fp_GetServiceParams().f_GetServiceMode() != EServiceMode_Global)
+		if (fp_GetDaemonParams().f_GetDaemonMode() != EDaemonMode_Global)
 			return fp_UserDaemonRemove();
 
-		bool bServiceExists;
-		if (f_Exists(bServiceExists) == EActionResult_Failure)
+		bool bDaemonExists;
+		if (f_Exists(bDaemonExists) == EActionResult_Failure)
 			return EActionResult_Failure;
 				
-		if (!bServiceExists)
+		if (!bDaemonExists)
 		{
-			f_ReportInformation("Remove Service", "Service is not installed so it has not been removed");
+			f_ReportInformation("Remove Daemon", "Daemon is not installed so it has not been removed");
 			return EActionResult_Success;
 		}
 
@@ -208,7 +208,7 @@ namespace NMib::NService
 			)
 		;
 
-		SC_HANDLE schService = OpenServiceW(schSCManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName()), DELETE);
+		SC_HANDLE schService = OpenServiceW(schSCManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName()), DELETE);
 		if (schService)
 		{
 			auto CleanupService = fg_OnScopeExit
@@ -221,7 +221,7 @@ namespace NMib::NService
 			;
 			if (!DeleteService(schService))
 			{
-				f_ReportError(NStr::CStr::CFormat("Unable to delete service: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
+				f_ReportError(NStr::CStr::CFormat("Unable to delete daemon: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 				return EActionResult_Failure;
 			}
 		}
@@ -229,17 +229,17 @@ namespace NMib::NService
 		return EActionResult_Success;
 	}
 
-	void CService::CDetails::fp_UpdateService(SC_HANDLE _Service)
+	void CDaemon::CDetails::fp_UpdateService(SC_HANDLE _Service)
 	{
 		SERVICE_DESCRIPTIONW Description;
-		NStr::CWStr Temp = NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceDescription());
+		NStr::CWStr Temp = NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonDescription());
 		Description.lpDescription = (ch16 *)Temp.f_GetStr();
 		ChangeServiceConfig2W(_Service, SERVICE_CONFIG_DESCRIPTION, &Description);
 
 		SERVICE_FAILURE_ACTIONSW RestartActions;
 
 		RestartActions.dwResetPeriod = 60*60*24;
-		Temp = NStr::NPlatform::fg_StrToWindows(NStr::CStr("Rebooting the server in response to crash of ") + mp_pOwner->f_GetServiceParams().f_GetServiceDisplayName() + " crash.");
+		Temp = NStr::NPlatform::fg_StrToWindows(NStr::CStr("Rebooting the server in response to crash of ") + mp_pOwner->f_GetDaemonParams().f_GetDaemonDisplayName() + " crash.");
 		RestartActions.lpRebootMsg = (ch16 *)Temp.f_GetStr();
 		RestartActions.lpCommand = str_utf16("");
 		RestartActions.cActions = 3;
@@ -262,12 +262,12 @@ namespace NMib::NService
 		}
 	}
 
-	EActionResult CService::CDetails::f_Exists(bool &_bExists) const
+	EActionResult CDaemon::CDetails::f_Exists(bool &_bExists) const
 	{
-		if (!fp_CheckParamsSupported(fp_GetServiceParams()))
+		if (!fp_CheckParamsSupported(fp_GetDaemonParams()))
 			return EActionResult_Failure;
 
-		if (fp_GetServiceParams().f_GetServiceMode() != EServiceMode_Global)
+		if (fp_GetDaemonParams().f_GetDaemonMode() != EDaemonMode_Global)
 			return fp_UserDaemonExists(_bExists);
 
 		_bExists = false;
@@ -286,7 +286,7 @@ namespace NMib::NService
 			)
 		;
 
-		SC_HANDLE schService = OpenServiceW(schSCManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetServiceParams().f_GetServiceName()), SERVICE_QUERY_CONFIG | SERVICE_CHANGE_CONFIG);
+		SC_HANDLE schService = OpenServiceW(schSCManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName()), SERVICE_QUERY_CONFIG | SERVICE_CHANGE_CONFIG);
 
 		if (schService)
 		{

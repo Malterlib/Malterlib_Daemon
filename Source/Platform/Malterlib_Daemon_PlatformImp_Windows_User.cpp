@@ -7,17 +7,17 @@
 #include <Mib/Process/ProcessLaunch>
 #include <Mib/Concurrency/ConcurrencyManager>
 
-namespace NMib::NService
+namespace NMib::NDaemon
 {
 	using namespace NStr;
 	namespace
 	{
-		NStr::CStr fg_GetName(CServiceParams const &_Params)
+		NStr::CStr fg_GetName(CDaemonParams const &_Params)
 		{
-			return "Malterlib_Daemon_{}"_f << _Params.f_GetServiceName();
+			return "Malterlib_Daemon_{}"_f << _Params.f_GetDaemonName();
 		}
 
-		NStr::CStr fg_GetExecutableCommand(CServiceParams const &_Params)
+		NStr::CStr fg_GetExecutableCommand(CDaemonParams const &_Params)
 		{
 			NContainer::TCVector<CStr> Params;
 
@@ -32,24 +32,24 @@ namespace NMib::NService
 			}
 		}
 
-		NMib::NPlatform::CWin32_Registry fg_GetRegistry(CServiceParams const &_Params)
+		NMib::NPlatform::CWin32_Registry fg_GetRegistry(CDaemonParams const &_Params)
 		{
 			auto Root = NMib::NPlatform::CWin32_Registry::ERegRoot_CurrentUser;
-			if (_Params.f_GetServiceMode() == EServiceMode_AllUsers)
+			if (_Params.f_GetDaemonMode() == EDaemonMode_AllUsers)
 				Root = NMib::NPlatform::CWin32_Registry::ERegRoot_LocalMachine;
 			return NMib::NPlatform::CWin32_Registry(Root, "Software\\Microsoft\\Windows\\CurrentVersion\\Run");
 		}
 
 		bool fg_IsRunning()
 		{
-			CStr ServicePidPath = NFile::CFile::fs_GetProgramDirectory() + "/ServicePID";
-			return NFile::CFile::fs_FileExists(ServicePidPath);
+			CStr DaemonPidPath = NFile::CFile::fs_GetProgramDirectory() + "/ServicePID";
+			return NFile::CFile::fs_FileExists(DaemonPidPath);
 		}
 	}
 
-	EActionResult CService::CDetails::fp_UserDaemonExists(bool &_bExists) const
+	EActionResult CDaemon::CDetails::fp_UserDaemonExists(bool &_bExists) const
 	{
-		auto &Params = fp_GetServiceParams();
+		auto &Params = fp_GetDaemonParams();
 		try
 		{
 			auto Registry = fg_GetRegistry(Params);
@@ -63,23 +63,23 @@ namespace NMib::NService
 		return EActionResult_Success;
 	}
 
-	EActionResult CService::CDetails::fp_UserDaemonStart()
+	EActionResult CDaemon::CDetails::fp_UserDaemonStart()
 	{
-		auto &Params = fp_GetServiceParams();
+		auto &Params = fp_GetDaemonParams();
 
-		bool bServiceExists;
-		if (f_Exists(bServiceExists) == EActionResult_Failure)
+		bool bDaemonExists;
+		if (f_Exists(bDaemonExists) == EActionResult_Failure)
 			return EActionResult_Failure;
 				
-		if (!bServiceExists)
+		if (!bDaemonExists)
 		{
-			f_ReportInformation("Start Service", "Service is not installed so it can not be started");
+			f_ReportInformation("Start Daemon", "Daemon is not installed so it can not be started");
 			return EActionResult_Success;
 		}
 
 		if (fg_IsRunning())
 		{
-			f_ReportInformation("Start Service", "Service is already running");
+			f_ReportInformation("Start Daemon", "Daemon is already running");
 			return EActionResult_Success;
 		}
 
@@ -121,30 +121,30 @@ namespace NMib::NService
 		return EActionResult_Success;
 	}
 
-	EActionResult CService::CDetails::fp_UserDaemonStop(bint _bWait)
+	EActionResult CDaemon::CDetails::fp_UserDaemonStop(bint _bWait)
 	{
-		auto &Params = fp_GetServiceParams();
+		auto &Params = fp_GetDaemonParams();
 
-		bool bServiceExists;
-		if (f_Exists(bServiceExists) == EActionResult_Failure)
+		bool bDaemonExists;
+		if (f_Exists(bDaemonExists) == EActionResult_Failure)
 			return EActionResult_Failure;
 				
-		if (!bServiceExists)
+		if (!bDaemonExists)
 		{
-			f_ReportInformation("Stop Service", "Service is not installed so it can not be stopped");
+			f_ReportInformation("Stop Daemon", "Daemon is not installed so it can not be stopped");
 			return EActionResult_Success;
 		}
 
 		if (!fg_IsRunning())
 		{
-			f_ReportInformation("Stop Service", "Service was not running");
+			f_ReportInformation("Stop Daemon", "Daemon was not running");
 			return EActionResult_Success;
 		}
 
 		try
 		{
-			CStr ServicePidPath = NFile::CFile::fs_GetProgramDirectory() + "/ServicePID";
-			mint PID = NFile::CFile::fs_ReadStringFromFile(ServicePidPath, true).f_ToInt(0);
+			CStr DaemonPidPath = NFile::CFile::fs_GetProgramDirectory() + "/ServicePID";
+			mint PID = NFile::CFile::fs_ReadStringFromFile(DaemonPidPath, true).f_ToInt(0);
 
 			HANDLE hProcess = nullptr;
 			if (PID && _bWait)
@@ -160,8 +160,8 @@ namespace NMib::NService
 				)
 			;
 
-			CStr ServiceStateFile = NFile::CFile::fs_GetProgramDirectory() + "/ServiceState";
-			NFile::CFile::fs_WriteStringToFile(ServiceStateFile, "Stop", false);
+			CStr DaemonStateFile = NFile::CFile::fs_GetProgramDirectory() + "/ServiceState";
+			NFile::CFile::fs_WriteStringToFile(DaemonStateFile, "Stop", false);
 
 			if (hProcess)
 			{
@@ -177,9 +177,9 @@ namespace NMib::NService
 		return EActionResult_Success;
 	}
 
-	EActionResult CService::CDetails::fp_UserDaemonAdd(bint _bCheckForExisting)
+	EActionResult CDaemon::CDetails::fp_UserDaemonAdd(bint _bCheckForExisting)
 	{
-		auto &Params = fp_GetServiceParams();
+		auto &Params = fp_GetDaemonParams();
 		CStr Name = fg_GetName(Params);
 		try
 		{
@@ -195,22 +195,22 @@ namespace NMib::NService
 		return EActionResult_Success;
 	}
 
-	EActionResult CService::CDetails::fp_UserDaemonRemove()
+	EActionResult CDaemon::CDetails::fp_UserDaemonRemove()
 	{
-		bool bServiceExists;
-		if (f_Exists(bServiceExists) == EActionResult_Failure)
+		bool bDaemonExists;
+		if (f_Exists(bDaemonExists) == EActionResult_Failure)
 			return EActionResult_Failure;
 				
-		if (!bServiceExists)
+		if (!bDaemonExists)
 		{
-			f_ReportInformation("Remove Service", "Service is not installed so it has not been removed");
+			f_ReportInformation("Remove Daemon", "Daemon is not installed so it has not been removed");
 			return EActionResult_Success;
 		}
 
 		if (f_Stop(true) == EActionResult_Failure)
 			return EActionResult_Failure;
 
-		auto &Params = fp_GetServiceParams();
+		auto &Params = fp_GetDaemonParams();
 
 		try
 		{

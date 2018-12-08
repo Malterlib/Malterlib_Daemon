@@ -18,19 +18,19 @@ void fg_ReportInformation(CStr const& _Title, CStr const& _Error)
 	DMibConOut("{}\n", _Error);
 }
 
-NService::EReportError fg_ReportErrorYesNo(CStr const& _Title, CStr const& _Message, NService::EReportError _Default)
+NDaemon::EReportError fg_ReportErrorYesNo(CStr const& _Title, CStr const& _Message, NDaemon::EReportError _Default)
 {
 	DMibConErrOut("{}\n", _Message);
 	return _Default;
 }
 
-int fg_ServiceMain(void* _pNativeHandle)
+int fg_DaemonMain(void* _pNativeHandle)
 {
-	class CServiceImplementation : public NService::CServiceImp
+	class CDaemonImplementation : public NDaemon::CDaemonImp
 	{
 	public:
 
-		CServiceImplementation()
+		CDaemonImplementation()
 		{
 			CStr File = NFile::CFile::fs_GetProgramDirectory() + "/Running";
 
@@ -50,7 +50,7 @@ int fg_ServiceMain(void* _pNativeHandle)
 			}
 		}
 
-		~CServiceImplementation()
+		~CDaemonImplementation()
 		{
 			NTime::CClock Clock;
 			Clock.f_Start();
@@ -68,34 +68,34 @@ int fg_ServiceMain(void* _pNativeHandle)
 			}
 		}
 
-		void f_ServicePause()
+		void f_DaemonPause()
 		{
 
 		}
 
-		void f_ServiceResume()
+		void f_DaemonResume()
 		{
 
 		}
 
 	};
 
-	NService::CServiceParams ServiceParams
+	NDaemon::CDaemonParams DaemonParams
 		(
-			"Malterlib_Tests_Service"
-			, "Malterlib_Tests_Service"
-			, "Malterlib_Tests_Service"
+			"Malterlib_Tests_Daemon"
+			, "Malterlib_Tests_Daemon"
+			, "Malterlib_Tests_Daemon"
 			, _pNativeHandle
-			, [&]() -> NPtr::TCUniquePointer<NService::CServiceImp>
+			, [&]() -> NStorage::TCUniquePointer<NDaemon::CDaemonImp>
 			{
-				NPtr::TCUniquePointer<NService::CServiceImp> ServerService = fg_Explicit(DMibNew CServiceImplementation());
-				return ServerService;
+				NStorage::TCUniquePointer<NDaemon::CDaemonImp> ServerDaemon = fg_Explicit(DMibNew CDaemonImplementation());
+				return ServerDaemon;
 			}
-			, [&] (NService::CServiceParams& _Params, NService::CService* _pService, bint& _bHandled) -> NService::EActionResult
+			, [&] (NDaemon::CDaemonParams& _Params, NDaemon::CDaemon* _pDaemon, bint& _bHandled) -> NDaemon::EActionResult
 			{
-				NMib::fg_GetSys()->f_RegisterProgram("Malterlib_Tests_Service", "support@hansoft.se", _Params.f_GetAction() == NService::EServiceAction_Run);
+				NMib::fg_GetSys()->f_RegisterProgram("Malterlib_Tests_Daemon", "support@malterlib.com", _Params.f_GetAction() == NDaemon::EDaemonAction_Run);
 
-				if (_Params.f_GetAction() == NService::EServiceAction_Custom)
+				if (_Params.f_GetAction() == NDaemon::EDaemonAction_Custom)
 				{
 					_bHandled = true;
 
@@ -104,7 +104,7 @@ int fg_ServiceMain(void* _pNativeHandle)
 #if defined(DPlatformFamily_Windows)
 						
 
-	#pragma message ( "TODO: Implement user/group management for Windows and enable this service test code." )
+	#pragma message ( "TODO: Implement user/group management for Windows and enable this daemon test code." )
 
 #else
 						NMib::NStr::CStr Tmp;
@@ -118,7 +118,7 @@ int fg_ServiceMain(void* _pNativeHandle)
 						catch (NMib::NException::CException const &_Exception)
 						{
 							fg_ReportError("Error", _Exception.f_GetErrorStr());
-							return NService::EActionResult_Failure;
+							return NDaemon::EActionResult_Failure;
 						}
 #endif // DPlatformFamily_Windows
 					}
@@ -135,10 +135,10 @@ int fg_ServiceMain(void* _pNativeHandle)
 						}
 					}
 
-					return NService::EActionResult_Success;
+					return NDaemon::EActionResult_Success;
 				}
 
-				return NService::EActionResult_Success;
+				return NDaemon::EActionResult_Success;
 			}
 			, [&] (CStr const& _Errors)
 			{
@@ -148,7 +148,7 @@ int fg_ServiceMain(void* _pNativeHandle)
 			{
 				fg_ReportInformation(_Heading, _Information);
 			}
-			, [&] (CStr const& _Errors, NService::EReportError _Default) -> NMib::NService::EReportError
+			, [&] (CStr const& _Errors, NDaemon::EReportError _Default) -> NMib::NDaemon::EReportError
 			{
 				return fg_ReportErrorYesNo("Error", _Errors, _Default);
 			}
@@ -158,11 +158,11 @@ int fg_ServiceMain(void* _pNativeHandle)
 	NContainer::TCVector<CStr> lArgs;
 	NSys::fg_Process_GetCommandLineArgs(lArgs);
 
-	ServiceParams.f_ParseCommandLine(lArgs);
+	DaemonParams.f_ParseCommandLine(lArgs);
 
-	NService::CService Service(ServiceParams);
+	NDaemon::CDaemon Daemon(DaemonParams);
 
-	return Service.f_ProcessCommand();
+	return Daemon.f_ProcessCommand();
 }
 
 #ifdef DPlatformFamily_Windows
@@ -175,12 +175,12 @@ int __stdcall WinMain(struct HINSTANCE__ * hInstance, struct HINSTANCE__ * hPrev
 
 int WINAPI wWinMain(IN HINSTANCE hInstance,IN HINSTANCE hPrevInstance,IN wchar_t *lpCmdLine,IN int nShowCmd)
 {
-	return fg_ServiceMain((void*)hInstance);
+	return fg_DaemonMain((void*)hInstance);
 }
 #else
 int main(int argc, char *argv[])
 {
-	return fg_ServiceMain(nullptr);
+	return fg_DaemonMain(nullptr);
 }
 #endif
 

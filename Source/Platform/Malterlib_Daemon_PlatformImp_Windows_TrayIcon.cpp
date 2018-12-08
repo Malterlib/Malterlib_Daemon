@@ -3,11 +3,11 @@
 
 #include "Malterlib_Daemon_PlatformImp_Windows.h"
 
-namespace NMib::NService
+namespace NMib::NDaemon
 {
-	CService::CDetails::CTaskIconCleaner::CTaskIconCleaner() = default;
+	CDaemon::CDetails::CTaskIconCleaner::CTaskIconCleaner() = default;
 
-	CService::CDetails::CTaskIconCleaner::~CTaskIconCleaner()
+	CDaemon::CDetails::CTaskIconCleaner::~CTaskIconCleaner()
 	{
 		if (!m_bInit)
 			return;
@@ -15,21 +15,21 @@ namespace NMib::NService
 		if (m_NotifyIconData.hIcon)
 			Shell_NotifyIcon(NIM_DELETE, &m_NotifyIconData);
 		DestroyWindow(m_hReportWnd);
-		UnregisterClassA("AOService_ReportWindow", 0);
+		UnregisterClassA("MalterlibDaemon_ReportWindow", 0);
 	}
 
-	LRESULT CALLBACK CService::CDetails::CTaskIconCleaner::fs_ReportWindowProc(HWND _hWnd, UINT _Message, WPARAM _WParam, LPARAM _LParam)
+	LRESULT CALLBACK CDaemon::CDetails::CTaskIconCleaner::fs_ReportWindowProc(HWND _hWnd, UINT _Message, WPARAM _WParam, LPARAM _LParam)
 	{
 		if (_Message == WM_COMMAND)
 		{
 			if (_WParam == 123)
 			{
-				msp_pThis->fp_ServicePause();
+				msp_pThis->fp_DaemonPause();
 				return true;
 			}
 			else if (_WParam == 124)
 			{
-				msp_pThis->fp_ServiceResume();
+				msp_pThis->fp_DaemonResume();
 				return true;
 			}
 			else if (_WParam == 125)
@@ -66,7 +66,7 @@ namespace NMib::NService
 		return DefWindowProc(_hWnd, _Message, _WParam, _LParam);
 	}
 
-	void CService::CDetails::CTaskIconCleaner::f_Init(HICON _hIcon)
+	void CDaemon::CDetails::CTaskIconCleaner::f_Init(HICON _hIcon)
 	{
 		if (!m_bInit)
 		{
@@ -74,13 +74,13 @@ namespace NMib::NService
 
 			WNDCLASSA WndClass;
 			memset(&WndClass, 0, sizeof(WndClass));
-			WndClass.lpszClassName = "CService_ReportWindow" ;
+			WndClass.lpszClassName = "MalterlibDaemon_ReportWindow" ;
 			WndClass.lpfnWndProc = fs_ReportWindowProc;
 			WndClass.hInstance = 0;
 			RegisterClassA(&WndClass);
-			m_hReportWnd = CreateWindowA("CService_ReportWindow", "CService_ReportWindow", 0, 0, 0, 0, 0, HWND_MESSAGE, 0, 0, 0);
+			m_hReportWnd = CreateWindowA("MalterlibDaemon_ReportWindow", "MalterlibDaemon_ReportWindow", 0, 0, 0, 0, 0, HWND_MESSAGE, 0, 0, 0);
 
-			NMem::fg_MemClear(m_NotifyIconData);
+			NMemory::fg_MemClear(m_NotifyIconData);
 			if (_hIcon)
 			{
 				m_NotifyIconData.cbSize = sizeof(m_NotifyIconData);
@@ -91,14 +91,14 @@ namespace NMib::NService
 				m_NotifyIconData.uCallbackMessage = WM_USER+20;
 				m_NotifyIconData.dwState = 0;
 				m_NotifyIconData.dwStateMask = 0;
-				NStr::fg_StrCopy(m_NotifyIconData.szTip, "Double click to quit " + msp_pThis->mp_pOwner->f_GetServiceParams().f_GetServiceName());
+				NStr::fg_StrCopy(m_NotifyIconData.szTip, "Double click to quit " + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName());
 
 				Shell_NotifyIcon(NIM_ADD, &m_NotifyIconData);
 			}
 		}
 	}
 
-	bint CService::CDetails::CTaskIconCleaner::f_Update()
+	bint CDaemon::CDetails::CTaskIconCleaner::f_Update()
 	{	
 		MSG Message;
 

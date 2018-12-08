@@ -3,92 +3,92 @@
 
 #include "Malterlib_Daemon_PlatformImp_Windows.h"
 
-namespace NMib::NService
+namespace NMib::NDaemon
 {
-	CService::CService(CServiceParams const& _Params)
+	CDaemon::CDaemon(CDaemonParams const& _Params)
 		: mp_pD(fg_Construct(this))
 		, mp_Params(_Params)
 	{
 
 	}
 
-	CService::~CService()
+	CDaemon::~CDaemon()
 	{
 
 	}
 
-	EServiceFeature CService::fs_SupportedFeatures()
+	EDaemonFeature CDaemon::fs_SupportedFeatures()
 	{
-		return EServiceFeature_GlobalService;
+		return EDaemonFeature_GlobalDaemon;
 	}
 		
-	EActionResult CService::f_Start()
+	EActionResult CDaemon::f_Start()
 	{
 		return mp_pD->f_Start();
 	}
 
-	EActionResult CService::f_Stop(bool _bWait)
+	EActionResult CDaemon::f_Stop(bool _bWait)
 	{
 		return mp_pD->f_Stop(_bWait);
 	}
 
-	EActionResult CService::f_Restart(bool _bWait)
+	EActionResult CDaemon::f_Restart(bool _bWait)
 	{
 		return mp_pD->f_Restart(_bWait);
 	}
 
-	EActionResult CService::f_Exists(bool &_bExists) const
+	EActionResult CDaemon::f_Exists(bool &_bExists) const
 	{
 		return mp_pD->f_Exists(_bExists);
 	}
 
-	EActionResult CService::f_Add(bool _bCheckForExisting)
+	EActionResult CDaemon::f_Add(bool _bCheckForExisting)
 	{
 		return mp_pD->f_Add(_bCheckForExisting);
 	}
 
-	EActionResult CService::f_Remove()
+	EActionResult CDaemon::f_Remove()
 	{
 		return mp_pD->f_Remove();
 	}
 
-	EActionResult CService::f_Run()
+	EActionResult CDaemon::f_Run()
 	{
 		return mp_pD->f_Run();
 	}
 
-	EActionResult CService::f_RunAsProgram(bool _bDebug)
+	EActionResult CDaemon::f_RunAsProgram(bool _bDebug)
 	{
 		return mp_pD->f_RunAsProgram(_bDebug);
 	}
 
-	bool CService::f_IsShutdown() const
+	bool CDaemon::f_IsShutdown() const
 	{
 		return mp_pD->f_IsShutdown();
 	}
 
-	void CService::f_ReportError(NStr::CStr const &_Error)
+	void CDaemon::f_ReportError(NStr::CStr const &_Error)
 	{
 		mp_pD->f_ReportError(_Error);
 	}
 
-	void CService::f_ReportInformation(NStr::CStr const &_Heading, NStr::CStr const &_Information)
+	void CDaemon::f_ReportInformation(NStr::CStr const &_Heading, NStr::CStr const &_Information)
 	{
 		mp_pD->f_ReportInformation(_Heading, _Information);
 	}
 
-	EReportError CService::f_ReportErrorYesNo(NStr::CStr const &_Error, EReportError _Default)
+	EReportError CDaemon::f_ReportErrorYesNo(NStr::CStr const &_Error, EReportError _Default)
 	{
 		return mp_pD->f_ReportErrorYesNo(_Error, _Default);
 	}
 
-	void CService::fs_QuitDaemon()
+	void CDaemon::fs_QuitDaemon()
 	{
-		CService::CDetails::fs_AbortDebug();
+		CDaemon::CDetails::fs_AbortDebug();
 		NProcess::NPlatform::fg_Process_AbortWaitForTermination();
 	}
 
-	bool CService::fs_SupportsAutoRestart()
+	bool CDaemon::fs_SupportsAutoRestart()
 	{
 		return false;
 	}

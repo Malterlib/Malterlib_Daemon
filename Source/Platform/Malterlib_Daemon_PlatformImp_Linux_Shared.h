@@ -6,28 +6,23 @@
 
 #include "Malterlib_Daemon_PlatformImp_Linux_Interface.h"
 
-namespace NMib
+namespace NMib::NDaemon
 {
-	namespace NService
+	class CDaemonSystemInterfaceShared : public CDaemonSystemInterface
 	{
-		class CServiceSystemInterfaceShared : public CServiceSystemInterface
+	protected:
+		enum ESupportedFeature
 		{
-		protected:
-			enum ESupportedFeature
-			{
-				ESupportedFeature_None = 0
-				, ESupportedFeature_LocalUser = DMibBit(0)
-				, ESupportedFeature_AllUsers = DMibBit(1)
-			};
-				
-			CServiceSystemInterfaceShared(CService *_pOwner, ESupportedFeature _SupportedFeatures);
-
-			bool fp_CheckParamsSupported(CServiceParams const &_Params) const;
-
-			CService *mp_pOwner;
-			ESupportedFeature mp_SupportedFeatures = ESupportedFeature_None;
+			ESupportedFeature_None = 0
+			, ESupportedFeature_LocalUser = DMibBit(0)
+			, ESupportedFeature_AllUsers = DMibBit(1)
 		};
-		
-	} // namespace NService
 
-} // namespace NMib
+		CDaemonSystemInterfaceShared(CDaemon *_pOwner, ESupportedFeature _SupportedFeatures);
+
+		bool fp_CheckParamsSupported(CDaemonParams const &_Params) const;
+
+		CDaemon *mp_pOwner;
+		ESupportedFeature mp_SupportedFeatures = ESupportedFeature_None;
+	};
+}

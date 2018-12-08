@@ -12,13 +12,13 @@
 #include <LsaLookup.h>
 #include <Ntsecapi.h>
 
-namespace NMib::NService
+namespace NMib::NDaemon
 {
-	class CService::CDetails
+	class CDaemon::CDetails
 	{
 	public:
 
-		CDetails(CService* _pOwner);
+		CDetails(CDaemon* _pOwner);
 		~CDetails();
 
 		EActionResult f_Run();
@@ -57,8 +57,8 @@ namespace NMib::NService
 			bool m_bAbortDebug = false;
 		};
 
-		bool fp_CheckParamsSupported(CServiceParams const &_Params) const;
-		CServiceParams const &fp_GetServiceParams() const;
+		bool fp_CheckParamsSupported(CDaemonParams const &_Params) const;
+		CDaemonParams const &fp_GetDaemonParams() const;
 
 		SC_HANDLE fp_OpenSCManager() const;
 
@@ -69,20 +69,20 @@ namespace NMib::NService
 		EActionResult fp_UserDaemonRemove();
 
 		void fp_UpdateService(SC_HANDLE _Service);
-		bool fp_PrepareUserAndGroup(CServiceParams const &_Params, NMib::NStr::CWStr &o_RunAsUser, NMib::NStr::CWStrSecure &o_RunAsUserPassword);
+		bool fp_PrepareUserAndGroup(CDaemonParams const &_Params, NMib::NStr::CWStr &o_RunAsUser, NMib::NStr::CWStrSecure &o_RunAsUserPassword);
 		NStr::CStr fp_GetAddCommandLine() const;
 		static void WINAPI fsp_ServiceStart (DWORD _nArgs, LPWSTR *_pArgs);
 		static DWORD WINAPI fsp_ServiceInitialization(DWORD _nArgs, LPWSTR *_pArgs, DWORD *_pSpecificError);
 		static DWORD WINAPI fsp_ServiceCtrlHandler (DWORD _ControlCode, DWORD _EventType, void *_pEventData, void *_pContext);
-		void fp_ServiceResume();
-		void fp_ServicePause();
-		void fp_ServiceCreate();
-		void fp_ServiceDestroy();
+		void fp_DaemonResume();
+		void fp_DaemonPause();
+		void fp_DaemonCreate();
+		void fp_DaemonDestroy();
 		aint fp_StopThread(NThread::CThreadObject *);
 		aint fp_StopReportThread(NThread::CThreadObject *_pThread);
 
-		NPtr::TCUniquePointer<NThread::CThreadObject> mp_pStopThread;
-		NPtr::TCUniquePointer<NThread::CThreadObject> mp_pStopReportThread;
+		NStorage::TCUniquePointer<NThread::CThreadObject> mp_pStopThread;
+		NStorage::TCUniquePointer<NThread::CThreadObject> mp_pStopReportThread;
 
 		static NThread::CMutual        msp_ServiceControlLock; 
 		static SERVICE_STATUS          msp_ServiceStatus; 
@@ -91,7 +91,7 @@ namespace NMib::NService
 		static bint					   msp_bIsShutdown;
 		static CTaskIconCleaner		   msp_TaskIcon;
 
-		CService*					   mp_pOwner;
-		NPtr::TCUniquePointer<CServiceImp>   mp_pImp;
+		CDaemon*					   mp_pOwner;
+		NStorage::TCUniquePointer<CDaemonImp>   mp_pImp;
 	};
 }
