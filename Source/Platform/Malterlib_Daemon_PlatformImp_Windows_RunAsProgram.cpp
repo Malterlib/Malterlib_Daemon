@@ -18,14 +18,6 @@ namespace NMib::NDaemon
 		if (fp_GetDaemonParams().f_GetDetachConsole())
 			FreeConsole();
 
-		NFile::CFile PIDFile;
-		{
-			CStr DaemonPidPath = NFile::CFile::fs_GetProgramDirectory() / "ServicePID";
-			PIDFile.f_Open(DaemonPidPath, NFile::EFileOpen_Write | NFile::EFileOpen_Temporary | NFile::EFileOpen_NoLocalCache | NFile::EFileOpen_ShareRead);
-			CStr Pid = "{}"_f << NProcess::NPlatform::fg_Process_GetCurrentUID();
-			PIDFile.f_Write(Pid.f_GetStr(), Pid.f_GetLen());
-		}
-
 		CStr DaemonStateFile = NFile::CFile::fs_GetProgramDirectory() / "ServiceState";
 		NFile::CFile StateFile;
 		{
@@ -77,9 +69,19 @@ namespace NMib::NDaemon
 
 		fp_DaemonCreate();
 
+		NFile::CFile PIDFile;
+		{
+			CStr DaemonPidPath = NFile::CFile::fs_GetProgramDirectory() / "ServicePID";
+			PIDFile.f_Open(DaemonPidPath, NFile::EFileOpen_Write | NFile::EFileOpen_Temporary | NFile::EFileOpen_NoLocalCache | NFile::EFileOpen_ShareRead);
+			CStr Pid = "{}"_f << NProcess::NPlatform::fg_Process_GetCurrentUID();
+			PIDFile.f_Write(Pid.f_GetStr(), Pid.f_GetLen());
+		}
+
 		if (_bDebug)
 		{
 			HICON Icon = LoadIcon((HINSTANCE)mp_pOwner->f_GetDaemonParams().f_GetNativeHandle(), IDI_APPLICATION);
+			if (!Icon)
+				Icon = LoadIcon(nullptr, IDI_APPLICATION);
 			msp_TaskIcon.f_Init(Icon);
 				
 			// Just spin in eternity

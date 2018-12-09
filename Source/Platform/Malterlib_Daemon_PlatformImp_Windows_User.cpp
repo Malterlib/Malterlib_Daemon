@@ -73,8 +73,8 @@ namespace NMib::NDaemon
 				
 		if (!bDaemonExists)
 		{
-			f_ReportInformation("Start Daemon", "Daemon is not installed so it can not be started");
-			return EActionResult_Success;
+			f_ReportError("Daemon is not installed so it can not be started");
+			return EActionResult_Failure;
 		}
 
 		if (fg_IsRunning())
@@ -112,6 +112,14 @@ namespace NMib::NDaemon
 
 			NMib::NProcess::CProcessLaunch ProcessLaunch(Params, NMib::NProcess::EProcessLaunchCloseFlag_None);
 			LaunchResult.f_CallSync(60.0);
+
+			NTime::CClock Clock{true};
+			while (!fg_IsRunning())
+			{
+				if (Clock.f_GetTime() >= 60.0)
+					DMibError("Timed out waiting for daemon to start");
+				Sleep(10);
+			}			
 		}
 		catch (NException::CException const &_Exception)
 		{
@@ -165,7 +173,9 @@ namespace NMib::NDaemon
 
 			if (hProcess)
 			{
-				if (WaitForSingleObject(hProcess, 240000) == WAIT_TIMEOUT)
+				NTime::CClock Clock{true};
+				auto WaitResult = WaitForSingleObject(hProcess, 240000);
+				if (WaitResult == WAIT_TIMEOUT)
 					DMibError("Timed out waiting for process to exit");
 			}
 		}
@@ -191,6 +201,10 @@ namespace NMib::NDaemon
 			mp_pOwner->f_ReportError("Failed to query registry for daemon existance: {}"_f << _Exception);
 			return EActionResult_Failure;
 		}
+
+		NStr::CStr Error;
+		if (!fp_GetDaemonParams().f_GetDisableWriteDaemon() && !fp_GetDaemonParams().f_WriteDaemonModeFile(Error))
+			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to write daemon mode file: {}") << Error);
 
 		return EActionResult_Success;
 	}

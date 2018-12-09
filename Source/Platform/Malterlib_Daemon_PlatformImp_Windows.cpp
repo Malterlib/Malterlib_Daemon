@@ -19,7 +19,7 @@ namespace NMib::NDaemon
 
 	EDaemonFeature CDaemon::fs_SupportedFeatures()
 	{
-		return EDaemonFeature_GlobalDaemon;
+		return EDaemonFeature_GlobalDaemon | EDaemonFeature_LocalUserDaemon | EDaemonFeature_AllUsersDaemon;
 	}
 		
 	EActionResult CDaemon::f_Start()

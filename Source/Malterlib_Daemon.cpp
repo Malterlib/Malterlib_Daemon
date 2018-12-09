@@ -109,7 +109,7 @@ namespace NMib::NDaemon
 		mp_CommandLine.f_Clear();
 
 		mp_Action = EDaemonAction_Custom;
-		mp_ActionParam = false;
+		mp_ActionParam = true;
 		mp_lRawArguments = _CommandLine;
 
 		NContainer::TCVector<NMib::NStr::CStr> Cmd(_CommandLine);
@@ -165,10 +165,11 @@ namespace NMib::NDaemon
 
 			COptionHandlerMap OptionHandlers;
 
-			OptionHandlers["AddService"] = [&](CCommandLineVector &_Cmd)
+			OptionHandlers["-daemon-add"] = OptionHandlers["AddService"] = [&](CCommandLineVector &_Cmd)
 				{
 					NStr::CStr DaemonName;
 					mp_Action = EDaemonAction_Add;
+					mp_ActionParam = false;
 					fs_ParseOptionArgument(Cmd, DaemonName);
 					if (!DaemonName.f_IsEmpty() && DaemonName != mp_DaemonName)
 					{
@@ -195,45 +196,58 @@ namespace NMib::NDaemon
 					bWriteDaemonName = true;
 				}
 			;
-			OptionHandlers["RemoveService"] = [&](CCommandLineVector &_Cmd)
+			OptionHandlers["-daemon-remove"] = OptionHandlers["RemoveService"] = [&](CCommandLineVector &_Cmd)
 				{
 					mp_Action = EDaemonAction_Remove;
 					fs_ParseOptionArgument(Cmd, mp_DaemonName);
 				}
 			;
-			OptionHandlers["StartService"] = [&](CCommandLineVector &_Cmd)
+			OptionHandlers["-daemon-start"] = OptionHandlers["StartService"] = [&](CCommandLineVector &_Cmd)
 				{
 					mp_Action = EDaemonAction_Start;
 					fs_ParseOptionArgument(Cmd, mp_DaemonName);
 				}
 			;
-			OptionHandlers["RestartService"] = [&](CCommandLineVector &_Cmd)
+			OptionHandlers["-daemon-restart"] = OptionHandlers["RestartService"] = [&](CCommandLineVector &_Cmd)
 				{
 					mp_Action = EDaemonAction_Restart;
 					fs_ParseOptionArgument(Cmd, mp_DaemonName);
 				}
 			;
-			OptionHandlers["StopService"] = [&](CCommandLineVector &_Cmd)
+			OptionHandlers["-daemon-stop"] = OptionHandlers["StopService"] = [&](CCommandLineVector &_Cmd)
 				{
 					mp_Action = EDaemonAction_Stop;
 					fs_ParseOptionArgument(Cmd, mp_DaemonName);
 				}
 			;
-			OptionHandlers["RunAsProgram"] = [&](CCommandLineVector &_Cmd)
+			OptionHandlers["-daemon-run-debug"] = OptionHandlers["RunAsProgram"] = [&](CCommandLineVector &_Cmd)
 				{
 					mp_Action = EDaemonAction_RunAsProgram;
 				}
 			;
-			OptionHandlers["Exists"] = [&](CCommandLineVector &_Cmd)
+			OptionHandlers["-daemon-exists"] = OptionHandlers["Exists"] = [&](CCommandLineVector &_Cmd)
 			{
 				mp_Action = EDaemonAction_Exists;
 				fs_ParseOptionArgument(Cmd, mp_DaemonName);
 			}
 			;
-			OptionHandlers["Service"] = [&](CCommandLineVector &_Cmd)
+			OptionHandlers["-daemon-run"] = OptionHandlers["Service"] = [&](CCommandLineVector &_Cmd)
 				{
 					mp_Action = EDaemonAction_Run;
 					fs_ParseOptionArgument(Cmd, mp_DaemonName);
+				}
+			;
+
+			OptionHandlers["-mode"] = [&](CCommandLineVector &_Cmd)
+				{
+					NStr::CStr Mode;
+					fs_ParseOptionArgument(Cmd, Mode);
+					if (Mode == "global")
+						mp_DaemonMode = EDaemonMode_Global;
+					else if (Mode == "user")
+						mp_DaemonMode = EDaemonMode_LocalUser;
+					else if (Mode == "all-users")
+						mp_DaemonMode = EDaemonMode_AllUsers;
 				}
 			;
 
@@ -248,13 +262,13 @@ namespace NMib::NDaemon
 				}
 			;
 
-			OptionHandlers["RunAsUser"] = [&](CCommandLineVector &_Cmd)
+			OptionHandlers["-run-as-user"] = OptionHandlers["RunAsUser"] = [&](CCommandLineVector &_Cmd)
 				{
 					fs_ParseOptionArgument(_Cmd, mp_RunAsUser);
 				}
 			;
 
-			OptionHandlers["RunAsGroup"] = [&](CCommandLineVector &_Cmd)
+			OptionHandlers["-run-as-group"] = OptionHandlers["RunAsGroup"] = [&](CCommandLineVector &_Cmd)
 				{
 					fs_ParseOptionArgument(_Cmd, mp_RunAsGroup);
 				}
@@ -272,13 +286,13 @@ namespace NMib::NDaemon
 				}
 			;
 
-			OptionHandlers["DetachConsole"] = [&](CCommandLineVector &_Cmd)
+			OptionHandlers["-detach-console"] = OptionHandlers["DetachConsole"] = [&](CCommandLineVector &_Cmd)
 				{
 					mp_bDetachConsole = true;
 				}
 			;
 
-			OptionHandlers["Daemonize"] = [&](CCommandLineVector &_Cmd)
+			OptionHandlers["-daemonize"] = OptionHandlers["Daemonize"] = [&](CCommandLineVector &_Cmd)
 				{
 					mp_bDaemonize  = true;
 				}

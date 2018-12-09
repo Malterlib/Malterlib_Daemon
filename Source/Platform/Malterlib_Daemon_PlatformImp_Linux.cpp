@@ -872,6 +872,20 @@ namespace NMib::NDaemon
 				{
 				}
 
+				if (CSystemd::fs_IsSupported())
+				{
+					m_SupportedFeatures |= EDaemonFeature_LocalUserDaemon | EDaemonFeature_AllUsersDaemon;
+				}
+				else if (CUpstart::fs_IsSupported())
+				{
+					m_SupportedFeatures |= EDaemonFeature_LocalUserDaemon | EDaemonFeature_AllUsersDaemon;
+				}
+				else if (CGentoo::fs_IsSupported())
+				{
+				}
+				else if (CScript::fs_IsSupported())
+				{
+				}
 			}
 		};
 		NStorage::TCAggregate<CCalcFeatures> g_SupportedFeatures = {DAggregateInit};

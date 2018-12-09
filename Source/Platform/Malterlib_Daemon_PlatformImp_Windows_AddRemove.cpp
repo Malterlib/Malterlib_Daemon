@@ -100,6 +100,11 @@ namespace NMib::NDaemon
 				}
 
 				fp_UpdateService(schService);
+
+				NStr::CStr Error;
+				if (!fp_GetDaemonParams().f_GetDisableWriteDaemon() && !fp_GetDaemonParams().f_WriteDaemonModeFile(Error))
+					mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to write daemon mode file: {}") << Error);
+
 				return EActionResult_Success;
 			}
 		}
@@ -167,6 +172,10 @@ namespace NMib::NDaemon
 			)
 		;
 
+		NStr::CStr Error;
+		if (!fp_GetDaemonParams().f_GetDisableWriteDaemon() && !fp_GetDaemonParams().f_WriteDaemonModeFile(Error))
+			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to write daemon mode file: {}") << Error);
+				
 		fp_UpdateService(schService);
 		return EActionResult_Success;
 	}
