@@ -42,9 +42,27 @@ namespace NMib::NDaemon
 		return _Params.f_GetDaemonName() + ".service";
 	}
 
+	static NStr::CStr fs_EscapePath(NStr::CStr const &_Path)
+	{
+		using namespace NStr;
+		CStr Return;
+		for (uch8 const *pParse = (uch8 const *)_Path.f_GetStr(); *pParse; ++pParse)
+		{
+			if (NStr::fg_CharIsAnsiAlphabetical(*pParse) || NStr::fg_CharIsNumber(*pParse) || *pParse == '/' || *pParse == '_')
+				Return.f_AddChar(*pParse);
+			else
+				Return += "\\x{nfh,sf0,sj2}"_f << *pParse;
+		}
+		return Return;
+	}
+
 	static NStr::CStr fs_GetExecutableCommand(CDaemonParams const &_Params)
 	{
-		return NStr::CStr::CFormat("{} -Service") << _Params.f_GetExecutablePath();
+		NStr::CStr ExecutablePath = _Params.f_GetExecutablePath();
+		NStr::CStr EscapedExecutablePath = fs_EscapePath(ExecutablePath);
+		if (EscapedExecutablePath != ExecutablePath)
+			return NStr::CStr::CFormat("/usr/bin/env {} -Service") << EscapedExecutablePath;
+		return NStr::CStr::CFormat("{} -Service") << ExecutablePath;
 	}
 
 	NStr::CStr CSystemd::fp_GetUnitConfigDirectory(EDaemonMode _Mode) const
