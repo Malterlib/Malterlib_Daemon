@@ -85,7 +85,7 @@ namespace NMib::NDaemon
 
 		try
 		{
-			NConcurrency::TCContinuation<void> LaunchResult;
+			NConcurrency::TCPromise<void> LaunchResult;
 			NMib::NProcess::CProcessLaunchParams Params = NMib::NProcess::CProcessLaunchParams::fs_LaunchExecutable
 				(
 					NSys::NFile::fg_GetProgramPath()
