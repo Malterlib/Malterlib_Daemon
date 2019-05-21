@@ -1,7 +1,9 @@
-// Copyright © 2015 Hansoft AB 
+// Copyright © 2015 Hansoft AB
 // Distributed under the MIT license, see license text in LICENSE.Malterlib
 
 #include "Malterlib_Daemon.h"
+
+#include <Mib/Container/Registry>
 
 namespace NMib::NDaemon
 {
@@ -345,7 +347,7 @@ namespace NMib::NDaemon
 
 	bool CDaemonParams::fp_Trace(NStr::CStr &_Error)
 	{
-		NContainer::CRegistry_CStr TraceRegistry;
+		NContainer::CRegistry TraceRegistry;
 		TraceRegistry.f_SetValue("ServiceName", mp_DaemonName);
 		TraceRegistry.f_SetValue("Params", NSys::fg_Process_GetCommandLine());
 
