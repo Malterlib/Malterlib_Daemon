@@ -129,7 +129,7 @@ namespace NMib::NDaemon
 		return EActionResult_Success;
 	}
 
-	EActionResult CDaemon::CDetails::fp_UserDaemonStop(bint _bWait)
+	EActionResult CDaemon::CDetails::fp_UserDaemonStop(bool _bWait)
 	{
 		auto &Params = fp_GetDaemonParams();
 
@@ -187,7 +187,7 @@ namespace NMib::NDaemon
 		return EActionResult_Success;
 	}
 
-	EActionResult CDaemon::CDetails::fp_UserDaemonAdd(bint _bCheckForExisting)
+	EActionResult CDaemon::CDetails::fp_UserDaemonAdd(bool _bCheckForExisting)
 	{
 		auto &Params = fp_GetDaemonParams();
 		CStr Name = fg_GetName(Params);

@@ -52,7 +52,7 @@ namespace NMib::NDaemon
 				{
 					return _fImpFactory();
 				}
-				, [&] (NDaemon::CDaemonParams &_Params, NDaemon::CDaemon *_pDaemon, bint &_bHandled) -> EActionResult
+				, [&] (NDaemon::CDaemonParams &_Params, NDaemon::CDaemon *_pDaemon, bool &_bHandled) -> EActionResult
 				{
 					NMib::fg_GetSys()->f_RegisterProgram(_Name, _SupportEmail, false);
 

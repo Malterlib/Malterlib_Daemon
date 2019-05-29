@@ -9,7 +9,7 @@ namespace NMib::NDaemon
 	SERVICE_STATUS CDaemon::CDetails::msp_ServiceStatus;
 	SERVICE_STATUS_HANDLE CDaemon::CDetails::msp_ServiceStatusHandle;
 	CDaemon::CDetails* CDaemon::CDetails::msp_pThis = nullptr;
-	bint CDaemon::CDetails::msp_bIsShutdown = false;
+	bool CDaemon::CDetails::msp_bIsShutdown = false;
 	CDaemon::CDetails::CTaskIconCleaner CDaemon::CDetails::msp_TaskIcon;
 
 	CDaemon::CDetails::CDetails(CDaemon *_pOwner)
@@ -33,7 +33,7 @@ namespace NMib::NDaemon
 		return msp_pThis->mp_pOwner->f_GetDaemonParams();
 	}
 
-	bint CDaemon::CDetails::f_IsShutdown() const
+	bool CDaemon::CDetails::f_IsShutdown() const
 	{
 		return msp_bIsShutdown;
 	}

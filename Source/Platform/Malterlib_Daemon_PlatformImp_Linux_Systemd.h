@@ -14,8 +14,8 @@ namespace NMib::NDaemon
 
 		NStr::CStr fp_GetUnitConfigDirectory(EDaemonMode _Mode) const;
 		bool fp_IsUnitConfigThisExecutable(CDaemon *pOwner, CDaemonParams const &_Params) const;
-		EActionResult fp_SetUnitEnable(CDaemonParams const &_Params, bint _bEnable) const;
-		EActionResult fp_IsUnitEnabled(CDaemonParams const &_Params, bint& _bIsEnabled) const;
+		EActionResult fp_SetUnitEnable(CDaemonParams const &_Params, bool _bEnable) const;
+		EActionResult fp_IsUnitEnabled(CDaemonParams const &_Params, bool& _bIsEnabled) const;
 
 		NStr::CStr mp_SystemdSystemUnitDirectory;
 		NStr::CStr mp_SystemdUserUnitDirectory;
@@ -26,13 +26,13 @@ namespace NMib::NDaemon
 		CSystemd(CDaemon *);
 		~CSystemd();
 
-		static bint fs_IsSupported();
+		static bool fs_IsSupported();
 
 		virtual EActionResult f_Start(CDaemonParams const &_Params) override;
-		virtual EActionResult f_Stop(CDaemonParams const &_Params, bint _bWait = false) override;
-		virtual EActionResult f_Restart(CDaemonParams const &_Params, bint _bWait = false) override;
+		virtual EActionResult f_Stop(CDaemonParams const &_Params, bool _bWait = false) override;
+		virtual EActionResult f_Restart(CDaemonParams const &_Params, bool _bWait = false) override;
 
-		virtual EActionResult f_Add(CDaemonParams const &_Params, bint _bCheckForExisting = false) override;
+		virtual EActionResult f_Add(CDaemonParams const &_Params, bool _bCheckForExisting = false) override;
 		virtual EActionResult f_Remove(CDaemonParams const &_Params) override;
 
 		virtual EActionResult f_Exists(CDaemonParams const &_Params, bool &_bExists) const override;

@@ -5,7 +5,7 @@
 
 namespace NMib::NDaemon
 {
-	EActionResult CDaemon::CDetails::f_Add(bint _bCheckForExisting)
+	EActionResult CDaemon::CDetails::f_Add(bool _bCheckForExisting)
 	{
 		if (!fp_CheckParamsSupported(fp_GetDaemonParams()))
 			return EActionResult_Failure;

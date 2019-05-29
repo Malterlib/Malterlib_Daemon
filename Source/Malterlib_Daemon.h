@@ -60,7 +60,7 @@ namespace NMib::NDaemon
 
 	class CDaemonParams;
 	typedef NFunction::TCFunction<NStorage::TCUniquePointer<CDaemonImp> ()> FImplementationFactory;
-	typedef NFunction::TCFunction<EActionResult (CDaemonParams&, CDaemon* _pDaemon, bint& _bHandled)> FProcessCommand;
+	typedef NFunction::TCFunction<EActionResult (CDaemonParams&, CDaemon* _pDaemon, bool& _bHandled)> FProcessCommand;
 	typedef NFunction::TCFunction<void (NStr::CStr const&)> FErrorReporter;
 	typedef NFunction::TCFunction<void (NStr::CStr const&, NStr::CStr const&)> FInformationReporter;
 	typedef NFunction::TCFunction<EReportError (NStr::CStr const&, EReportError)> FErrorReporterYesNo;
@@ -139,7 +139,7 @@ namespace NMib::NDaemon
 		bool f_RemoveDaemonModeFile(NMib::NStr::CStr &_Error) const;
 
 		NStorage::TCUniquePointer<CDaemonImp> f_ImplementationFactory() const;
-		EActionResult f_ProcessCommand(CDaemon* _pDaemon, bint& _bHandled);
+		EActionResult f_ProcessCommand(CDaemon* _pDaemon, bool& _bHandled);
 
 		void f_ReportError(NStr::CStr const& _Error) const;
 		void f_ReportInformation(NStr::CStr const& _Heading, NStr::CStr const& _Information) const;

@@ -95,7 +95,7 @@ namespace NMib::NDaemon
 		return false;
 	}
 
-	bint CGentoo::fs_IsSupported()
+	bool CGentoo::fs_IsSupported()
 	{
 		return NFile::CFile::fs_FileExists(NStr::CStr(DInitD))
 			&& NFile::CFile::fs_FileExists(NStr::CStr(DGentooReleaseFile))
@@ -183,7 +183,7 @@ namespace NMib::NDaemon
 		return EActionResult_Success;
 	}
 
-	EActionResult CGentoo::f_Stop(CDaemonParams const &_Params, bint _bWait)
+	EActionResult CGentoo::f_Stop(CDaemonParams const &_Params, bool _bWait)
 	{
 		if (!fp_CheckParamsSupported(_Params))
 			return EActionResult_Failure;
@@ -224,7 +224,7 @@ namespace NMib::NDaemon
 		return EActionResult_Success;
 	}
 
-	EActionResult CGentoo::f_Restart(CDaemonParams const &_Params, bint _bWait)
+	EActionResult CGentoo::f_Restart(CDaemonParams const &_Params, bool _bWait)
 	{
 		if (!fp_CheckParamsSupported(_Params))
 			return EActionResult_Failure;
@@ -329,7 +329,7 @@ namespace NMib::NDaemon
 		return Script;
 	}
 
-	EActionResult CGentoo::f_Add(CDaemonParams const &_Params, bint _bCheckForExisting)
+	EActionResult CGentoo::f_Add(CDaemonParams const &_Params, bool _bCheckForExisting)
 	{
 		if (!fp_CheckParamsSupported(_Params))
 			return EActionResult_Failure;

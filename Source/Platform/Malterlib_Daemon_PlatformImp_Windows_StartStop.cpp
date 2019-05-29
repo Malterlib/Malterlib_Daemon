@@ -78,7 +78,7 @@ namespace NMib::NDaemon
 		return EActionResult_Success;
 	}
 
-	EActionResult CDaemon::CDetails::f_Stop(bint _bWait)
+	EActionResult CDaemon::CDetails::f_Stop(bool _bWait)
 	{
 		if (!fp_CheckParamsSupported(fp_GetDaemonParams()))
 			return EActionResult_Failure;
@@ -206,7 +206,7 @@ namespace NMib::NDaemon
 		return EActionResult_Success;
 	}
 
-	EActionResult CDaemon::CDetails::f_Restart(bint _bWait)
+	EActionResult CDaemon::CDetails::f_Restart(bool _bWait)
 	{
 		EActionResult Result = f_Stop(_bWait);
 		if (Result != EActionResult_Success)

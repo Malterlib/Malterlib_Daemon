@@ -643,7 +643,7 @@ namespace NMib::NDaemon
 		return mp_fImplementationFactory();
 	}
 
-	EActionResult CDaemonParams::f_ProcessCommand(CDaemon* _pDaemon, bint& _bHandled)
+	EActionResult CDaemonParams::f_ProcessCommand(CDaemon* _pDaemon, bool& _bHandled)
 	{
 		if (mp_fProcessCommand.f_IsEmpty())
 			return EActionResult_Failure;
@@ -678,7 +678,7 @@ namespace NMib::NDaemon
 
 	EActionResult CDaemon::f_ProcessCommand()
 	{
-		bint bHandled = false;
+		bool bHandled = false;
 		EActionResult CommandResult = mp_Params.f_ProcessCommand(this, bHandled);
 
 		if (bHandled)
@@ -688,7 +688,7 @@ namespace NMib::NDaemon
 		{
 			case EDaemonAction_Add:
 			{
-				bint bCheckForExisting = mp_Params.f_GetActionParam().f_GetAsType<bool>();
+				bool bCheckForExisting = mp_Params.f_GetActionParam().f_GetAsType<bool>();
 				CommandResult = f_Add(bCheckForExisting);
 			}
 			break;
@@ -704,13 +704,13 @@ namespace NMib::NDaemon
 			break;
 			case EDaemonAction_Restart:
 			{
-				bint bWait = mp_Params.f_GetActionParam().f_GetAsType<bool>();
+				bool bWait = mp_Params.f_GetActionParam().f_GetAsType<bool>();
 				CommandResult = f_Restart(bWait);
 			}
 			break;
 			case EDaemonAction_Stop:
 			{
-				bint bWait = mp_Params.f_GetActionParam().f_GetAsType<bool>();
+				bool bWait = mp_Params.f_GetActionParam().f_GetAsType<bool>();
 				CommandResult = f_Stop(bWait);
 			}
 			break;

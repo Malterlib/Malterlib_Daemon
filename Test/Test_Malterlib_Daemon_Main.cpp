@@ -1,4 +1,4 @@
-// Copyright © 2015 Hansoft AB 
+// Copyright © 2015 Hansoft AB
 // Distributed under the MIT license, see license text in LICENSE.Malterlib
 
 #include <Mib/Core/Core>
@@ -34,13 +34,13 @@ int fg_DaemonMain(void* _pNativeHandle)
 		{
 			CStr File = NFile::CFile::fs_GetProgramDirectory() + "/Running";
 
-			try 
+			try
 			{
 				NMib::NStr::CStr Output;
 				Output += NSys::fg_UserManagement_GetProcessRealUserName() + "\n";
 				Output += NSys::fg_UserManagement_GetProcessRealGroupName() + "\n";
 				Output += NFile::CFile::fs_GetProgramDirectory();
-				
+
 				NFile::CFile::fs_WriteStringToFile(File, Output, false);
 				DMibConOut("Wrote file {}\n", File);
 			}
@@ -91,7 +91,7 @@ int fg_DaemonMain(void* _pNativeHandle)
 				NStorage::TCUniquePointer<NDaemon::CDaemonImp> ServerDaemon = fg_Explicit(DMibNew CDaemonImplementation());
 				return ServerDaemon;
 			}
-			, [&] (NDaemon::CDaemonParams& _Params, NDaemon::CDaemon* _pDaemon, bint& _bHandled) -> NDaemon::EActionResult
+			, [&] (NDaemon::CDaemonParams& _Params, NDaemon::CDaemon* _pDaemon, bool& _bHandled) -> NDaemon::EActionResult
 			{
 				NMib::fg_GetSys()->f_RegisterProgram("Malterlib_Tests_Daemon", "support@malterlib.com", _Params.f_GetAction() == NDaemon::EDaemonAction_Run);
 
@@ -102,13 +102,13 @@ int fg_DaemonMain(void* _pNativeHandle)
 					if (_Params.f_GetCustomActionKey() == "DeleteUserAndGroup")
 					{
 #if defined(DPlatformFamily_Windows)
-						
+
 
 	#pragma message ( "TODO: Implement user/group management for Windows and enable this daemon test code." )
 
 #else
 						NMib::NStr::CStr Tmp;
-						try 
+						try
 						{
 							if (NMib::NSys::fg_UserManagement_UserExists("_idstestuser", Tmp))
 								NMib::NSys::fg_UserManagement_DeleteUser("_idstestuser");

@@ -377,7 +377,7 @@ namespace NMib::NDaemon
 			return EActionResult_Success;
 		}
 
-		EActionResult f_Stop(bint _bWait)
+		EActionResult f_Stop(bool _bWait)
 		{
 			if (!fp_CheckParamsSupported())
 				return EActionResult_Failure;
@@ -432,7 +432,7 @@ namespace NMib::NDaemon
 			return EActionResult_Success;
 		}
 
-		EActionResult f_Restart(bint _bWait)
+		EActionResult f_Restart(bool _bWait)
 		{
 			EActionResult Result = f_Stop(_bWait);
 			if (Result != EActionResult_Success)
@@ -476,7 +476,7 @@ namespace NMib::NDaemon
 			CFRelease(ArrayRef);
 		}
 
-		CFDictionaryRef fg_CreateDictionaryFromParams(CDaemonParams const &_Params, bint _bDisabled = false)
+		CFDictionaryRef fg_CreateDictionaryFromParams(CDaemonParams const &_Params, bool _bDisabled = false)
 		{
 			CFMutableDictionaryRef Dict = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks,	&kCFTypeDictionaryValueCallBacks);
 
@@ -507,7 +507,7 @@ namespace NMib::NDaemon
 
 
 
-		EActionResult f_Add(bint _bCheckForExisting)
+		EActionResult f_Add(bool _bCheckForExisting)
 		{
 			if (!fp_CheckParamsSupported())
 				return EActionResult_Failure;
@@ -713,7 +713,7 @@ namespace NMib::NDaemon
 			return EActionResult_Failure;
 		}
 
-		bint f_IsShutdown() const
+		bool f_IsShutdown() const
 		{
 			return false;
 		}

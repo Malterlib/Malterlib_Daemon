@@ -27,7 +27,7 @@ namespace NMib::NDaemon
 		return ExecCommand;
 	}
 
-	bint CUpstart::fs_IsSupported()
+	bool CUpstart::fs_IsSupported()
 	{
 		return NFile::CFile::fs_FileExists(NStr::CStr("/etc/init")) && NFile::CFile::fs_FileExists(NStr::CStr(DInitctlExecutable));
 	}
@@ -208,7 +208,7 @@ namespace NMib::NDaemon
 		return EActionResult_Success;
 	}
 
-	EActionResult CUpstart::f_Stop(CDaemonParams const &_Params, bint _bWait)
+	EActionResult CUpstart::f_Stop(CDaemonParams const &_Params, bool _bWait)
 	{
 		if (!fp_CheckParamsSupported(_Params))
 			return EActionResult_Failure;
@@ -253,7 +253,7 @@ namespace NMib::NDaemon
 		return EActionResult_Success;
 	}
 
-	EActionResult CUpstart::f_Restart(CDaemonParams const &_Params, bint _bWait)
+	EActionResult CUpstart::f_Restart(CDaemonParams const &_Params, bool _bWait)
 	{
 		if (!fp_CheckParamsSupported(_Params))
 			return EActionResult_Failure;
@@ -298,7 +298,7 @@ namespace NMib::NDaemon
 		return Conf;
 	}
 
-	EActionResult CUpstart::f_Add(CDaemonParams const &_Params, bint _bCheckForExisting)
+	EActionResult CUpstart::f_Add(CDaemonParams const &_Params, bool _bCheckForExisting)
 	{
 		if (!fp_CheckParamsSupported(_Params))
 			return EActionResult_Failure;

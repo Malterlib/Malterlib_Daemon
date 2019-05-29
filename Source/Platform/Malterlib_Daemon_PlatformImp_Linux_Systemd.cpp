@@ -17,7 +17,7 @@
 
 namespace NMib::NProcess::NPlatform
 {
-	NStr::CStr fg_FindExecutable(NStr::CStr const &_Path, bint _bAllowLocate, NMib::NFile::EFileAttrib _Type, NContainer::TCVector<NStr::CStr> const &_ExtraPaths, NStr::CStr const &_LocalPaths = {});
+	NStr::CStr fg_FindExecutable(NStr::CStr const &_Path, bool _bAllowLocate, NMib::NFile::EFileAttrib _Type, NContainer::TCVector<NStr::CStr> const &_ExtraPaths, NStr::CStr const &_LocalPaths = {});
 }
 
 namespace NMib::NDaemon
@@ -148,13 +148,13 @@ namespace NMib::NDaemon
 		return Conf;
 	}
 
-	EActionResult CSystemd::fp_SetUnitEnable(CDaemonParams const &_Params, bint _bEnable) const
+	EActionResult CSystemd::fp_SetUnitEnable(CDaemonParams const &_Params, bool _bEnable) const
 	{
 		NStr::CStr Result;
 		NStr::CStr Error;
 		uint32 ExitCode = 0;
 
-		bint bUnitEnabled = false;
+		bool bUnitEnabled = false;
 		if (fp_IsUnitEnabled(_Params, bUnitEnabled) != EActionResult_Failure)
 		{
 			if ((!bUnitEnabled && !_bEnable) || (bUnitEnabled && _bEnable))
@@ -168,7 +168,7 @@ namespace NMib::NDaemon
 		return EActionResult_Success;
 	}
 
-	EActionResult CSystemd::fp_IsUnitEnabled(CDaemonParams const &_Params, bint& _bIsEnabled) const
+	EActionResult CSystemd::fp_IsUnitEnabled(CDaemonParams const &_Params, bool& _bIsEnabled) const
 	{
 		NStr::CStr Result;
 		NStr::CStr Error;
@@ -188,7 +188,7 @@ namespace NMib::NDaemon
 		return EActionResult_Success;
 	}
 
-	bint CSystemd::fs_IsSupported()
+	bool CSystemd::fs_IsSupported()
 	{
 		return NFile::CFile::fs_FileExists
 			(
@@ -328,7 +328,7 @@ namespace NMib::NDaemon
 		return EActionResult_Success;
 	}
 
-	EActionResult CSystemd::f_Stop(CDaemonParams const &_Params, bint _bWait)
+	EActionResult CSystemd::f_Stop(CDaemonParams const &_Params, bool _bWait)
 	{
 		if (!fp_CheckParamsSupported(_Params))
 			return EActionResult_Failure;
@@ -385,7 +385,7 @@ namespace NMib::NDaemon
 		return EActionResult_Success;
 	}
 
-	EActionResult CSystemd::f_Restart(CDaemonParams const &_Params, bint _bWait)
+	EActionResult CSystemd::f_Restart(CDaemonParams const &_Params, bool _bWait)
 	{
 		if (!fp_CheckParamsSupported(_Params))
 			return EActionResult_Failure;
@@ -423,7 +423,7 @@ namespace NMib::NDaemon
 		return EActionResult_Success;
 	}
 
-	EActionResult CSystemd::f_Add(CDaemonParams const &_Params, bint _bCheckForExisting)
+	EActionResult CSystemd::f_Add(CDaemonParams const &_Params, bool _bCheckForExisting)
 	{
 		if (!fp_CheckParamsSupported(_Params))
 			return EActionResult_Failure;

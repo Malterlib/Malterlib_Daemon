@@ -35,13 +35,13 @@ namespace NMib::NDaemon
 	public:
 		CGentoo(CDaemon *);
 
-		static bint fs_IsSupported();
+		static bool fs_IsSupported();
 
 		virtual EActionResult f_Start(CDaemonParams const &_Params) override;
-		virtual EActionResult f_Stop(CDaemonParams const &_Params, bint _bWait = false) override;
-		virtual EActionResult f_Restart(CDaemonParams const &_Params, bint _bWait = false) override;
+		virtual EActionResult f_Stop(CDaemonParams const &_Params, bool _bWait = false) override;
+		virtual EActionResult f_Restart(CDaemonParams const &_Params, bool _bWait = false) override;
 
-		virtual EActionResult f_Add(CDaemonParams const &_Params, bint _bCheckForExisting = false) override;
+		virtual EActionResult f_Add(CDaemonParams const &_Params, bool _bCheckForExisting = false) override;
 		virtual EActionResult f_Remove(CDaemonParams const &_Params) override;
 
 		virtual EActionResult f_Exists(CDaemonParams const &_Params, bool &_bExists) const override;

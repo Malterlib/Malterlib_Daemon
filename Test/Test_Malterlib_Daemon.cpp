@@ -1,4 +1,4 @@
-// Copyright © 2015 Hansoft AB 
+// Copyright © 2015 Hansoft AB
 // Distributed under the MIT license, see license text in LICENSE.Malterlib
 
 #include <Mib/Concurrency/ThreadSafeQueue>
@@ -20,7 +20,7 @@ namespace
 	class CDaemon_Tests : public CTest
 	{
 	public:
-		
+
 		NMib::NStr::CStr m_DaemonName;
 
 		CDaemon_Tests()
@@ -35,33 +35,33 @@ namespace
 			else
 				return NMib::NStr::CStr::CFormat("--Tests \"{}/{}\" --TestLogger Registry --TestResults (All ProcessRecursive)") << _TestPath << _Test;
 		}
-		
+
 		NMib::NThread::CMutual m_ProxyClientLock;
 		NMib::NStorage::TCUniquePointer<NMib::NProcess::CProxiedLaunchClient> m_pProxyClient;
-		
+
 		NMib::NStr::CStr m_DaemonDirectory;
-		
+
 		NMib::NContainer::TCSet<NMib::NStr::CStr> m_CreatedDirs;
-			
+
 		NMib::NProcess::CProxiedLaunchClient &f_GetClient()
 		{
 			DMibLock(m_ProxyClientLock);
 			if (m_pProxyClient)
 				return *m_pProxyClient;
-			
+
 			NMib::NProcess::CProcessLaunchParams Params;
 			Params.m_Target = NMib::NFile::CFile::fs_GetProgramPath();
 			if (NMib::NProcess::CProcessLaunch::fs_GetElevation() == NMib::NProcess::EProcessElevation_IsNotElevated)
 				Params.m_Elevation = NMib::NProcess::EProcessLaunchElevation_Elevate;
-			
+
 			Params.m_Parameters = "--Tests Malterlib/Daemon/Daemon/ProxyServer --TestLogger Null --TestResults (ProcessRecursive)";
 			Params.m_bStdOutPID = 1;
-			
+
 			m_pProxyClient = NMib::fg_Construct(Params, NMib::fg_Default());
-			
+
 			return *m_pProxyClient;
 		}
-		
+
 		void f_DoProxyServer()
 		{
 			if (fg_TestReportFlags() & ETestReportFlag_ProcessRecursive)
@@ -101,7 +101,7 @@ namespace
 				NMib::NFile::CFile::fs_SetAttributes
 					(
 						DaemonDir
-						, Attribs 
+						, Attribs
 			 			| NMib::NFile::EFileAttrib_UserExecute
 						| NMib::NFile::EFileAttrib_UserRead
 						| NMib::NFile::EFileAttrib_UserWrite
@@ -115,16 +115,16 @@ namespace
 					)
 				;
 			}
-			
+
 			return DaemonDir;
 		}
 
 		NMib::NStr::CStr f_GetDaemonPath()
 		{
-																																						 
+
 			return f_GetDaemonDir() + "/" + NMib::NFile::CFile::fs_GetFile(NMib::NFile::CFile::fs_GetProgramPath()).f_Replace("Test_Malterlib_Daemon", "Test_Malterlib_Helper_Daemon");
 		}
-		
+
 		void f_CleanupFiles()
 		{
 			for (auto &Dir : m_CreatedDirs)
@@ -143,7 +143,7 @@ namespace
 				}
 			}
 		}
-		
+
 		void f_LaunchDaemonProcess
 			(
 				NMib::NStr::CStr const &_CommandLine
@@ -155,11 +155,11 @@ namespace
 				, bool _bExpectFail
 			)
 		{
-			
+
 			EExitResult Exited = EExitResult_None;
 			uint32 ExitCode = 66;
 			NMib::NProcess::CProcessLaunchParams Params;
-		
+
 			Params.m_Target = f_GetDaemonPath();
 			Params.m_Parameters = _CommandLine;
 
@@ -172,7 +172,7 @@ namespace
 			Params.m_Environment["MalterlibDisableStdErrLog"] = "true";
 
 			NMib::NStr::CStr Errors;
-			
+
 			Params.m_fOnStateChange
 				= [&](NMib::NProcess::CProcessLaunchStateChangeVariant const &_State, fp64 _TimeSinceStart)
 				{
@@ -274,7 +274,7 @@ namespace
 			}
 		}
 
-		zbool m_bUserDaemon;
+		bool m_bUserDaemon = false;
 		NMib::NStr::CStr m_RunAsUser;
 		NMib::NStr::CStr m_RunAsGroup;
 
@@ -282,17 +282,17 @@ namespace
 		{
 			NMib::NStr::CStr DaemonDir = f_GetDaemonDir();
 			NMib::NStr::CStr File = DaemonDir + "/Running";
-			
+
 			bool bExists = false;
 			bool bTimedOut = false;
-			
+
 			NMib::NThread::CEventAutoResetReportable FileChangeEvent;
 			if (NMib::NFile::CFileChangeNotification::fs_Supported())
 			{
 				NMib::NFile::CFileChangeNotification FileChangeNotification;
-				
+
 				FileChangeNotification.f_Open(DaemonDir, NMib::NFile::EFileChange_All, &FileChangeEvent);
-				
+
 				NMib::NTime::CClock Clock;
 				Clock.f_Start();
 				bExists = NMib::NFile::CFile::fs_FileExists(File);
@@ -306,7 +306,7 @@ namespace
 						break;
 					}
 				}
-				
+
 				FileChangeNotification.f_Close();
 			}
 			else
@@ -326,11 +326,11 @@ namespace
 				}
 			}
 			bExists = NMib::NFile::CFile::fs_FileExists(File);
-						
+
 			DMibExpectFalse(bTimedOut);
 
 			DMibTest(DMibExpr(bExists) == DMibExpr(true));
-			
+
 			if (bExists)
 			{
 				auto Output = NMib::NFile::CFile::fs_ReadStringFromFile(File, true);
@@ -375,43 +375,43 @@ namespace
 							DMibTest(DMibExpr(Group) == DMibExpr(RootGroup));
 						}
 					}
-#endif					
+#endif
 					DMibTest(DMibExpr(ProgramDir) == DMibExpr(DaemonDir));
-					
+
 				}
-			}			
+			}
 		}
 
 		void f_CheckDaemonIsNotRunning()
 		{
 			NMib::NStr::CStr DaemonDir = f_GetDaemonDir();
-			
+
 			NMib::NStr::CStr File = DaemonDir + "/Running";
 			bool bExists = NMib::NFile::CFile::fs_FileExists(File);
 			DMibTest(DMibExpr(bExists) == DMibExpr(false));
 		}
-		
-		void f_LaunchDaemon(NMib::NStr::CStr const &_ExtraParams, bint _bElevated, bool _bElevatedRun, bool _bShouldFail)
-		{		
+
+		void f_LaunchDaemon(NMib::NStr::CStr const &_ExtraParams, bool _bElevated, bool _bElevatedRun, bool _bShouldFail)
+		{
 			for (int iRun = 0; iRun < 2; ++iRun)
 			{
 				NMib::NStr::CStr DaemonTestPath = "NoDaemonNameSpecified";
-				
+
 				if (iRun == 0)
 					DaemonTestPath = "DaemonNameSpecified";
-				
+
 				NMib::NStr::CStr DaemonName = m_DaemonName;
-				
+
 				if (iRun != 0)
 					DaemonName = "";
-				
+
 				DMibTestPath(DaemonTestPath);
-				
+
 				{
 					DMibTestPath("Cleanup");
 					f_LaunchDaemonProcess(NMib::NStr::CStr::CFormat("-RemoveService {} {}") << DaemonName << _ExtraParams, _bElevated, 0, true, true, false, _bShouldFail);
 				}
-				
+
 				{
 					DMibTestPath("Add");
 					f_LaunchDaemonProcess(NMib::NStr::CStr::CFormat("-AddService {} {}") << m_DaemonName << _ExtraParams, _bElevated, 0, true, true, false, _bShouldFail);
@@ -444,7 +444,7 @@ namespace
 					f_LaunchDaemonProcess(NMib::NStr::CStr::CFormat("-Exists {} {}") << m_DaemonName << _ExtraParams, _bElevatedRun, 1, true, false, true, _bShouldFail);
 				}
 			}
-			
+
 		}
 
 		void f_TestLocalUserDaemon(bool _bUnsupported)
@@ -452,7 +452,7 @@ namespace
 			DMibTestSuite("LocalUserDaemon")
 			{
 				m_bUserDaemon = true;
-				auto Cleanup 
+				auto Cleanup
 					= NMib::fg_OnScopeExit
 					(
 						[&]
@@ -474,7 +474,7 @@ namespace
 			DMibTestSuite(CTestCategory("AllUsersDaemons") << CTestGroup("Manual"))
 			{
 				m_bUserDaemon = true;
-				auto Cleanup 
+				auto Cleanup
 					= NMib::fg_OnScopeExit
 					(
 						[&]
@@ -486,7 +486,7 @@ namespace
 				f_LaunchDaemon("-AllUsers " + _ExtraParams, true, false, !(NMib::NDaemon::CDaemon::fs_SupportedFeatures() & NMib::NDaemon::EDaemonFeature_AllUsersDaemon) || _bUnsupported);
 			};
 		}
-		
+
 		void f_TestGlobalDaemon(NMib::NStr::CStr const &_ExtraParams, bool _bUnsupported)
 		{
 			DMibTestSuite(CTestCategory("GlobalDaemon") << CTestGroup("Manual"))
@@ -504,7 +504,7 @@ namespace
 					f_LaunchDaemonProcess("-CustomAction", false, 0, true, true, false, false);
 
 					NMib::NStr::CStr DaemonDir = f_GetDaemonDir();
-					
+
 					NMib::NStr::CStr File = DaemonDir + "/CustomAction";
 					bool bCustomActionRan = NMib::NFile::CFile::fs_FileExists(File);
 					DMibTest(DMibExpr(bCustomActionRan) == DMibExpr(true))(ETest_FailAndStop);
@@ -517,13 +517,13 @@ namespace
 				}
 			};
 		}
-		
+
 		void f_DoTestsInPath(NMib::NStr::CStr const &_Desc, NMib::NStr::CStr const &_Path, bool _bUnsupported)
 		{
 			DMibTestCategory(_Desc)
 			{
 				m_DaemonDirectory = _Path;
-				
+
 				DMibTestCategory("DefaultUser")
 				{
 					f_TestLocalUserDaemon(_bUnsupported);
@@ -531,7 +531,7 @@ namespace
 					f_TestGlobalDaemon("", _bUnsupported);
 					f_TestCustomAction();
 				};
-				
+
 	#if defined(DPlatformFamily_Windows)
 
 		#pragma message ( "TODO: Implement user/group management for Windows and enable this daemon test code." )
@@ -541,11 +541,11 @@ namespace
 				{
 					if (NMib::NTest::fg_GroupActive("Manual"))
 						f_LaunchDaemonProcess("-DeleteUserAndGroup", true, 0, false, true, false, false);
-					
+
 					DMibTestCategory("User")
 					{
 						m_RunAsUser = "_idstestuser";
-						auto Cleanup 
+						auto Cleanup
 							= NMib::fg_OnScopeExit
 							(
 								[&]
@@ -554,14 +554,14 @@ namespace
 								}
 							)
 						;
-						
+
 						f_TestAllUsersDaemon("-RunAsUser _idstestuser", _bUnsupported);
 						f_TestGlobalDaemon("-RunAsUser _idstestuser", _bUnsupported);
 					};
 					DMibTestCategory("Group")
 					{
 						m_RunAsGroup = "_idstestgroup";
-						auto Cleanup 
+						auto Cleanup
 							= NMib::fg_OnScopeExit
 							(
 								[&]
@@ -577,7 +577,7 @@ namespace
 					{
 						m_RunAsUser = "_idstestuser";
 						m_RunAsGroup = "_idstestgroup";
-						auto Cleanup 
+						auto Cleanup
 							= NMib::fg_OnScopeExit
 							(
 								[&]
@@ -597,11 +597,11 @@ namespace
 	#endif // DPlatformFamily_Windows
 			};
 		}
-	
+
 		void f_DoTests()
 		{
 			f_DoProxyServer();
-			
+
 			f_DoTestsInPath("NormalDir", "NoSpace", false);
 
 			NMib::NStr::CStr EvilDir = NMib::NStr::CWStr(str_utf16("'Evil' Dir 日本語 ÖÖÖ $(Bash) (Paren)"));
@@ -609,15 +609,15 @@ namespace
 			EvilDir += " \"From hell\"";
 #endif
 			f_DoTestsInPath("EvilDir", EvilDir, !!(NMib::NDaemon::CDaemon::fs_SupportedFeatures() & (NMib::NDaemon::EDaemonFeature_EscapedPathBroken|NMib::NDaemon::EDaemonFeature_EscapeCharBroken)));
-			
+
 			NMib::NStr::CStr SlightlyLessEvilDir = NMib::NStr::CWStr(str_utf16("'Evil' Dir 日本語 ÖÖÖ (Paren)"));
 
 			f_DoTestsInPath("SlightlyLessEvilDir", SlightlyLessEvilDir, !!(NMib::NDaemon::CDaemon::fs_SupportedFeatures() & NMib::NDaemon::EDaemonFeature_EscapedPathBroken));
-			
+
 			f_CleanupFiles();
 		}
 
 	};
-	
+
 	DMibTestRegister(CDaemon_Tests, Malterlib::Daemon);
 }

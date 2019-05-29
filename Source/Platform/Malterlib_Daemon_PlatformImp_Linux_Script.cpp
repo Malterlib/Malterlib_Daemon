@@ -78,7 +78,7 @@ namespace NMib::NDaemon
 	}
 
 
-	bint CScript::fs_IsSupported()
+	bool CScript::fs_IsSupported()
 	{
 		return (NFile::CFile::fs_FileExists(NStr::CStr(DInitD)) || NFile::CFile::fs_FileExists(NStr::CStr(DRcD)));
 	}
@@ -172,7 +172,7 @@ namespace NMib::NDaemon
 		return EActionResult_Success;
 	}
 
-	EActionResult CScript::f_Stop(CDaemonParams const &_Params, bint _bWait)
+	EActionResult CScript::f_Stop(CDaemonParams const &_Params, bool _bWait)
 	{
 		if (!fp_CheckParamsSupported(_Params))
 			return EActionResult_Failure;
@@ -206,7 +206,7 @@ namespace NMib::NDaemon
 		return EActionResult_Success;
 	}
 
-	EActionResult CScript::f_Restart(CDaemonParams const &_Params, bint _bWait)
+	EActionResult CScript::f_Restart(CDaemonParams const &_Params, bool _bWait)
 	{
 		if (!fp_CheckParamsSupported(_Params))
 			return EActionResult_Failure;
@@ -460,7 +460,7 @@ namespace NMib::NDaemon
 		return EActionResult_Success;
 	}
 
-	EActionResult CScript::f_Add(CDaemonParams const &_Params, bint _bCheckForExisting)
+	EActionResult CScript::f_Add(CDaemonParams const &_Params, bool _bCheckForExisting)
 	{
 		if (!fp_CheckParamsSupported(_Params))
 			return EActionResult_Failure;

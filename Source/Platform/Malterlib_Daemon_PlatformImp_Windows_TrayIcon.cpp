@@ -98,7 +98,7 @@ namespace NMib::NDaemon
 		}
 	}
 
-	bint CDaemon::CDetails::CTaskIconCleaner::f_Update()
+	bool CDaemon::CDetails::CTaskIconCleaner::f_Update()
 	{	
 		MSG Message;
 

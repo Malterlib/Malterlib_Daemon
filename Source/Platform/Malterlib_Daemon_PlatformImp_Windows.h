@@ -27,14 +27,14 @@ namespace NMib::NDaemon
 		EActionResult f_RunAsProgram(bool _bDebug);
 
 		EActionResult f_Start();
-		EActionResult f_Stop(bint _bWait);
-		EActionResult f_Restart(bint _bWait);
-		EActionResult f_Add(bint _bCheckForExisting);
+		EActionResult f_Stop(bool _bWait);
+		EActionResult f_Restart(bool _bWait);
+		EActionResult f_Add(bool _bCheckForExisting);
 		EActionResult f_Remove();
 
 		EActionResult f_Exists(bool &_bExists) const;
 
-		bint f_IsShutdown() const;
+		bool f_IsShutdown() const;
 
 		void f_ReportInformation(NStr::CStr const &_Heading, NStr::CStr const &_Message) const;
 		void f_ReportError(NStr::CStr const &_Message) const;
@@ -49,7 +49,7 @@ namespace NMib::NDaemon
 			static LRESULT CALLBACK fs_ReportWindowProc(HWND _hWnd, UINT _Message, WPARAM _WParam, LPARAM _LParam);
 
 			void f_Init(HICON _hIcon);
-			bint f_Update();
+			bool f_Update();
 
 			NOTIFYICONDATA m_NotifyIconData;
 			HWND m_hReportWnd;
@@ -64,8 +64,8 @@ namespace NMib::NDaemon
 
 		EActionResult fp_UserDaemonExists(bool &_bExists) const;
 		EActionResult fp_UserDaemonStart();
-		EActionResult fp_UserDaemonStop(bint _bWait);
-		EActionResult fp_UserDaemonAdd(bint _bCheckForExisting);
+		EActionResult fp_UserDaemonStop(bool _bWait);
+		EActionResult fp_UserDaemonAdd(bool _bCheckForExisting);
 		EActionResult fp_UserDaemonRemove();
 
 		void fp_UpdateService(SC_HANDLE _Service);
@@ -88,7 +88,7 @@ namespace NMib::NDaemon
 		static SERVICE_STATUS          msp_ServiceStatus; 
 		static SERVICE_STATUS_HANDLE   msp_ServiceStatusHandle;
 		static CDetails*			   msp_pThis;
-		static bint					   msp_bIsShutdown;
+		static bool					   msp_bIsShutdown;
 		static CTaskIconCleaner		   msp_TaskIcon;
 
 		CDaemon*					   mp_pOwner;
