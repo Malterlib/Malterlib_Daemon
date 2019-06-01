@@ -18,7 +18,7 @@ namespace NMib::NDaemon
 		if (fp_GetDaemonParams().f_GetDetachConsole())
 			FreeConsole();
 
-		CStr DaemonStateFile = NFile::CFile::fs_GetProgramDirectory() / "ServiceState";
+		CStr DaemonStateFile = NFile::CFile::fs_GetProgramDirectory() / (NFile::CFile::fs_GetFileNoExt(NFile::CFile::fs_GetProgramPath()) + ".ServiceState");
 		NFile::CFile StateFile;
 		{
 			StateFile.f_Open(DaemonStateFile, NFile::EFileOpen_Write | NFile::EFileOpen_Temporary | NFile::EFileOpen_NoLocalCache | NFile::EFileOpen_ShareAll);
@@ -41,6 +41,8 @@ namespace NMib::NDaemon
 						return 1;
 					}
 
+					auto ServiceStateFileName = NFile::CFile::fs_GetFile(DaemonStateFile);
+
 					while (_pThread->f_GetState() != NThread::EThreadState_EventWantQuit)
 					{
 						try
@@ -48,7 +50,7 @@ namespace NMib::NDaemon
 							NFile::CFileChangeNotification::CNotification Notification;
 							while (FileChangeNotification.f_GetNotification(Notification))
 							{
-								if (Notification.m_Path == "ServiceState" && NFile::CFile::fs_ReadStringFromFile(DaemonStateFile, true) == "Stop")
+								if (Notification.m_Path == ServiceStateFileName && NFile::CFile::fs_ReadStringFromFile(DaemonStateFile, true) == "Stop")
 								{
 									CDaemon::CDetails::fs_AbortDebug();
 									return 0;
@@ -71,7 +73,7 @@ namespace NMib::NDaemon
 
 		NFile::CFile PIDFile;
 		{
-			CStr DaemonPidPath = NFile::CFile::fs_GetProgramDirectory() / "ServicePID";
+			CStr DaemonPidPath = NFile::CFile::fs_GetProgramDirectory() / (NFile::CFile::fs_GetFileNoExt(NFile::CFile::fs_GetProgramPath()) + ".ServicePID");
 			PIDFile.f_Open(DaemonPidPath, NFile::EFileOpen_Write | NFile::EFileOpen_Temporary | NFile::EFileOpen_NoLocalCache | NFile::EFileOpen_ShareRead);
 			CStr Pid = "{}"_f << NProcess::NPlatform::fg_Process_GetCurrentUID();
 			PIDFile.f_Write(Pid.f_GetStr(), Pid.f_GetLen());

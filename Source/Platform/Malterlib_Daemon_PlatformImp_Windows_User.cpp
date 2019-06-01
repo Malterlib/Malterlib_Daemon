@@ -42,7 +42,7 @@ namespace NMib::NDaemon
 
 		bool fg_IsRunning()
 		{
-			CStr DaemonPidPath = NFile::CFile::fs_GetProgramDirectory() + "/ServicePID";
+			CStr DaemonPidPath = NFile::CFile::fs_GetProgramDirectory() / (NFile::CFile::fs_GetFileNoExt(NFile::CFile::fs_GetProgramPath()) + ".ServicePID");
 			return NFile::CFile::fs_FileExists(DaemonPidPath);
 		}
 	}
@@ -151,7 +151,7 @@ namespace NMib::NDaemon
 
 		try
 		{
-			CStr DaemonPidPath = NFile::CFile::fs_GetProgramDirectory() + "/ServicePID";
+			CStr DaemonPidPath = NFile::CFile::fs_GetProgramDirectory() / (NFile::CFile::fs_GetFileNoExt(NFile::CFile::fs_GetProgramPath()) + ".ServicePID");
 			mint PID = NFile::CFile::fs_ReadStringFromFile(DaemonPidPath, true).f_ToInt(0);
 
 			HANDLE hProcess = nullptr;
@@ -168,7 +168,7 @@ namespace NMib::NDaemon
 				)
 			;
 
-			CStr DaemonStateFile = NFile::CFile::fs_GetProgramDirectory() + "/ServiceState";
+			CStr DaemonStateFile = NFile::CFile::fs_GetProgramDirectory() / (NFile::CFile::fs_GetFileNoExt(NFile::CFile::fs_GetProgramPath()) + ".ServiceState");
 			NFile::CFile::fs_WriteStringToFile(DaemonStateFile, "Stop", false);
 
 			if (hProcess)
