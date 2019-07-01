@@ -111,7 +111,7 @@ namespace NMib::NDaemon
 			;
 
 			NMib::NProcess::CProcessLaunch ProcessLaunch(Params, NMib::NProcess::EProcessLaunchCloseFlag_None);
-			LaunchResult.f_CallSync(60.0);
+			LaunchResult.f_MoveFuture().f_CallSync(60.0);
 
 			NTime::CClock Clock{true};
 			while (!fg_IsRunning())
