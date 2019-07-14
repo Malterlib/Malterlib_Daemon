@@ -317,15 +317,17 @@ namespace NMib::NDaemon
 			}
 		}
 
-		bool bAlreadyExists = false;
-		EActionResult Result = f_Exists(bAlreadyExists);
-		if (Result != EActionResult_Success)
-			return Result;
-
-		if (bAlreadyExists)
 		{
-			mp_pOwner->f_ReportError("Daemon already exists, remove it manually with --daemon-remove before trying to add again.");
-			return EActionResult_Failure;
+			bool bAlreadyExists = false;
+			EActionResult Result = f_Exists(_Params, bAlreadyExists);
+			if (Result != EActionResult_Success)
+				return Result;
+
+			if (bAlreadyExists)
+			{
+				mp_pOwner->f_ReportError("Daemon already exists, remove it manually with --daemon-remove before trying to add again.");
+				return EActionResult_Failure;
+			}
 		}
 
 		NStr::CStr Data = fs_CreateUpstartConfFromParams(_Params);
