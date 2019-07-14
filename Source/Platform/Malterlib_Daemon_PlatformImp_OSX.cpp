@@ -540,36 +540,27 @@ namespace NMib::NDaemon
 									CFStringRef pExecPath = CFStringCreateWithCString(NULL, mp_pOwner->mp_Params.f_GetExecutablePath().f_GetStr(), kCFStringEncodingUTF8);
 
 									if (CFStringCompare(pExecPath, pExec, kCFCompareCaseInsensitive) == kCFCompareEqualTo)
-									{
 										DaemonNameInUse = EActionResult_Success;
-									}
 									else
-									{
 										f_ReportError(NStr::CStr::CFormat("Daemon name is already in use: {}") << LaunchFilePath);
-									}
 
 									CFRelease(pExecPath);
 								}
 								else
-								{
 									f_ReportError(NStr::CStr::CFormat("Invalid daemon file: {}") << LaunchFilePath);
-								}
 							}
 							else
-							{
 								f_ReportError(NStr::CStr::CFormat("Invalid daemon file: {}") << LaunchFilePath);
-							}
 
 							CFRelease(PropertyList);
 						}
 						else
-						{
 							f_ReportError(NStr::CStr::CFormat("Invalid daemon file: {}") << LaunchFilePath);
-						}
 
 						if (DaemonNameInUse == EActionResult_Failure)
 							return EActionResult_Failure;
-
+						else
+							return EActionResult_Success;
 					}
 				}
 				catch (NFile::CExceptionFile const &_Exception)

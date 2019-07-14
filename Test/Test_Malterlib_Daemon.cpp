@@ -411,7 +411,6 @@ namespace
 					DMibTestPath("Cleanup");
 					f_LaunchDaemonProcess(NMib::NStr::CStr::CFormat("-RemoveService {} {}") << DaemonName << _ExtraParams, _bElevated, 0, true, true, false, _bShouldFail);
 				}
-
 				{
 					DMibTestPath("Add");
 					f_LaunchDaemonProcess(NMib::NStr::CStr::CFormat("-AddService {} {}") << m_DaemonName << _ExtraParams, _bElevated, 0, true, true, false, _bShouldFail);
