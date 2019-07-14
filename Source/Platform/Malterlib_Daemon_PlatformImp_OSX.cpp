@@ -579,6 +579,17 @@ namespace NMib::NDaemon
 				}
 			}
 
+			bool bAlreadyExists = false;
+			EActionResult Result = f_Exists(bAlreadyExists);
+			if (Result != EActionResult_Success)
+				return Result;
+
+			if (bAlreadyExists)
+			{
+				mp_pOwner->f_ReportError("Daemon already exists, remove it manually with --daemon-remove before trying to add again.");
+				return EActionResult_Failure;
+			}
+
 			CFPropertyListRef PropertyList = fg_CreateDictionaryFromParams(mp_pOwner->mp_Params);
 			DMibDeprecatedSupressStart
 			CFDataRef XmlData = CFPropertyListCreateXMLData(NULL, PropertyList);
