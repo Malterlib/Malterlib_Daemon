@@ -37,7 +37,7 @@ namespace NMib::NDaemon
 
 		if (_bCheckForExisting)
 		{
-			SC_HANDLE schService = OpenServiceW(schSCManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName()), SERVICE_QUERY_CONFIG | SERVICE_CHANGE_CONFIG);
+			SC_HANDLE schService = OpenServiceW(schSCManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName()), SERVICE_ALL_ACCESS);
 
 			if (schService)
 			{
@@ -257,21 +257,27 @@ namespace NMib::NDaemon
 
 		SERVICE_FAILURE_ACTIONSW RestartActions;
 
-		RestartActions.dwResetPeriod = 60*60*24;
+		RestartActions.dwResetPeriod = 60;
 		Temp = NStr::NPlatform::fg_StrToWindows(NStr::CStr("Rebooting the server in response to crash of ") + mp_pOwner->f_GetDaemonParams().f_GetDaemonDisplayName() + " crash.");
 		RestartActions.lpRebootMsg = (ch16 *)Temp.f_GetStr();
 		RestartActions.lpCommand = str_utf16("");
 		RestartActions.cActions = 3;
 		SC_ACTION Actions[3];
-		Actions[0].Delay = 0;
+		Actions[0].Delay = 1000;
 		Actions[0].Type = SC_ACTION_RESTART;
-		Actions[1].Delay = 0;
+		Actions[1].Delay = 10 * 1000;
 		Actions[1].Type = SC_ACTION_RESTART;
-		Actions[2].Delay = 0;
-		Actions[2].Type = SC_ACTION_NONE;
+		Actions[2].Delay = 60 * 1000;
+		Actions[2].Type = SC_ACTION_RESTART;
 		RestartActions.lpsaActions = Actions;	
 
-		ChangeServiceConfig2W(_Service, SERVICE_CONFIG_FAILURE_ACTIONS, &RestartActions);
+		if (!ChangeServiceConfig2W(_Service, SERVICE_CONFIG_FAILURE_ACTIONS, &RestartActions))
+			f_ReportError(NStr::CStr::CFormat("Failed to change service config: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
+	
+		SERVICE_FAILURE_ACTIONS_FLAG FailureActionFlags = {0};
+		FailureActionFlags.fFailureActionsOnNonCrashFailures = true;
+		if (!ChangeServiceConfig2W(_Service, SERVICE_CONFIG_FAILURE_ACTIONS_FLAG, &FailureActionFlags))
+			f_ReportError(NStr::CStr::CFormat("Failed to change service config: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 
 		if (NMib::NPlatform::fg_IsVista())
 		{

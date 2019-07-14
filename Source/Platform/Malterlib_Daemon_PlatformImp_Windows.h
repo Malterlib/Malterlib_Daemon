@@ -23,6 +23,7 @@ namespace NMib::NDaemon
 
 		EActionResult f_Run();
 		static void fs_AbortDebug();
+		static void fs_AbortService();
 
 		EActionResult f_RunAsProgram(bool _bDebug);
 

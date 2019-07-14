@@ -15,12 +15,29 @@ namespace NMib::NDaemon
 		NStr::CWStr Temp = NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName());
 		SERVICE_TABLE_ENTRYW DispatchTable[] = { { (ch16 *)Temp.f_GetStr(), CDaemon::CDetails::fsp_ServiceStart}, { nullptr, nullptr} }; 
 
-		if (!StartServiceCtrlDispatcherW( DispatchTable)) 
+		if (!StartServiceCtrlDispatcherW(DispatchTable)) 
 		{ 
 			f_ReportError(NStr::CStr::CFormat("StartServiceCtrlDispatcher error: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 			return EActionResult_Failure;
 		}
 		return EActionResult_Success;
+	}
+
+	void CDaemon::CDetails::fs_AbortService()
+	{
+		if (!msp_pThis->mp_pStopThread)
+		{
+			msp_ServiceStatus.dwWin32ExitCode = ERROR_SUCCESS_RESTART_REQUIRED;
+			msp_ServiceStatus.dwCurrentState  = SERVICE_STOP_PENDING; 
+			msp_ServiceStatus.dwCheckPoint    = 0; 
+			msp_ServiceStatus.dwWaitHint      = 10000;
+
+			msp_pThis->mp_pStopThread = NThread::CThreadObject::fs_StartThread([](NThread::CThreadObject *_pThread){return msp_pThis->fp_StopThread(_pThread);}, "CDaemon_Destroy");
+			msp_pThis->mp_pStopReportThread = NThread::CThreadObject::fs_StartThread([](NThread::CThreadObject *_pThread){return msp_pThis->fp_StopReportThread(_pThread);}, "CDaemon_DestroyReport");
+
+			if (!SetServiceStatus(msp_ServiceStatusHandle, &msp_ServiceStatus)) 
+				DMibLogWithCategory(Daemon, Error, "SetServiceStatus error: {}", NMib::NPlatform::fg_Win32_GetLastErrorStr());
+		}
 	}
 
 	void WINAPI CDaemon::CDetails::fsp_ServiceStart(DWORD _nArgs, LPWSTR *_pArgs) 

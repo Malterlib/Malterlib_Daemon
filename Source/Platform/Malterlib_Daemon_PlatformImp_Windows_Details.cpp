@@ -91,7 +91,6 @@ namespace NMib::NDaemon
 			if (mp_pStopThread->f_GetState() == NThread::EThreadState_Stopped)
 			{
 				DMibLock(msp_ServiceControlLock);
-				msp_ServiceStatus.dwWin32ExitCode = 0; 
 				msp_ServiceStatus.dwCurrentState  = SERVICE_STOPPED; 
 
 				DMibDTrace("Daemon stopped: {}" DMibNewLine, msp_ServiceStatus.dwCheckPoint);
@@ -106,7 +105,6 @@ namespace NMib::NDaemon
 			else
 			{
 				DMibLock(msp_ServiceControlLock);
-				msp_ServiceStatus.dwWin32ExitCode = 0; 
 				msp_ServiceStatus.dwCurrentState  = SERVICE_STOP_PENDING; 
 				++msp_ServiceStatus.dwCheckPoint; 
 				msp_ServiceStatus.dwWaitHint      += 1500;

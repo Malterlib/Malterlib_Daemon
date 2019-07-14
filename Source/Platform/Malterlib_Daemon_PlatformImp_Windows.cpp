@@ -84,12 +84,13 @@ namespace NMib::NDaemon
 
 	void CDaemon::fs_QuitDaemon()
 	{
+		CDaemon::CDetails::fs_AbortService();
 		CDaemon::CDetails::fs_AbortDebug();
 		NProcess::NPlatform::fg_Process_AbortWaitForTermination();
 	}
 
 	bool CDaemon::fs_SupportsAutoRestart()
 	{
-		return false;
+		return true;
 	}
 }
