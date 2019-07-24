@@ -37,6 +37,7 @@ namespace NMib::NDaemon
 					}
 					catch (NFile::CExceptionFile const &_Exception)
 					{
+						(void)_Exception;
 						DMibLog(Error, "Failed to register for daemon state change: {}", _Exception);
 						return 1;
 					}
@@ -59,6 +60,7 @@ namespace NMib::NDaemon
 						}
 						catch (NFile::CExceptionFile const &_Exception)
 						{
+							(void)_Exception;
 							DMibLog(Error, "Failed to check state of daemon file: {}", _Exception);
 						}
 						_pThread->m_EventWantQuit.f_Wait();
