@@ -1,4 +1,4 @@
-// Copyright © 2015 Hansoft AB 
+// Copyright © 2015 Hansoft AB
 // Distributed under the MIT license, see license text in LICENSE.Malterlib
 
 #include <Mib/Daemon/Daemon>
@@ -25,7 +25,7 @@ namespace NMib::NDaemon
 	public:
 		CDetails(CDaemon* _pOwner)
 			: mp_pOwner(_pOwner)
-			, mp_InterruptedReason(EDaemonInterrupt_NotInterrupted)
+			, mp_InterruptedReason(EDaemonInterrupt_None)
 		{
 			if (msp_pThis)
 				DMibError("You cannot have two daemons running in the same process at once");
@@ -243,13 +243,13 @@ namespace NMib::NDaemon
 			switch (_sigid)
 			{
 				case SIGTSTP:
-					msp_pThis->mp_InterruptedReason = EDaemonInterrupt_Pause;
+					msp_pThis->mp_InterruptedReason.f_FetchOr(EDaemonInterrupt_Pause);
 					break;
 				case SIGCONT:
-					msp_pThis->mp_InterruptedReason = EDaemonInterrupt_Resume;
+					msp_pThis->mp_InterruptedReason.f_FetchOr(EDaemonInterrupt_Resume);
 					break;
 				default:
-					msp_pThis->mp_InterruptedReason = EDaemonInterrupt_Exit;
+					msp_pThis->mp_InterruptedReason.f_FetchOr(EDaemonInterrupt_Exit);
 					break;
 			}
 			msp_pThis->mp_InterruptedEvent.f_Signal();
@@ -690,19 +690,15 @@ namespace NMib::NDaemon
 
 						while(!bExit)
 						{
-							mp_InterruptedEvent.f_Wait();
-							switch (mp_InterruptedReason.f_Exchange(EDaemonInterrupt_NotInterrupted))
-							{
-								case EDaemonInterrupt_Pause:
-									kill(Launcher.f_GetProcessID(), SIGTSTP);
-									break;
-								case EDaemonInterrupt_Resume:
-									kill(Launcher.f_GetProcessID(), SIGCONT);
-									break;
-								case EDaemonInterrupt_Exit:
-									kill(Launcher.f_GetProcessID(), SIGTERM);
-									break;
-							}
+							auto Interrupts = mp_InterruptedReason.f_Exchange(EDaemonInterrupt_None);
+							if (Interrupts & EDaemonInterrupt_Pause)
+								kill(Launcher.f_GetProcessID(), SIGTSTP);
+							if (Interrupts & EDaemonInterrupt_Resume)
+								kill(Launcher.f_GetProcessID(), SIGCONT);
+							if (Interrupts & EDaemonInterrupt_Exit)
+								kill(Launcher.f_GetProcessID(), SIGTERM);
+							if (!bExit)
+								mp_InterruptedEvent.f_Wait();
 						}
 
 						return (EActionResult)ExitCode;
@@ -743,19 +739,20 @@ namespace NMib::NDaemon
 			bool bExit = false;
 			while(!bExit)
 			{
-				mp_InterruptedEvent.f_Wait();
-				switch (mp_InterruptedReason.f_Exchange(EDaemonInterrupt_NotInterrupted))
+				auto Interrupts = mp_InterruptedReason.f_Exchange(EDaemonInterrupt_None);
+				if (Interrupts & EDaemonInterrupt_Exit)
 				{
-					case EDaemonInterrupt_Pause:
-						fp_DaemonPause();
-						break;
-					case EDaemonInterrupt_Resume:
-						fp_DaemonResume();
-						break;
-					case EDaemonInterrupt_Exit:
-						bExit = true;
-						break;
+					bExit = true;
+					break;
 				}
+
+				if (Interrupts & EDaemonInterrupt_Pause)
+					fp_DaemonPause();
+
+				if (Interrupts & EDaemonInterrupt_Resume)
+					fp_DaemonResume();
+
+				mp_InterruptedEvent.f_Wait();
 			}
 
 			fp_DaemonDestroy();
@@ -791,14 +788,14 @@ namespace NMib::NDaemon
 		NStorage::TCUniquePointer<CDaemonSystemInterface> mp_pDaemonIntegration;
 		bool mp_bDaemonize;
 
-		enum EDaemonInterrupt
+		enum EDaemonInterrupt : uint32
 		{
-			EDaemonInterrupt_NotInterrupted = 0,
-			EDaemonInterrupt_Exit,
-			EDaemonInterrupt_Pause,
-			EDaemonInterrupt_Resume,
+			EDaemonInterrupt_None = 0,
+			EDaemonInterrupt_Exit = DMibBit(0),
+			EDaemonInterrupt_Pause = DMibBit(1),
+			EDaemonInterrupt_Resume = DMibBit(2),
 		};
-		NAtomic::TCAtomic<EDaemonInterrupt> mp_InterruptedReason;
+		NAtomic::TCAtomic<uint32> mp_InterruptedReason;
 		NThread::CEventAutoReset mp_InterruptedEvent;
 		CDaemon*					   mp_pOwner;
 		NStorage::TCUniquePointer<CDaemonImp>   mp_pImp;
