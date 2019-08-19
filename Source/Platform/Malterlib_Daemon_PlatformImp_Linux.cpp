@@ -306,7 +306,7 @@ namespace NMib::NDaemon
 						if (NFile::CFile::fs_FileExists(_PidFilePath))
 							NFile::CFile::fs_DeleteFile(_PidFilePath);
 					}
-					catch (NFile::CExceptionFile const &_Exception)
+					catch (NFile::CExceptionFile const &)
 					{
 					}
 				}
@@ -837,7 +837,7 @@ namespace NMib::NDaemon
 							m_SupportedFeatures |= EDaemonFeature_EscapeCharBroken;	// Upstart escape character is broken
 					}
 				}
-				catch (NMib::NException::CException const &_Exception)
+				catch (NMib::NException::CException const &)
 				{
 				}
 
@@ -851,7 +851,7 @@ namespace NMib::NDaemon
 							m_SupportedFeatures |= EDaemonFeature_EscapedPathBroken;
 					}
 				}
-				catch (NMib::NException::CException const &_Exception)
+				catch (NMib::NException::CException const &)
 				{
 				}
 
@@ -865,7 +865,7 @@ namespace NMib::NDaemon
 							m_SupportedFeatures |= EDaemonFeature_EscapeCharBroken;	// Upstart escape character is broken
 					}
 				}
-				catch (NMib::NException::CException const &_Exception)
+				catch (NMib::NException::CException const &)
 				{
 				}
 
