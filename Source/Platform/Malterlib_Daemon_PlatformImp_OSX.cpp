@@ -4,9 +4,7 @@
 #include <Mib/Daemon/Daemon>
 #include <CoreFoundation/CoreFoundation.h>
 #include <sys/signal.h>
-#if DPlatformVersionMax >= 1060
-	#include <ServiceManagement/ServiceManagement.h>
-#endif
+#include <ServiceManagement/ServiceManagement.h>
 #include <Mib/Process/ProcessLaunch>
 
 namespace NMib::NDaemon
