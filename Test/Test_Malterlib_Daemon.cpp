@@ -31,9 +31,9 @@ namespace
 		static NMib::NStr::CStr fs_GetTestPath(NMib::NStr::CStr const &_TestPath, NMib::NStr::CStr const &_Test)
 		{
 			if (_Test.f_IsEmpty())
-				return NMib::NStr::CStr::CFormat("--Tests \"{}\" --TestLogger Registry --TestResults (All ProcessRecursive)") << _TestPath;
+				return NMib::NProcess::CProcessLaunchParams::fs_GetParams({"--test", _TestPath, "--logger", "Registry", "--filter-results", "[\"All\"]", "--process-recursive"});
 			else
-				return NMib::NStr::CStr::CFormat("--Tests \"{}/{}\" --TestLogger Registry --TestResults (All ProcessRecursive)") << _TestPath << _Test;
+				return NMib::NProcess::CProcessLaunchParams::fs_GetParams({"--test", _TestPath / _Test, "--logger", "Registry", "--filter-results", "[\"All\"]", "--process-recursive"});
 		}
 
 		NMib::NThread::CMutual m_ProxyClientLock;
@@ -54,7 +54,7 @@ namespace
 			if (NMib::NProcess::CProcessLaunch::fs_GetElevation() == NMib::NProcess::EProcessElevation_IsNotElevated)
 				Params.m_Elevation = NMib::NProcess::EProcessLaunchElevation_Elevate;
 
-			Params.m_Parameters = "--Tests Malterlib/Daemon/Daemon/ProxyServer --TestLogger Null --TestResults (ProcessRecursive)";
+			Params.m_Parameters = "--test Malterlib/Daemon/Daemon/ProxyServer --logger Null --process-recursive";
 			Params.m_bStdOutPID = 1;
 
 			m_pProxyClient = NMib::fg_Construct(Params, NMib::fg_Default());
