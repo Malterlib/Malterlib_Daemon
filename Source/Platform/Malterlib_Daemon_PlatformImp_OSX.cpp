@@ -88,7 +88,7 @@ namespace NMib::NDaemon
 		static NStr::CStr fs_GetPlistPath(CDaemonParams const &_Params)
 		{
 			NStr::CStr LaunchFileDirectory = fs_GetPlistDirectory(_Params.f_GetDaemonMode());
-			return NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetPlistFilename(_Params);
+			return LaunchFileDirectory / fs_GetPlistFilename(_Params);
 		}
 
 		static int fs_SystemCall(NStr::CStr const &_Target, NStr::CStr const &_Parameters, NStr::CStr *_pResult = nullptr, NStr::CStr *_pError = nullptr)
@@ -101,6 +101,8 @@ namespace NMib::NDaemon
 
 			Params.m_bShowLaunched = false;
 			Params.m_bStdOutPID = true;
+			Params.m_bMergeEnvironment = false;
+			Params.m_Environment["Dummy"];
 
 			Params.m_bMakeEffectiveUserReal = true;
 			Params.m_bMakeEffectiveGroupReal = true;
@@ -347,7 +349,7 @@ namespace NMib::NDaemon
 				NStr::CStr ListResult;
 				NStr::CStr ListError;
 
-				NStr::CStr Command = NStr::CStr::CFormat("list {}") << fs_GetFullDaemonName(mp_pOwner->mp_Params);
+				NStr::CStr Command = NProcess::CProcessLaunchParams::fs_GetParams({"list", fs_GetFullDaemonName(mp_pOwner->mp_Params)});
 				fs_SystemCall("/bin/launchctl", Command, &ListResult, &ListError);
 
 				if (ListResult.f_Find("PID") != -1)
@@ -358,12 +360,14 @@ namespace NMib::NDaemon
 			}
 
 			// .plist is set to automatically run when loaded
-			NStr::CStr Command = NStr::CStr::CFormat("load {}") << LaunchFilePath;
+			NStr::CStr Command = NProcess::CProcessLaunchParams::fs_GetParams({"load", LaunchFilePath});
 			bResult = fs_SystemCall("/bin/launchctl", Command, &Result, &Error) == 0;
 
-			if (!Error.f_IsEmpty())
+			Error = Error.f_Trim();
+
+			if (!Error.f_IsEmpty() && !Error.f_EndsWith("Operation now in progress"))
 			{
-				f_ReportError(Error.f_Trim());
+				f_ReportError(Error);
 				return EActionResult_Failure;
 			}
 			else if (!bResult)
@@ -394,7 +398,7 @@ namespace NMib::NDaemon
 
 				NStr::CStr DaemonName = fs_GetFullDaemonName(mp_pOwner->mp_Params);
 
-				NStr::CStr Command = NStr::CStr::CFormat("list {}") << DaemonName;
+				NStr::CStr Command = NProcess::CProcessLaunchParams::fs_GetParams({"list" , DaemonName});
 				fs_SystemCall("/bin/launchctl", Command, &ListResult, &ListError);
 
 				NStr::CStr LoadedLabel = NStr::CStr::CFormat("\"Label\" = \"{}\";") << DaemonName;
@@ -418,12 +422,13 @@ namespace NMib::NDaemon
 			}
 
 			// unload command automatically stops the daemon
-			NStr::CStr Command = NStr::CStr::CFormat("unload {}") << fs_GetPlistPath(mp_pOwner->mp_Params);
+			NStr::CStr Command = NProcess::CProcessLaunchParams::fs_GetParams({"unload", fs_GetPlistPath(mp_pOwner->mp_Params)});
 			bResult = fs_SystemCall("/bin/launchctl", Command, &Result, &Error) == 0;
+			Error = Error.f_Trim();
 
-			if (!Error.f_IsEmpty())
+			if (!Error.f_IsEmpty() && !Error.f_EndsWith("Operation now in progress"))
 			{
-				f_ReportError(Error.f_Trim());
+				f_ReportError(Error);
 				return EActionResult_Failure;
 			}
 
