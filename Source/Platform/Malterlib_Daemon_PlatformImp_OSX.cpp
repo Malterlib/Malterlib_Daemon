@@ -1,4 +1,4 @@
-// Copyright © 2015 Hansoft AB 
+// Copyright © 2015 Hansoft AB
 // Distributed under the MIT license, see license text in LICENSE.Malterlib
 
 #include <Mib/Daemon/Daemon>
@@ -401,7 +401,7 @@ namespace NMib::NDaemon
 
 				bool bFoundLabel = false;
 
-				for (auto &Line : ListResult.f_SplitLine())
+				for (auto &Line : ListResult.f_SplitLine<true>())
 				{
 					auto TrimmedLine = Line.f_Trim();
 					if (TrimmedLine == LoadedLabel)
