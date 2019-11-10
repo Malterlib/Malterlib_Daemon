@@ -885,7 +885,7 @@ namespace NMib::NDaemon
 				}
 			}
 		};
-		NStorage::TCAggregate<CCalcFeatures> g_SupportedFeatures = {DAggregateInit};
+		constinit NStorage::TCAggregate<CCalcFeatures> g_SupportedFeatures = {DAggregateInit};
 	}
 
 	EDaemonFeature CDaemon::fs_SupportedFeatures()
