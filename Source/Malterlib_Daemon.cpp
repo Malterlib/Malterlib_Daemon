@@ -686,51 +686,51 @@ namespace NMib::NDaemon
 
 		switch (mp_Params.f_GetAction())
 		{
-			case EDaemonAction_Add:
+		case EDaemonAction_Add:
 			{
 				bool bCheckForExisting = mp_Params.f_GetActionParam().f_GetAsType<bool>();
 				CommandResult = f_Add(bCheckForExisting);
 			}
 			break;
-			case EDaemonAction_Remove:
+		case EDaemonAction_Remove:
 			{
 				CommandResult = f_Remove();
 			}
 			break;
-			case EDaemonAction_Start:
+		case EDaemonAction_Start:
 			{
 				CommandResult = f_Start();
 			}
 			break;
-			case EDaemonAction_Restart:
+		case EDaemonAction_Restart:
 			{
 				bool bWait = mp_Params.f_GetActionParam().f_GetAsType<bool>();
 				CommandResult = f_Restart(bWait);
 			}
 			break;
-			case EDaemonAction_Stop:
+		case EDaemonAction_Stop:
 			{
 				bool bWait = mp_Params.f_GetActionParam().f_GetAsType<bool>();
 				CommandResult = f_Stop(bWait);
 			}
 			break;
-			case EDaemonAction_Run:
+		case EDaemonAction_Run:
 			{
 				NMib::fg_GetSys()->f_SetRunningAsDaemon(true);
 				CommandResult = f_Run();
 			}
 			break;
-			case EDaemonAction_RunAsProgram:
+		case EDaemonAction_RunAsProgram:
 			{
 				CommandResult = f_RunAsProgram(true);
 			}
 			break;
-			case EDaemonAction_RunAsProgramNoDebug:
+		case EDaemonAction_RunAsProgramNoDebug:
 			{
 				CommandResult = f_RunAsProgram(false);
 			}
 			break;
-			case EDaemonAction_Exists:
+		case EDaemonAction_Exists:
 			{
 				bool bExists;
 				if (f_Exists(bExists) == EActionResult_Failure)
@@ -738,6 +738,9 @@ namespace NMib::NDaemon
 				else
 					CommandResult = bExists ? EActionResult_Success : EActionResult_Failure;
 			}
+			break;
+		case EDaemonAction_Custom:
+			DMibNeverGetHere;
 			break;
 		}
 

@@ -191,6 +191,8 @@ namespace
 							//DMibDTrace("Error: {}\r\n", _State.f_Get<NMib::NProcess::EProcessLaunchState_LaunchFailed>());
 						}
 						break;
+					case NMib::NProcess::EProcessLaunchState_Launched:
+						break;
 					}
 				}
 			;

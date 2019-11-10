@@ -123,6 +123,8 @@ namespace NMib::NDaemon
 							*_pError += "\n";
 						}
 						break;
+					case NMib::NProcess::EProcessLaunchState_Launched:
+						break;
 					}
 				}
 			;
