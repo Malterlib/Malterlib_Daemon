@@ -5,9 +5,9 @@ Import "../Core/Lib_Malterlib.MTarget"
 
 %Group "{Malterlib}/{Lib_Malterlib_Daemon}"
 {
-	%Group Daemon
+	%Group "Daemon"
 	{
-		%Group Include
+		%Group "Include"
 		{
 			Compile.Type "C++"
 			{
@@ -16,7 +16,7 @@ Import "../Core/Lib_Malterlib.MTarget"
 			%File "Include/Mib/Daemon/^*"
 		}
 		%File "Source/*"
-		%Group Platform
+		%Group "Platform"
 		{
 			%File "Source/Platform/*"
 			{
@@ -26,7 +26,7 @@ Import "../Core/Lib_Malterlib.MTarget"
 				}
 			}
 		}
-		%Group Documentation
+		%Group "Documentation"
 		{
 			%File "Documentation/*"
 		}
@@ -67,7 +67,7 @@ Property
 	}
 	%Group "Source"
 	{
-		%File Test/Test_Malterlib_Daemon_Main.cpp
+		%File "Test/Test_Malterlib_Daemon_Main.cpp"
 	}
 }
 
@@ -84,11 +84,11 @@ Property
 {
 	%Group "Source"
 	{
-		%File Test/Test_Malterlib_Daemon.cpp
+		%File "Test/Test_Malterlib_Daemon.cpp"
 	}
 	%Dependency "Malterlib_Helper_Daemon=Exe_Test_Malterlib_Helper_Daemon"
 	{
-		Dependency.Link "false"
+		Dependency.Link false
 	}
 }
 
