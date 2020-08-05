@@ -246,6 +246,19 @@ namespace NMib::NDaemon
 
 		static void fs_SigTermHandler(int const sigid)
 		{
+			sigset_t WaitSet;
+			sigset_t OldSet;
+			sigemptyset(&WaitSet);
+			sigaddset(&WaitSet, SIGTERM);
+			sigaddset(&WaitSet, SIGINT);
+			sigprocmask(SIG_BLOCK, &WaitSet, &OldSet);
+
+			auto Cleanup = g_OnScopeExit > [&]
+				{
+					sigprocmask(SIG_SETMASK, &OldSet, nullptr);
+				}
+			;
+
 			msp_pThis->mp_InterruptedEvent.f_SetSignaled();
 		}
 
@@ -275,6 +288,19 @@ namespace NMib::NDaemon
 
 		static void fs_CancelDaemonStatusHandler(int const sigid)
 		{
+			sigset_t WaitSet;
+			sigset_t OldSet;
+			sigemptyset(&WaitSet);
+			sigaddset(&WaitSet, SIGTERM);
+			sigaddset(&WaitSet, SIGINT);
+			sigprocmask(SIG_BLOCK, &WaitSet, &OldSet);
+
+			auto Cleanup = g_OnScopeExit > [&]
+				{
+					sigprocmask(SIG_SETMASK, &OldSet, nullptr);
+				}
+			;
+
 			fg_CancelRunDaemonStatusApp();
 		}
 

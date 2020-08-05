@@ -240,6 +240,21 @@ namespace NMib::NDaemon
 
 		static void fs_SigHandler(int const _sigid)
 		{
+			sigset_t WaitSet;
+			sigset_t OldSet;
+			sigemptyset(&WaitSet);
+			sigaddset(&WaitSet, SIGTERM);
+			sigaddset(&WaitSet, SIGINT);
+			sigaddset(&WaitSet, SIGTSTP);
+			sigaddset(&WaitSet, SIGCONT);
+			sigprocmask(SIG_BLOCK, &WaitSet, &OldSet);
+
+			auto Cleanup = g_OnScopeExit > [&]
+				{
+					sigprocmask(SIG_SETMASK, &OldSet, nullptr);
+				}
+			;
+
 			switch (_sigid)
 			{
 				case SIGTSTP:
