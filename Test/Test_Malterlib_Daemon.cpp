@@ -75,13 +75,14 @@ namespace
 
 		NMib::NStr::CStr f_GetDaemonDir()
 		{
-			NMib::NStr::CStr DaemonDir = NMib::NFile::CFile::fs_GetProgramDirectory() + "/" + m_DaemonDirectory;
+			NMib::NStr::CStr ProgramDirectory = NMib::NFile::CFile::fs_GetProgramDirectory();
+			NMib::NStr::CStr DaemonDir = ProgramDirectory + "/" + m_DaemonDirectory;
 
 			auto Mapped = m_CreatedDirs(DaemonDir);
 			if (Mapped.f_WasCreated())
 			{
 				NMib::NStr::CStr DaemonFile = NMib::NFile::CFile::fs_GetFile(NMib::NFile::CFile::fs_GetProgramPath()).f_Replace("Test_Malterlib_Daemon", "Test_Malterlib_Helper_Daemon");
-				NMib::NStr::CStr SourceFile = NMib::NFile::CFile::fs_GetProgramDirectory() + "/" + DaemonFile;
+				NMib::NStr::CStr SourceFile = ProgramDirectory + "/" + DaemonFile;
 				NMib::NStr::CStr DestFile = DaemonDir + "/" + DaemonFile;
 				for (mint i = 0; i < 5; ++i)
 				{
@@ -95,7 +96,17 @@ namespace
 					{
 					}
 				}
+
 				NMib::NFile::CFile::fs_CreateDirectory(DaemonDir);
+#if defined(DPlatformFamily_OSX) || defined(DPlatformFamily_Linux)
+				if (NMib::NFile::CFile::fs_FileExists(ProgramDirectory / "MalterlibHelper"))
+					NMib::NFile::CFile::fs_CopyFile(ProgramDirectory / "MalterlibHelper", DaemonDir / "MalterlibHelper");
+#endif
+
+#ifdef DPlatformFamily_OSX
+				if (NMib::NFile::CFile::fs_FileExists(ProgramDirectory / "MalterlibOverrideMalloc.dylib"))
+					NMib::NFile::CFile::fs_CopyFile(ProgramDirectory / "MalterlibOverrideMalloc.dylib", DestFile);
+#endif
 				NMib::NFile::CFile::fs_CopyFile(SourceFile, DestFile);
 				auto Attribs = NMib::NFile::CFile::fs_GetAttributes(DaemonDir);
 				NMib::NFile::CFile::fs_SetAttributes
@@ -121,7 +132,6 @@ namespace
 
 		NMib::NStr::CStr f_GetDaemonPath()
 		{
-
 			return f_GetDaemonDir() + "/" + NMib::NFile::CFile::fs_GetFile(NMib::NFile::CFile::fs_GetProgramPath()).f_Replace("Test_Malterlib_Daemon", "Test_Malterlib_Helper_Daemon");
 		}
 
