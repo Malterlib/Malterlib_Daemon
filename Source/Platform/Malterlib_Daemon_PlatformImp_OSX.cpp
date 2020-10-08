@@ -555,9 +555,9 @@ namespace NMib::NDaemon
 
 						NContainer::CByteVector lData = NFile::CFile::fs_ReadFile(LaunchFilePath);
 						CFDataRef XmlData = CFDataCreate(NULL, lData.f_GetArray(), lData.f_GetLen());
-						DMibDeprecatedSupressStart
+						DMibDeprecatedSuppressStart
 						CFPropertyListRef PropertyList = CFPropertyListCreateFromXMLData(NULL, XmlData, kCFPropertyListImmutable, NULL);
-						DMibDeprecatedSupressStop
+						DMibDeprecatedSuppressStop
 						CFRelease(XmlData);
 
 						if (PropertyList)
@@ -613,9 +613,9 @@ namespace NMib::NDaemon
 			}
 
 			CFPropertyListRef PropertyList = fg_CreateDictionaryFromParams(mp_pOwner->mp_Params);
-			DMibDeprecatedSupressStart
+			DMibDeprecatedSuppressStart
 			CFDataRef XmlData = CFPropertyListCreateXMLData(NULL, PropertyList);
-			DMibDeprecatedSupressStop
+			DMibDeprecatedSuppressStop
 			NContainer::CByteVector Data;
 			Data.f_Insert((uint8 const *)CFDataGetBytePtr(XmlData), CFDataGetLength(XmlData));
 
@@ -667,9 +667,9 @@ namespace NMib::NDaemon
 					if (NFile::CFile::fs_FileExists(LaunchFilePath, NFile::EFileAttrib_File))
 					{
 						CFPropertyListRef PropertyList = fg_CreateDictionaryFromParams(mp_pOwner->mp_Params, true);
-						DMibDeprecatedSupressStart
+						DMibDeprecatedSuppressStart
 						CFDataRef XmlData = CFPropertyListCreateXMLData(NULL, PropertyList);
-						DMibDeprecatedSupressStop
+						DMibDeprecatedSuppressStop
 						NContainer::CByteVector Data;
 						Data.f_Insert((uint8 const *)CFDataGetBytePtr(XmlData), CFDataGetLength(XmlData));
 
