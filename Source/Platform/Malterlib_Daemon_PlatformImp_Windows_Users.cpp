@@ -92,7 +92,7 @@ namespace NMib::NDaemon
 
 					LSA_UNICODE_STRING PrivilegeString;
 
-					PrivilegeString.Buffer = L"SeServiceLogonRight";
+					PrivilegeString.Buffer = fg_AutoConstCast(L"SeServiceLogonRight");
 					PrivilegeString.Length = NMib::NStr::fg_StrLen(PrivilegeString.Buffer) * sizeof(ch16);
 					PrivilegeString.MaximumLength = (PrivilegeString.Length + 1) * sizeof(ch16);
 

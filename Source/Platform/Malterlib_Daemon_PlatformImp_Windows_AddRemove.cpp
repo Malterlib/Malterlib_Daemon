@@ -260,7 +260,7 @@ namespace NMib::NDaemon
 		RestartActions.dwResetPeriod = 60;
 		Temp = NStr::NPlatform::fg_StrToWindows(NStr::CStr("Rebooting the server in response to crash of ") + mp_pOwner->f_GetDaemonParams().f_GetDaemonDisplayName() + " crash.");
 		RestartActions.lpRebootMsg = (ch16 *)Temp.f_GetStr();
-		RestartActions.lpCommand = str_utf16("");
+		RestartActions.lpCommand = fg_AutoConstCast(str_utf16(""));
 		RestartActions.cActions = 3;
 		SC_ACTION Actions[3];
 		Actions[0].Delay = 1000;
