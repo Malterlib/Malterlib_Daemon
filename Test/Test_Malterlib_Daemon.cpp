@@ -298,7 +298,7 @@ namespace
 			bool bExists = false;
 			bool bTimedOut = false;
 
-			NMib::NThread::CEventAutoResetReportable FileChangeEvent;
+			NMib::NThread::CEventAutoReset FileChangeEvent;
 			if (NMib::NFile::CFileChangeNotification::fs_Supported())
 			{
 				NMib::NFile::CFileChangeNotification FileChangeNotification;
