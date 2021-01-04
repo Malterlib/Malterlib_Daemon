@@ -6,10 +6,19 @@
 #include <sys/signal.h>
 #include <ServiceManagement/ServiceManagement.h>
 #include <Mib/Process/ProcessLaunch>
+#include <Mib/Core/PlatformSpecific/OSXQualityOfService>
 
 namespace NMib::NDaemon
 {
-	void fg_RunDaemonStatusApp(NFunction::TCFunction<void ()> const& _fPause, NFunction::TCFunction<void ()> const& _fResume, NStr::CStr const &_DaemonName, NContainer::CByteVector const& _IconData);
+	void fg_RunDaemonStatusApp
+		(
+			NFunction::TCFunction<void ()> const& _fPause
+			, NFunction::TCFunction<void ()> const& _fResume
+			, NStr::CStr const &_DaemonName
+			, NContainer::CByteVector const &_IconData
+			, bool _bRunningAsDaemon
+		)
+	;
 	void fg_CancelRunDaemonStatusApp();
 
 	NStr::CStr CDaemon::fs_GetUniquePrefix()
@@ -69,10 +78,19 @@ namespace NMib::NDaemon
 			return NStr::CStr::CFormat(CDaemon::fs_GetUniquePrefix() + ".{}") << _Params.f_GetDaemonName();
 		}
 
-
 		static NStr::CStr fs_GetPlistFilename(CDaemonParams const &_Params)
 		{
 			return fs_GetFullDaemonName(_Params) + ".plist";
+		}
+
+		static NStr::CStr fs_GetLaunchdMode(EDaemonMode _Mode)
+		{
+			if (_Mode == EDaemonMode_LocalUser)
+				return "Aqua";
+			else if (_Mode == EDaemonMode_AllUsers)
+				return "Aqua";
+			else
+				return "System";
 		}
 
 		static NStr::CStr fs_GetPlistDirectory(EDaemonMode _Mode)
@@ -264,6 +282,9 @@ namespace NMib::NDaemon
 
 		EActionResult f_Run()
 		{
+			if (mp_pOwner->mp_Params.f_GetAlwaysRunStatusApp())
+				return f_RunAsProgram(false);
+
 			mp_InterruptedEvent.f_ResetSignaled();
 
 			auto pSigterm = signal(SIGTERM, (sig_t)fs_SigTermHandler);
@@ -306,7 +327,7 @@ namespace NMib::NDaemon
 
 		EActionResult f_RunAsProgram(bool _bDebug)
 		{
-			if (!_bDebug)
+			if (!_bDebug && !mp_pOwner->mp_Params.f_GetAlwaysRunStatusApp())
 				return f_Run();
 
 			auto pSigterm = signal(SIGTERM, (sig_t)fs_CancelDaemonStatusHandler);
@@ -330,20 +351,26 @@ namespace NMib::NDaemon
 					IconData = *pIconData;
 			}
 
-			fg_RunDaemonStatusApp
-				(
-					[&]()
-					{
-						fp_DaemonPause();
-					}
-					, [&]()
-					{
-						fp_DaemonResume();
-					}
-					, mp_pOwner->mp_Params.f_GetDaemonDisplayName()
-					, IconData
-				 )
-			;
+			if (mp_pOwner->mp_Params.f_GetCanPause())
+			{
+				fg_RunDaemonStatusApp
+					(
+						[&]()
+						{
+							fp_DaemonPause();
+						}
+						, [&]()
+						{
+							fp_DaemonResume();
+						}
+						, mp_pOwner->mp_Params.f_GetDaemonDisplayName()
+						, IconData
+						, NMib::fg_GetSys()->f_GetRunningAsDaemon()
+					)
+				 ;
+			}
+			else
+				fg_RunDaemonStatusApp(nullptr, nullptr, mp_pOwner->mp_Params.f_GetDaemonDisplayName(), IconData, NMib::fg_GetSys()->f_GetRunningAsDaemon());
 
 			fp_DaemonDestroy();
 
@@ -409,6 +436,8 @@ namespace NMib::NDaemon
 
 		EActionResult f_Stop(bool _bWait)
 		{
+			using namespace NStr;
+
 			if (!fp_CheckParamsSupported())
 				return EActionResult_Failure;
 			if (mp_pOwner->mp_Params.f_GetKeepRunning())
@@ -418,20 +447,21 @@ namespace NMib::NDaemon
 			NStr::CStr Result;
 			NStr::CStr Error;
 
-			uint32 Pid = 0;
-
 			{
 				NStr::CStr ListResult;
 				NStr::CStr ListError;
 
 				NStr::CStr DaemonName = fs_GetFullDaemonName(mp_pOwner->mp_Params);
 
-				NStr::CStr Command = NProcess::CProcessLaunchParams::fs_GetParams({"list" , DaemonName});
+				NStr::CStr Command = NProcess::CProcessLaunchParams::fs_GetParams({"list", DaemonName});
 				fs_SystemCall("/bin/launchctl", Command, &ListResult, &ListError);
 
-				NStr::CStr LoadedLabel = NStr::CStr::CFormat("\"Label\" = \"{}\";") << DaemonName;
+				NStr::CStr ExpectedSessionType = "\"LimitLoadToSessionType\" = \"{}\";"_f << fs_GetLaunchdMode(mp_pOwner->mp_Params.f_GetDaemonMode());
+				NStr::CStr LoadedLabel = "\"Label\" = \"{}\";"_f << DaemonName;
 
 				bool bFoundLabel = false;
+				bool bFoundSessionType = false;
+				uint32 Pid = 0;
 
 				for (auto &Line : ListResult.f_SplitLine<true>())
 				{
@@ -439,10 +469,13 @@ namespace NMib::NDaemon
 					if (TrimmedLine == LoadedLabel)
 						bFoundLabel = true;
 
+					if (TrimmedLine == ExpectedSessionType)
+						bFoundSessionType = true;
+
 					(NStr::CStr::CParse("\"PID\" = {};") >> Pid).f_Parse(TrimmedLine);
 				}
 
-				if (Pid == 0 && !bFoundLabel)
+				if ((Pid == 0 && !bFoundLabel) || !bFoundSessionType)
 				{
 					// The daemon is not loaded
 					return EActionResult_Success;
@@ -523,6 +556,21 @@ namespace NMib::NDaemon
 			CFDictionarySetValue(Dict, CFSTR("RunAtLoad"), kCFBooleanTrue);
 //				fg_SetDictionaryValue(Dict, "ExitTimeOut", 0);	// Disable timeout, this seems to have broken on Yosemite
 			fg_SetDictionaryValue(Dict, "ExitTimeOut", 72*3600);	// Three day timeout
+
+			int RelativePriority;
+			NStr::CStr ProcessType;
+			switch (NMib::NPlatform::fg_PriorityToQualityOfService(_Params.f_GetExecutionPriority(), RelativePriority))
+			{
+			case QOS_CLASS_USER_INTERACTIVE: ProcessType = "Interactive"; break;
+			case QOS_CLASS_USER_INITIATED: break;
+			case QOS_CLASS_DEFAULT: break;
+			case QOS_CLASS_UTILITY: break;
+			case QOS_CLASS_UNSPECIFIED: break;
+			case QOS_CLASS_BACKGROUND: ProcessType = "Background"; break;
+			}
+
+			if (ProcessType)
+				fg_SetDictionaryValue(Dict, "ProcessType", ProcessType);
 
 			if (!_Params.f_GetRunAsUser().f_IsEmpty())
 				fg_SetDictionaryValue(Dict, "UserName", _Params.f_GetRunAsUser());

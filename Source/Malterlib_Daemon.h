@@ -148,6 +148,15 @@ namespace NMib::NDaemon
 		static void fs_ParseOptions(COptionHandlerMap &, CCommandLineVector &_CommandLine);
 		static bool fs_ParseOptionArgument(CCommandLineVector &_CommandLine, NStr::CStr & _Destination);
 
+		bool f_GetAlwaysRunStatusApp() const;
+		void f_SetAlwaysRunStatusApp(bool _bValue);
+
+		bool f_GetCanPause() const;
+		void f_SetCanPause(bool _bValue);
+
+		EExecutionPriority f_GetExecutionPriority() const;
+		void f_SetExecutionPriority(EExecutionPriority _Priority);
+
 	protected:
 		NStr::CStr mp_DaemonName;
 		NStr::CStr mp_DisplayName;
@@ -176,6 +185,8 @@ namespace NMib::NDaemon
 		FErrorReporterYesNo mp_fReportErrorYesNo;
 		FInformationReporter mp_fReportInformation;
 
+		EExecutionPriority mp_ExecutionPriority = EExecutionPriority_Normal;
+
 		NStr::CStr mp_AddCommandLine;
 
 		void* mp_pNativeHandle;
@@ -186,6 +197,8 @@ namespace NMib::NDaemon
 		bool mp_bKeepRunning;
 		bool mp_bDetachConsole;
 		bool mp_bDaemonize;
+		bool mp_bAlwaysRunStatusApp = false;
+		bool mp_bCanPause = true;
 
 		NMib::NStr::CStr fp_CleanDaemonName(NMib::NStr::CStr const &_DaemonName);
 		void fp_CopyElementsToCommandLine(CCommandLineVector const &_CommandLine);

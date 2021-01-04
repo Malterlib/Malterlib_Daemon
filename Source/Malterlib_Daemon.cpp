@@ -429,9 +429,39 @@ namespace NMib::NDaemon
 		return mp_Action;
 	}
 
-	void* CDaemonParams::f_GetNativeHandle() const
+	void *CDaemonParams::f_GetNativeHandle() const
 	{
 		return mp_pNativeHandle;
+	}
+
+	bool CDaemonParams::f_GetAlwaysRunStatusApp() const
+	{
+		return mp_bAlwaysRunStatusApp;
+	}
+
+	void CDaemonParams::f_SetAlwaysRunStatusApp(bool _bValue)
+	{
+		mp_bAlwaysRunStatusApp = _bValue;
+	}
+
+	bool CDaemonParams::f_GetCanPause() const
+	{
+		return mp_bCanPause;
+	}
+
+	void CDaemonParams::f_SetCanPause(bool _bValue)
+	{
+		mp_bCanPause = _bValue;
+	}
+
+	EExecutionPriority CDaemonParams::f_GetExecutionPriority() const
+	{
+		return mp_ExecutionPriority;
+	}
+
+	void CDaemonParams::f_SetExecutionPriority(EExecutionPriority _Priority)
+	{
+		mp_ExecutionPriority = _Priority;
 	}
 
 	CDaemonActionParam const &CDaemonParams::f_GetActionParam() const
