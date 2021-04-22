@@ -22,7 +22,7 @@ Import "../Core/Lib_Malterlib.MTarget"
 			{
 				Compile.Disabled true
 				{
-					!PlatformFamily "@(PlatformFamilyFromImpFile)"
+					!PlatformFamily PlatformFamilyFromImpFile
 				}
 			}
 		}
@@ -36,20 +36,13 @@ Import "../Core/Lib_Malterlib.MTarget"
 
 Property
 {
-	MalterlibLibrary_Daemon true
-	{
-		&
-		{
-			MalterlibLibrary_Daemon ""
-			MalterlibLibrary_All true
-		}
-	}
-	MalterlibSubLibraries "Daemon;@(MalterlibSubLibraries)"
+	MalterlibLibrary_Daemon define bool = MalterlibLibrary_All
+	MalterlibSubLibraries =+ "Daemon"
 	{
 		!!MalterlibLibrary_Daemon true
 	}
-//	MalterlibSubLibrarySeparate_Lib_Malterlib_Daemon true
-	MalterlibIncludeRoots "@('Include'->MakeAbsolute());@(MalterlibIncludeRoots)"
+//	MalterlibSubLibrarySeparate_Lib_Malterlib_Daemon define bool = true
+	MalterlibIncludeRoots =+ "Include"->MakeAbsolute()
 	{
 		!!MalterlibLibrary_Daemon true
 	}
@@ -75,9 +68,9 @@ Property
 {
 	!!MalterlibEnableInternalTests true
 	
-	MalterlibTests "Malterlib_Helper_Daemon;@(MalterlibTests)"
-	MalterlibTestExtraGroups_Malterlib_Helper_Daemon "{Test}/{Malterlib_Helper_Daemon}"
-	MalterlibTestAutoAdd_Malterlib_Helper_Daemon false
+	MalterlibTests =+ "Malterlib_Helper_Daemon"
+	MalterlibTestExtraGroups_Malterlib_Helper_Daemon define [string] = ["{Test}/{Malterlib_Helper_Daemon}"]
+	MalterlibTestAutoAdd_Malterlib_Helper_Daemon define bool = false
 }
 
 %Group "{Test}/{Malterlib_Daemon}"
@@ -86,7 +79,12 @@ Property
 	{
 		%File "Test/Test_Malterlib_Daemon.cpp"
 	}
-	%Dependency "Malterlib_Helper_Daemon=Exe_Test_Malterlib_Helper_Daemon"
+	%Dependency {
+		Name: "Exe_Test_Malterlib_Helper_Daemon"
+		, Properties: {
+			Dependency.Target: "Malterlib_Helper_Daemon"
+		}
+	}
 	{
 		Dependency.Link false
 	}
@@ -96,6 +94,6 @@ Property
 {
 	!!MalterlibEnableInternalTests true
 	
-	MalterlibTests "Malterlib_Daemon;@(MalterlibTests)"
-	MalterlibTestExtraGroups_Malterlib_Daemon "{Test}/{Malterlib_Daemon}"
+	MalterlibTests =+ "Malterlib_Daemon"
+	MalterlibTestExtraGroups_Malterlib_Daemon define [string] = ["{Test}/{Malterlib_Daemon}"]
 }
