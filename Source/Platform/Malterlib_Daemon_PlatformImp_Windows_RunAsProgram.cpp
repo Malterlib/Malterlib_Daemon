@@ -87,6 +87,15 @@ namespace NMib::NDaemon
 			if (!Icon)
 				Icon = LoadIcon(nullptr, IDI_APPLICATION);
 			msp_TaskIcon.f_Init(Icon);
+
+			auto Subscription = NProcess::NPlatform::fg_Process_WaitForTermination
+				(
+					[&]
+					{
+						fs_AbortDebug();
+					}
+				)
+			;
 				
 			// Just spin in eternity
 			while (1)
