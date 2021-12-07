@@ -269,11 +269,11 @@ namespace NMib::NDaemon
 			sigemptyset(&WaitSet);
 			sigaddset(&WaitSet, SIGTERM);
 			sigaddset(&WaitSet, SIGINT);
-			sigprocmask(SIG_BLOCK, &WaitSet, &OldSet);
+			pthread_sigmask(SIG_BLOCK, &WaitSet, &OldSet);
 
 			auto Cleanup = g_OnScopeExit > [&]
 				{
-					sigprocmask(SIG_SETMASK, &OldSet, nullptr);
+					pthread_sigmask(SIG_SETMASK, &OldSet, nullptr);
 				}
 			;
 
@@ -314,11 +314,11 @@ namespace NMib::NDaemon
 			sigemptyset(&WaitSet);
 			sigaddset(&WaitSet, SIGTERM);
 			sigaddset(&WaitSet, SIGINT);
-			sigprocmask(SIG_BLOCK, &WaitSet, &OldSet);
+			pthread_sigmask(SIG_BLOCK, &WaitSet, &OldSet);
 
 			auto Cleanup = g_OnScopeExit > [&]
 				{
-					sigprocmask(SIG_SETMASK, &OldSet, nullptr);
+					pthread_sigmask(SIG_SETMASK, &OldSet, nullptr);
 				}
 			;
 

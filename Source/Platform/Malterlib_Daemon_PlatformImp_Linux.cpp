@@ -247,11 +247,11 @@ namespace NMib::NDaemon
 			sigaddset(&WaitSet, SIGINT);
 			sigaddset(&WaitSet, SIGTSTP);
 			sigaddset(&WaitSet, SIGCONT);
-			sigprocmask(SIG_BLOCK, &WaitSet, &OldSet);
+			pthread_sigmask(SIG_BLOCK, &WaitSet, &OldSet);
 
 			auto Cleanup = g_OnScopeExit > [&]
 				{
-					sigprocmask(SIG_SETMASK, &OldSet, nullptr);
+					pthread_sigmask(SIG_SETMASK, &OldSet, nullptr);
 				}
 			;
 
