@@ -492,6 +492,11 @@ namespace NMib::NDaemon
 				f_ReportError(Error);
 				return EActionResult_Failure;
 			}
+			else if (!bResult)
+			{
+				f_ReportError("Unknown error stopping daemon");
+				return EActionResult_Failure;
+			}
 
 			return EActionResult_Success;
 		}
