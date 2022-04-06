@@ -249,7 +249,7 @@ namespace NMib::NDaemon
 			sigaddset(&WaitSet, SIGCONT);
 			pthread_sigmask(SIG_BLOCK, &WaitSet, &OldSet);
 
-			auto Cleanup = g_OnScopeExit > [&]
+			auto Cleanup = g_OnScopeExit / [&]
 				{
 					pthread_sigmask(SIG_SETMASK, &OldSet, nullptr);
 				}
@@ -737,7 +737,7 @@ namespace NMib::NDaemon
 			auto pSigcont = signal(SIGCONT, (sig_t) fs_SigHandler);
 
 			auto Cleanup
-				= g_OnScopeExit > [&]
+				= g_OnScopeExit / [&]
 				{
 					signal(SIGTERM, pSigterm);
 					signal(SIGINT, pSigint);

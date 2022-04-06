@@ -54,7 +54,7 @@ namespace NMib::NDaemon
 						)
 					;
 
-					auto CleanupUser = g_OnScopeExit > [&]
+					auto CleanupUser = g_OnScopeExit / [&]
 						{
 							try
 							{
@@ -84,7 +84,7 @@ namespace NMib::NDaemon
 					if (Status)
 						DMibError((NMib::NStr::CFStr256::CFormat("Windows returned an error from LsaOpenPolicy(Add login as service privilege): {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(Status)).f_GetStr());
 
-					auto Cleanup = g_OnScopeExit > [&]
+					auto Cleanup = g_OnScopeExit / [&]
 						{
 							LsaClose(PolicyHandle);
 						}

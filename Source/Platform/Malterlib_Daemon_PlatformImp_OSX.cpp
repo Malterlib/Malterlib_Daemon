@@ -271,7 +271,7 @@ namespace NMib::NDaemon
 			sigaddset(&WaitSet, SIGINT);
 			pthread_sigmask(SIG_BLOCK, &WaitSet, &OldSet);
 
-			auto Cleanup = g_OnScopeExit > [&]
+			auto Cleanup = g_OnScopeExit / [&]
 				{
 					pthread_sigmask(SIG_SETMASK, &OldSet, nullptr);
 				}
@@ -291,7 +291,7 @@ namespace NMib::NDaemon
 			auto pSigint = signal(SIGINT, (sig_t)fs_SigTermHandler);
 
 			auto Cleanup
-				= g_OnScopeExit > [&]
+				= g_OnScopeExit / [&]
 				{
 					signal(SIGTERM, pSigterm);
 					signal(SIGINT, pSigint);
@@ -316,7 +316,7 @@ namespace NMib::NDaemon
 			sigaddset(&WaitSet, SIGINT);
 			pthread_sigmask(SIG_BLOCK, &WaitSet, &OldSet);
 
-			auto Cleanup = g_OnScopeExit > [&]
+			auto Cleanup = g_OnScopeExit / [&]
 				{
 					pthread_sigmask(SIG_SETMASK, &OldSet, nullptr);
 				}
@@ -334,7 +334,7 @@ namespace NMib::NDaemon
 			auto pSigint = signal(SIGINT, (sig_t)fs_CancelDaemonStatusHandler);
 
 			auto Cleanup
-				= g_OnScopeExit > [&]
+				= g_OnScopeExit / [&]
 				{
 					signal(SIGTERM, pSigterm);
 					signal(SIGINT, pSigint);
