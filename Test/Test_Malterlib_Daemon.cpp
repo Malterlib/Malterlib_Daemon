@@ -102,6 +102,10 @@ namespace
 				if (NMib::NFile::CFile::fs_FileExists(ProgramDirectory / "MalterlibHelper"))
 					NMib::NFile::CFile::fs_CopyFile(ProgramDirectory / "MalterlibHelper", DaemonDir / "MalterlibHelper");
 #endif
+#if defined(DMibLLVMSanitizerRuntime)
+				if (NMib::NFile::CFile::fs_FileExists(ProgramDirectory / DMibLLVMSanitizerRuntime))
+					NMib::NFile::CFile::fs_CopyFile(ProgramDirectory / DMibLLVMSanitizerRuntime, DaemonDir / DMibLLVMSanitizerRuntime);
+#endif
 
 #ifdef DPlatformFamily_OSX
 				if (NMib::NFile::CFile::fs_FileExists(ProgramDirectory / "MalterlibOverrideMalloc.dylib"))
