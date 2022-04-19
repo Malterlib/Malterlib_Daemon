@@ -464,8 +464,8 @@ namespace
 
 		void f_TestLocalUserDaemon(bool _bUnsupported)
 		{
-			DMibTestSuite("LocalUserDaemon")
 			{
+				DMibTestPath("LocalUserDaemon");
 				m_bUserDaemon = true;
 				auto Cleanup
 					= NMib::fg_OnScopeExit
@@ -486,8 +486,10 @@ namespace
 
 		void f_TestAllUsersDaemon(NMib::NStr::CStr const &_ExtraParams, bool _bUnsupported)
 		{
-			DMibTestSuite(CTestCategory("AllUsersDaemons") << CTestGroup("Manual"))
+			if (!NMib::NTest::fg_GroupActive("Manual"))
+				return;
 			{
+				DMibTestPath("AllUsersDaemons");
 				m_bUserDaemon = true;
 				auto Cleanup
 					= NMib::fg_OnScopeExit
@@ -504,134 +506,129 @@ namespace
 
 		void f_TestGlobalDaemon(NMib::NStr::CStr const &_ExtraParams, bool _bUnsupported)
 		{
-			DMibTestSuite(CTestCategory("GlobalDaemon") << CTestGroup("Manual"))
+			if (!NMib::NTest::fg_GroupActive("Manual"))
+				return;
 			{
+				DMibTestPath("GlobalDaemon");
 				f_LaunchDaemon(_ExtraParams, true, true, !(NMib::NDaemon::CDaemon::fs_SupportedFeatures() & NMib::NDaemon::EDaemonFeature_GlobalDaemon) || _bUnsupported);
-			};
+			}
 		}
 
 		void f_TestCustomAction()
 		{
-			DMibTestSuite("CustomAction")
-			{
-				{
-					DMibTestPath("RunCustomAction");
-					f_LaunchDaemonProcess("-CustomAction", false, 0, true, true, false, false);
+			DMibTestPath("CustomAction");
+			f_LaunchDaemonProcess("-CustomAction", false, 0, true, true, false, false);
 
-					NMib::NStr::CStr DaemonDir = f_GetDaemonDir();
+			NMib::NStr::CStr DaemonDir = f_GetDaemonDir();
 
-					NMib::NStr::CStr File = DaemonDir + "/CustomAction";
-					bool bCustomActionRan = NMib::NFile::CFile::fs_FileExists(File);
-					DMibTest(DMibExpr(bCustomActionRan) == DMibExpr(true))(ETest_FailAndStop);
+			NMib::NStr::CStr File = DaemonDir + "/CustomAction";
+			bool bCustomActionRan = NMib::NFile::CFile::fs_FileExists(File);
+			DMibTest(DMibExpr(bCustomActionRan) == DMibExpr(true))(ETest_FailAndStop);
 
-					NMib::NStr::CStr CustomActionStr = NMib::NFile::CFile::fs_ReadStringFromFile(File);
-					DMibTest(DMibExpr(CustomActionStr) == DMibExpr("CustomAction"));
+			NMib::NStr::CStr CustomActionStr = NMib::NFile::CFile::fs_ReadStringFromFile(File);
+			DMibTest(DMibExpr(CustomActionStr) == DMibExpr("CustomAction"));
 
-					if (bCustomActionRan)
-						NMib::NFile::CFile::fs_DeleteFile(File);
-				}
-			};
+			if (bCustomActionRan)
+				NMib::NFile::CFile::fs_DeleteFile(File);
 		}
 
 		void f_DoTestsInPath(NMib::NStr::CStr const &_Desc, NMib::NStr::CStr const &_Path, bool _bUnsupported)
 		{
-			DMibTestCategory(_Desc)
+			DMibTestPath(_Desc);
+			m_DaemonDirectory = _Path;
+
 			{
-				m_DaemonDirectory = _Path;
+				DMibTestPath("DefaultUser");
+				f_TestLocalUserDaemon(_bUnsupported);
+				f_TestAllUsersDaemon("", _bUnsupported);
+				f_TestGlobalDaemon("", _bUnsupported);
+				f_TestCustomAction();
+			}
+#if defined(DPlatformFamily_Windows)
 
-				DMibTestCategory("DefaultUser")
+	#pragma message ( "TODO: Implement user/group management for Windows and enable this daemon test code." )
+
+#else
+			{
+				DMibTestPath("MalterlibTestUser");
+				if (NMib::NTest::fg_GroupActive("Manual"))
+					f_LaunchDaemonProcess("-DeleteUserAndGroup", true, 0, false, true, false, false);
 				{
-					f_TestLocalUserDaemon(_bUnsupported);
-					f_TestAllUsersDaemon("", _bUnsupported);
-					f_TestGlobalDaemon("", _bUnsupported);
-					f_TestCustomAction();
-				};
+					DMibTestPath("User");
+					m_RunAsUser = "_idstestuser";
+					auto Cleanup
+						= NMib::fg_OnScopeExit
+						(
+							[&]
+							{
+								m_RunAsUser.f_Clear();
+							}
+						)
+					;
 
-	#if defined(DPlatformFamily_Windows)
-
-		#pragma message ( "TODO: Implement user/group management for Windows and enable this daemon test code." )
-
-	#else
-				DMibTestCategory("MalterlibTestUser")
+					f_TestAllUsersDaemon("-RunAsUser _idstestuser", _bUnsupported);
+					f_TestGlobalDaemon("-RunAsUser _idstestuser", _bUnsupported);
+				}
 				{
-					if (NMib::NTest::fg_GroupActive("Manual"))
-						f_LaunchDaemonProcess("-DeleteUserAndGroup", true, 0, false, true, false, false);
+					DMibTestPath("Group");
+					m_RunAsGroup = "_idstestgroup";
+					auto Cleanup
+						= NMib::fg_OnScopeExit
+						(
+							[&]
+							{
+								m_RunAsGroup.f_Clear();
+							}
+						)
+					;
+					f_TestAllUsersDaemon("-RunAsGroup _idstestgroup", _bUnsupported);
+					f_TestGlobalDaemon("-RunAsGroup _idstestgroup", _bUnsupported);
+				}
+				{
+					DMibTestPath("GroupAndUser");
+					m_RunAsUser = "_idstestuser";
+					m_RunAsGroup = "_idstestgroup";
+					auto Cleanup
+						= NMib::fg_OnScopeExit
+						(
+							[&]
+							{
+								m_RunAsUser.f_Clear();
+								m_RunAsGroup.f_Clear();
+							}
+						)
+					;
+					f_TestAllUsersDaemon("-RunAsUser _idstestuser -RunAsGroup _idstestgroup", _bUnsupported);
+					f_TestGlobalDaemon("-RunAsUser _idstestuser -RunAsGroup _idstestgroup", _bUnsupported);
+				}
 
-					DMibTestCategory("User")
-					{
-						m_RunAsUser = "_idstestuser";
-						auto Cleanup
-							= NMib::fg_OnScopeExit
-							(
-								[&]
-								{
-									m_RunAsUser.f_Clear();
-								}
-							)
-						;
-
-						f_TestAllUsersDaemon("-RunAsUser _idstestuser", _bUnsupported);
-						f_TestGlobalDaemon("-RunAsUser _idstestuser", _bUnsupported);
-					};
-					DMibTestCategory("Group")
-					{
-						m_RunAsGroup = "_idstestgroup";
-						auto Cleanup
-							= NMib::fg_OnScopeExit
-							(
-								[&]
-								{
-									m_RunAsGroup.f_Clear();
-								}
-							)
-						;
-						f_TestAllUsersDaemon("-RunAsGroup _idstestgroup", _bUnsupported);
-						f_TestGlobalDaemon("-RunAsGroup _idstestgroup", _bUnsupported);
-					};
-					DMibTestCategory("GroupAndUser")
-					{
-						m_RunAsUser = "_idstestuser";
-						m_RunAsGroup = "_idstestgroup";
-						auto Cleanup
-							= NMib::fg_OnScopeExit
-							(
-								[&]
-								{
-									m_RunAsUser.f_Clear();
-									m_RunAsGroup.f_Clear();
-								}
-							)
-						;
-						f_TestAllUsersDaemon("-RunAsUser _idstestuser -RunAsGroup _idstestgroup", _bUnsupported);
-						f_TestGlobalDaemon("-RunAsUser _idstestuser -RunAsGroup _idstestgroup", _bUnsupported);
-					};
-
-					if (NMib::NTest::fg_GroupActive("Manual"))
-						f_LaunchDaemonProcess("-DeleteUserAndGroup", true, 0, false, true, false, false);
-				};
-	#endif // DPlatformFamily_Windows
+				if (NMib::NTest::fg_GroupActive("Manual"))
+					f_LaunchDaemonProcess("-DeleteUserAndGroup", true, 0, false, true, false, false);
 			};
+#endif // DPlatformFamily_Windows
 		}
 
 		void f_DoTests()
 		{
 			f_DoProxyServer();
 
-			f_DoTestsInPath("NormalDir", "NoSpace", false);
+			DMibTestSuite("Tests")
+			{
+				f_DoTestsInPath("NormalDir", "NoSpace", false);
 
-			NMib::NStr::CStr EvilDir = NMib::NStr::CWStr(str_utf16("'Evil' Dir 日本語 ÖÖÖ $(Bash) (Paren)"));
-#ifndef DPlatformFamily_Windows
-			EvilDir += " \"From hell\"";
-#endif
-			f_DoTestsInPath("EvilDir", EvilDir, !!(NMib::NDaemon::CDaemon::fs_SupportedFeatures() & (NMib::NDaemon::EDaemonFeature_EscapedPathBroken|NMib::NDaemon::EDaemonFeature_EscapeCharBroken)));
+				NMib::NStr::CStr EvilDir = NMib::NStr::CWStr(str_utf16("'Evil' Dir 日本語 ÖÖÖ $(Bash) (Paren)"));
+	#ifndef DPlatformFamily_Windows
+				EvilDir += " \"From hell\"";
+	#endif
+				f_DoTestsInPath("EvilDir", EvilDir, !!(NMib::NDaemon::CDaemon::fs_SupportedFeatures() & (NMib::NDaemon::EDaemonFeature_EscapedPathBroken|NMib::NDaemon::EDaemonFeature_EscapeCharBroken)));
 
-			NMib::NStr::CStr SlightlyLessEvilDir = NMib::NStr::CWStr(str_utf16("'Evil' Dir 日本語 ÖÖÖ (Paren)"));
+				NMib::NStr::CStr SlightlyLessEvilDir = NMib::NStr::CWStr(str_utf16("'Evil' Dir 日本語 ÖÖÖ (Paren)"));
 
-			f_DoTestsInPath("SlightlyLessEvilDir", SlightlyLessEvilDir, !!(NMib::NDaemon::CDaemon::fs_SupportedFeatures() & NMib::NDaemon::EDaemonFeature_EscapedPathBroken));
+				f_DoTestsInPath("SlightlyLessEvilDir", SlightlyLessEvilDir, !!(NMib::NDaemon::CDaemon::fs_SupportedFeatures() & NMib::NDaemon::EDaemonFeature_EscapedPathBroken));
 
-			f_CleanupFiles();
+				f_CleanupFiles();
+			};
 		}
-
 	};
 
 	DMibTestRegister(CDaemon_Tests, Malterlib::Daemon);
