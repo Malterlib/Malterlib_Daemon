@@ -6,7 +6,7 @@
 #include <sys/signal.h>
 #include <ServiceManagement/ServiceManagement.h>
 #include <Mib/Process/ProcessLaunch>
-#include <Mib/Core/PlatformSpecific/OSXQualityOfService>
+#include <Mib/Core/PlatformSpecific/MacOSQualityOfService>
 
 namespace NMib::NDaemon
 {

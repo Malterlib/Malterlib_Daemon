@@ -98,7 +98,7 @@ namespace
 				}
 
 				NMib::NFile::CFile::fs_CreateDirectory(DaemonDir);
-#if defined(DPlatformFamily_OSX) || defined(DPlatformFamily_Linux)
+#if defined(DPlatformFamily_macOS) || defined(DPlatformFamily_Linux)
 				if (NMib::NFile::CFile::fs_FileExists(ProgramDirectory / "MalterlibHelper"))
 					NMib::NFile::CFile::fs_CopyFile(ProgramDirectory / "MalterlibHelper", DaemonDir / "MalterlibHelper");
 #endif
@@ -107,7 +107,7 @@ namespace
 					NMib::NFile::CFile::fs_CopyFile(ProgramDirectory / DMibLLVMSanitizerRuntime, DaemonDir / DMibLLVMSanitizerRuntime);
 #endif
 
-#ifdef DPlatformFamily_OSX
+#ifdef DPlatformFamily_macOS
 				if (NMib::NFile::CFile::fs_FileExists(ProgramDirectory / "MalterlibOverrideMalloc.dylib"))
 					NMib::NFile::CFile::fs_CopyFile(ProgramDirectory / "MalterlibOverrideMalloc.dylib", DestFile);
 #endif
@@ -371,7 +371,7 @@ namespace
 						}
 						else if (!m_RunAsUser.f_IsEmpty())
 						{
-#ifdef DPlatformFamily_OSX
+#ifdef DPlatformFamily_macOS
 							RootGroup = "daemon";
 #endif
 							DMibTest(DMibExpr(User) == DMibExpr(m_RunAsUser));
@@ -384,7 +384,7 @@ namespace
 						}
 						else
 						{
-#ifdef DPlatformFamily_OSX
+#ifdef DPlatformFamily_macOS
 							RootGroup = "wheel";
 #endif
 							DMibTest(DMibExpr(User) == DMibExpr("root"));
