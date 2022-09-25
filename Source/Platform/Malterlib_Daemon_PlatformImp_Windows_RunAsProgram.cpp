@@ -26,6 +26,16 @@ namespace NMib::NDaemon
 			StateFile.f_Write(State.f_GetStr(), State.f_GetLen());
 		}
 
+		if (_bDebug)
+		{
+			HICON Icon = LoadIcon((HINSTANCE)mp_pOwner->f_GetDaemonParams().f_GetNativeHandle(), IDI_APPLICATION);
+			if (!Icon)
+				Icon = LoadIcon(nullptr, IDI_APPLICATION);
+			msp_TaskIcon.f_Init(Icon);
+		}
+
+		NStorage::TCSharedPointer<NThread::CEvent> pAbortStarted = fg_Construct();
+
 		NStorage::TCUniquePointer<NThread::CThreadObject> pAbortThread = NThread::CThreadObject::fs_StartThread
 			(
 				[=](NThread::CThreadObject *_pThread) -> aint
@@ -39,10 +49,13 @@ namespace NMib::NDaemon
 					{
 						(void)_Exception;
 						DMibLog(Error, "Failed to register for daemon state change: {}", _Exception);
+						pAbortStarted->f_SetSignaled();
 						return 1;
 					}
 
 					auto ServiceStateFileName = NFile::CFile::fs_GetFile(DaemonStateFile);
+
+					pAbortStarted->f_SetSignaled();
 
 					while (_pThread->f_GetState() != NThread::EThreadState_EventWantQuit)
 					{
@@ -71,6 +84,8 @@ namespace NMib::NDaemon
 			)
 		;
 
+		pAbortStarted->f_Wait();
+
 		fp_DaemonCreate();
 
 		NFile::CFile PIDFile;
@@ -83,11 +98,6 @@ namespace NMib::NDaemon
 
 		if (_bDebug)
 		{
-			HICON Icon = LoadIcon((HINSTANCE)mp_pOwner->f_GetDaemonParams().f_GetNativeHandle(), IDI_APPLICATION);
-			if (!Icon)
-				Icon = LoadIcon(nullptr, IDI_APPLICATION);
-			msp_TaskIcon.f_Init(Icon);
-
 			auto Subscription = NProcess::NPlatform::fg_Process_WaitForTermination
 				(
 					[&]
