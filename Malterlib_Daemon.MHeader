@@ -36,12 +36,12 @@ Import "../Core/Lib_Malterlib.MTarget"
 
 Property
 {
-	MalterlibLibrary_Daemon define bool = MalterlibLibrary_All
+	MalterlibLibrary_Daemon: bool = MalterlibLibrary_All
 	MalterlibSubLibraries =+ "Daemon"
 	{
 		!!MalterlibLibrary_Daemon true
 	}
-//	MalterlibSubLibrarySeparate_Lib_Malterlib_Daemon define bool = true
+//	MalterlibSubLibrarySeparate_Lib_Malterlib_Daemon: bool = true
 	MalterlibIncludeRoots =+ "Include"->MakeAbsolute()
 	{
 		!!MalterlibLibrary_Daemon true
@@ -69,8 +69,8 @@ Property
 	!!MalterlibEnableInternalTests true
 	
 	MalterlibTests =+ "Malterlib_Helper_Daemon"
-	MalterlibTestExtraGroups_Malterlib_Helper_Daemon define [string] = ["{Test}/{Malterlib_Helper_Daemon}"]
-	MalterlibTestAutoAdd_Malterlib_Helper_Daemon define bool = false
+	MalterlibTestExtraGroups_Malterlib_Helper_Daemon: [string] = ["{Test}/{Malterlib_Helper_Daemon}"]
+	MalterlibTestAutoAdd_Malterlib_Helper_Daemon: bool = false
 }
 
 %Group "{Test}/{Malterlib_Daemon}"
@@ -95,5 +95,5 @@ Property
 	!!MalterlibEnableInternalTests true
 	
 	MalterlibTests =+ "Malterlib_Daemon"
-	MalterlibTestExtraGroups_Malterlib_Daemon define [string] = ["{Test}/{Malterlib_Daemon}"]
+	MalterlibTestExtraGroups_Malterlib_Daemon: [string] = ["{Test}/{Malterlib_Daemon}"]
 }
