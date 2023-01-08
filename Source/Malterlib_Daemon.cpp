@@ -585,11 +585,11 @@ namespace NMib::NDaemon
 		return mp_RunAsGroup;
 	}
 
-	NStr::CStr CDaemonParams::f_GetLocalizedStr(NStr::CStr const& _Key) const
+	NStr::CStr CDaemonParams::f_GetLocalizedStr(NStr::CStr const &_Key) const
 	{
-		NStr::CStr LocalizedString;
-		mp_LocalizedStrings.f_Lookup(_Key, LocalizedString);
-		return LocalizedString;
+		if (auto pString = mp_LocalizedStrings.f_FindEqual(_Key))
+			return *pString;
+		return {};
 	}
 
 	void CDaemonParams::f_SetAddCommandLine(NStr::CStr const& _CommandLine)
