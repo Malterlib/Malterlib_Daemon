@@ -57,7 +57,7 @@ namespace NMib::NDaemon
 			POINT Pos;
 			GetCursorPos(&Pos);
 			TrackPopupMenu(hMenu, TPM_BOTTOMALIGN | TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_RIGHTBUTTON, Pos.x, Pos.y, 0, _hWnd, nullptr);
- 			PostMessage(_hWnd, WM_NULL, 0, 0);
+			PostMessage(_hWnd, WM_NULL, 0, 0);
 			DestroyMenu(hMenu);
 
 			return true;

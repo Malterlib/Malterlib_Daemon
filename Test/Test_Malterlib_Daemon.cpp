@@ -117,7 +117,7 @@ namespace
 					(
 						DaemonDir
 						, Attribs
-			 			| NMib::NFile::EFileAttrib_UserExecute
+						| NMib::NFile::EFileAttrib_UserExecute
 						| NMib::NFile::EFileAttrib_UserRead
 						| NMib::NFile::EFileAttrib_UserWrite
 						| NMib::NFile::EFileAttrib_GroupExecute
