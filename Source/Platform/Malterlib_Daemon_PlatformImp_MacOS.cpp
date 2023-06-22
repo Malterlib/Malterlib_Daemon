@@ -560,7 +560,7 @@ namespace NMib::NDaemon
 			CFDictionarySetValue(Dict, CFSTR("KeepAlive"), kCFBooleanTrue);
 			CFDictionarySetValue(Dict, CFSTR("RunAtLoad"), kCFBooleanTrue);
 //				fg_SetDictionaryValue(Dict, "ExitTimeOut", 0);	// Disable timeout, this seems to have broken on Yosemite
-			fg_SetDictionaryValue(Dict, "ExitTimeOut", 72*3600);	// Three day timeout
+			fg_SetDictionaryValue(Dict, "ExitTimeOut", _Params.f_GetMaxShutdownTime().f_ToInt());
 
 			int RelativePriority;
 			NStr::CStr ProcessType;

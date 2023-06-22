@@ -118,6 +118,9 @@ namespace NMib::NDaemon
 		void f_SetRunAsGroup(NStr::CStr const &_Group);
 		NStr::CStr f_GetRunAsGroup() const;
 
+		void f_SetMaxShutdownTime(fp64 const &_Seconds);
+		fp64 f_GetMaxShutdownTime() const;
+
 		NContainer::TCVector<NStr::CStr> const& f_GetDaemonDependencies() const;
 
 		NStr::CStr f_GetExecutablePath() const;
@@ -175,6 +178,8 @@ namespace NMib::NDaemon
 		EDaemonAction mp_Action;
 		NStr::CStr mp_CustomAction;
 		CDaemonActionParam mp_ActionParam;
+
+		fp64 mp_MaxShutdownTime = 12_hours;
 
 		NContainer::TCMap<NStr::CStr, NStr::CStr> mp_LocalizedStrings;
 

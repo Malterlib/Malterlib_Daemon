@@ -275,7 +275,7 @@ namespace NMib::NDaemon
 		Script += NStr::CStr::CFormat("NAME={}\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(_Params.f_GetDaemonName());
 		Script += NStr::CStr::CFormat("DAEMON_ARGS=( '-Service' {} '-Daemonize' {} )\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(_Params.f_GetDaemonName()) << NMib::NStr::fg_StrEscapeBashSingleQuotes(PidFilePath);
 		Script += NStr::CStr::CFormat("PIDFILE={}\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(PidFilePath);
-		Script += NStr::CStr::CFormat("STOPTIMEOUT={}\n") << 24*60*60;
+		Script += NStr::CStr::CFormat("STOPTIMEOUT={}\n") << _Params.f_GetMaxShutdownTime().f_ToInt();
 
 		Script += "\n";
 

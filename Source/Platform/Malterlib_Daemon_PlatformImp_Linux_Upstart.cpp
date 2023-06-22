@@ -291,7 +291,7 @@ namespace NMib::NDaemon
 		Conf += NStr::CStr::CFormat("chdir {}\n") << NMib::NStr::fg_StrEscapeBashDoubleQuotes(NFile::CFile::fs_GetPath(_Params.f_GetExecutablePath()));
 		Conf += NStr::CStr::CFormat("exec {}\n") << fs_GetExecutableCommand(_Params);
 
-		Conf += NStr::CStr::CFormat("kill timeout {}\n") << 24*60*60;
+		Conf += NStr::CStr::CFormat("kill timeout {}\n") << _Params.f_GetMaxShutdownTime().f_ToInt();
 
 		Conf += NStr::CStr::CFormat("respawn\n");
 

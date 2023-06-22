@@ -281,7 +281,7 @@ namespace NMib::NDaemon
 		Script += NStr::CStr::CFormat("SCRIPTNAME={}\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(fp_GetScriptPath(_Params));
 		Script += NStr::CStr::CFormat("PIDFILE={}\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(PidFilePath);
 		Script += NStr::CStr::CFormat("PIDDIRECTORY={}\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(NFile::CFile::fs_GetPath(PidFilePath));
-		Script += NStr::CStr::CFormat("STOPTIMEOUT={}\n") << 24*60*60; // 24 hour timeout
+		Script += NStr::CStr::CFormat("STOPTIMEOUT={}\n") << _Params.f_GetMaxShutdownTime().f_ToInt();
 		Script += NStr::CStr::CFormat("DAEMON_USER={}\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(_Params.f_GetRunAsUser());
 		Script += NStr::CStr::CFormat("DAEMON_GROUP={}\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(_Params.f_GetRunAsGroup());
 

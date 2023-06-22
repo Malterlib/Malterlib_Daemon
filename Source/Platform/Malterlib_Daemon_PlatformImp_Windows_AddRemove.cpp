@@ -282,7 +282,7 @@ namespace NMib::NDaemon
 		if (NMib::NPlatform::fg_IsVista())
 		{
 			SERVICE_PRESHUTDOWN_INFO PreShutDown;
-			PreShutDown.dwPreshutdownTimeout = 12*60*60*1000;
+			PreShutDown.dwPreshutdownTimeout = (fp_GetDaemonParams().f_GetMaxShutdownTime() * 1000.0).f_ToInt();
 			ChangeServiceConfig2W(_Service, SERVICE_CONFIG_PRESHUTDOWN_INFO, &PreShutDown);
 		}
 	}

@@ -133,7 +133,7 @@ namespace NMib::NDaemon
 
 		Conf += NStr::CStr::CFormat("[Service]\nExecStart={}\n") << fs_GetExecutableCommand(_Params);
 		Conf += "KillMode=mixed\n";
-		Conf += NStr::CStr::CFormat("TimeoutStopSec={}\n") << 24*60*60;
+		Conf += NStr::CStr::CFormat("TimeoutStopSec={}\n") <<  _Params.f_GetMaxShutdownTime().f_ToInt();
 		Conf += NStr::CStr::CFormat("WorkingDirectory={}\n") << NFile::CFile::fs_GetPath(_Params.f_GetExecutablePath());
 		if (!_Params.f_GetRunAsUser().f_IsEmpty())
 			Conf += NStr::CStr::CFormat("User={}\n") << _Params.f_GetRunAsUser();

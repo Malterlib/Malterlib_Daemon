@@ -270,6 +270,14 @@ namespace NMib::NDaemon
 				}
 			;
 
+			OptionHandlers["-max-shutdown-time"] = [&](CCommandLineVector &_Cmd)
+				{
+					NStr::CStr MaxShutdownTime;
+					fs_ParseOptionArgument(_Cmd, MaxShutdownTime);
+					mp_MaxShutdownTime = MaxShutdownTime.f_ToFloat(fp64(12_hours));
+				}
+			;
+
 			OptionHandlers["-run-as-group"] = OptionHandlers["RunAsGroup"] = [&](CCommandLineVector &_Cmd)
 				{
 					fs_ParseOptionArgument(_Cmd, mp_RunAsGroup);
@@ -573,6 +581,16 @@ namespace NMib::NDaemon
 	NStr::CStr CDaemonParams::f_GetRunAsUser() const
 	{
 		return mp_RunAsUser;
+	}
+
+	void CDaemonParams::f_SetMaxShutdownTime(fp64 const &_Seconds)
+	{
+		mp_MaxShutdownTime = _Seconds;
+	}
+
+	fp64 CDaemonParams::f_GetMaxShutdownTime() const
+	{
+		return mp_MaxShutdownTime;
 	}
 
 	void CDaemonParams::f_SetRunAsGroup(NStr::CStr const &_Group)
