@@ -258,8 +258,8 @@ namespace NMib::NDaemon
 				mp_SystemdUserUnitDirectory = DSystemdUserDirectory2;
 		}
 
-		DMibLog(Debug, "System unit directory: {}", mp_SystemdSystemUnitDirectory);
-		DMibLog(Debug, "User unit directory: {}", mp_SystemdUserUnitDirectory);
+		DMibLog(DebugVerbose1, "System unit directory: {}", mp_SystemdSystemUnitDirectory);
+		DMibLog(DebugVerbose1, "User unit directory: {}", mp_SystemdUserUnitDirectory);
 	}
 
 	CSystemd::~CSystemd()

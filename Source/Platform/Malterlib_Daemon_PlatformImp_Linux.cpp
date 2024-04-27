@@ -34,22 +34,22 @@ namespace NMib::NDaemon
 
 			if (CSystemd::fs_IsSupported())
 			{
-				DMibLog(Debug, "Systemd supported.", 0);
+				DMibLog(DebugVerbose1, "Systemd supported.", 0);
 				mp_pDaemonIntegration = fg_Construct<CSystemd>(_pOwner);
 			}
 			else if (CUpstart::fs_IsSupported())
 			{
-				DMibLog(Debug, "Upstart supported.", 0);
+				DMibLog(DebugVerbose1, "Upstart supported.", 0);
 				mp_pDaemonIntegration = fg_Construct<CUpstart>(_pOwner);
 			}
 			else if (CGentoo::fs_IsSupported())
 			{
-				DMibLog(Debug, "Gentoo supported.", 0);
+				DMibLog(DebugVerbose1, "Gentoo supported.", 0);
 				mp_pDaemonIntegration = fg_Construct<CGentoo>(_pOwner);
 			}
 			else if (CScript::fs_IsSupported())
 			{
-				DMibLog(Debug, "Script supported.", 0);
+				DMibLog(DebugVerbose1, "Script supported.", 0);
 				mp_pDaemonIntegration = fg_Construct<CScript>(_pOwner);
 			}
 			else

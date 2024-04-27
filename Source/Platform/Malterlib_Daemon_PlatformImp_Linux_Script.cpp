@@ -104,18 +104,18 @@ namespace NMib::NDaemon
 			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Unable to check for script support: {}") << _Exception.f_GetErrorStr());
 		}
 
-		DMibLog(Debug, "Script directory: {}", mp_ScriptDirectory);
+		DMibLog(DebugVerbose1, "Script directory: {}", mp_ScriptDirectory);
 
 		switch (mp_ScriptRegistrationMethod)
 		{
 		case EScriptRegistrationMethod_ChkConfig:
-			DMibLog(Debug, "Using {} for script management.", NStr::CStr(DChkConfig));
+			DMibLog(DebugVerbose1, "Using {} for script management.", NStr::CStr(DChkConfig));
 			break;
 		case EScriptRegistrationMethod_UpdateRcD:
-			DMibLog(Debug, "Using {} for script management.", NStr::CStr(DUpdateRcD));
+			DMibLog(DebugVerbose1, "Using {} for script management.", NStr::CStr(DUpdateRcD));
 			break;
 		default:
-			DMibLog(Debug, "No script management tool found.", 0);
+			DMibLog(DebugVerbose1, "No script management tool found.", 0);
 			break;
 		}
 

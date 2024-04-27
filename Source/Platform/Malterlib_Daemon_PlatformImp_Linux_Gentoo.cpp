@@ -108,7 +108,7 @@ namespace NMib::NDaemon
 		if (NFile::CFile::fs_FileExists(NStr::CStr(DInitD)))
 			mp_ScriptDirectory = DInitD;
 
-		DMibLog(Debug, "Script directory: {}", mp_ScriptDirectory);
+		DMibLog(DebugVerbose1, "Script directory: {}", mp_ScriptDirectory);
 	}
 
 	CGentoo::EGentooDaemonStatus CGentoo::fp_GetStatus(NStr::CStr const &_ScriptFilePath)
