@@ -207,9 +207,6 @@ namespace NMib::NDaemon
 
 		NMib::NStr::CStr fp_CleanDaemonName(NMib::NStr::CStr const &_DaemonName);
 		void fp_CopyElementsToCommandLine(CCommandLineVector const &_CommandLine);
-
-		bool fp_Trace(NStr::CStr &_Error);
-
 	};
 
 	enum EDaemonFeature

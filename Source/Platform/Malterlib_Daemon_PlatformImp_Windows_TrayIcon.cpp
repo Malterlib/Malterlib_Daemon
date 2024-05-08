@@ -14,7 +14,8 @@ namespace NMib::NDaemon
 
 		if (m_NotifyIconData.hIcon)
 			Shell_NotifyIcon(NIM_DELETE, &m_NotifyIconData);
-		DestroyWindow(m_hReportWnd);
+		if (m_hReportWnd)
+			DestroyWindow(m_hReportWnd);
 		UnregisterClassA("MalterlibDaemon_ReportWindow", 0);
 	}
 
@@ -72,13 +73,19 @@ namespace NMib::NDaemon
 		{
 			m_bInit = true;
 
-			WNDCLASSA WndClass;
+			auto pName = L"MalterlibDaemon_ReportWindow";
+
+			WNDCLASSW WndClass;
 			memset(&WndClass, 0, sizeof(WndClass));
-			WndClass.lpszClassName = "MalterlibDaemon_ReportWindow" ;
+			WndClass.lpszClassName = pName;
 			WndClass.lpfnWndProc = fs_ReportWindowProc;
 			WndClass.hInstance = 0;
-			RegisterClassA(&WndClass);
-			m_hReportWnd = CreateWindowA("MalterlibDaemon_ReportWindow", "MalterlibDaemon_ReportWindow", 0, 0, 0, 0, 0, HWND_MESSAGE, 0, 0, 0);
+			if (!RegisterClassW(&WndClass))
+				DMibError((NStr::CStr::CFormat("Windows returned an error from RegisterClassW: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr()).f_GetStr());
+
+			m_hReportWnd = CreateWindowExW(0L, pName, pName, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, 0, 0);
+			if (!m_hReportWnd)
+				DMibError((NStr::CStr::CFormat("Windows returned an error from CreateWindowW: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr()).f_GetStr());
 
 			NMemory::fg_MemClear(m_NotifyIconData);
 			if (_hIcon)

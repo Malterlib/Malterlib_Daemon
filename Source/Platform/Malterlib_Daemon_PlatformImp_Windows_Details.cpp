@@ -97,7 +97,7 @@ namespace NMib::NDaemon
 
 				if (!SetServiceStatus (msp_ServiceStatusHandle, &msp_ServiceStatus))
 				{ 
-					HRESULT status = GetLastError(); 
+					[[maybe_unused]] HRESULT status = GetLastError(); 
 					DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", status); 
 				}
 				return 0;
@@ -112,7 +112,7 @@ namespace NMib::NDaemon
 
 				if (!SetServiceStatus (msp_ServiceStatusHandle, &msp_ServiceStatus))
 				{ 
-					HRESULT status = GetLastError(); 
+					[[maybe_unused]] HRESULT status = GetLastError(); 
 					DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", status); 
 				}
 			}

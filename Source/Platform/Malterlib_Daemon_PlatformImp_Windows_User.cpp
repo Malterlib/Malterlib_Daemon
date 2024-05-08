@@ -65,8 +65,6 @@ namespace NMib::NDaemon
 
 	EActionResult CDaemon::CDetails::fp_UserDaemonStart()
 	{
-		auto &Params = fp_GetDaemonParams();
-
 		bool bDaemonExists;
 		if (f_Exists(bDaemonExists) == EActionResult_Failure)
 			return EActionResult_Failure;
@@ -105,6 +103,8 @@ namespace NMib::NDaemon
 								LaunchResult.f_SetResult();
 								break;
 							}
+						case NMib::NProcess::EProcessLaunchState_Exited:
+							break;
 						}
 					}
 				)
@@ -131,8 +131,6 @@ namespace NMib::NDaemon
 
 	EActionResult CDaemon::CDetails::fp_UserDaemonStop(bool _bWait)
 	{
-		auto &Params = fp_GetDaemonParams();
-
 		bool bDaemonExists;
 		if (f_Exists(bDaemonExists) == EActionResult_Failure)
 			return EActionResult_Failure;

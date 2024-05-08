@@ -110,7 +110,7 @@ namespace NMib::NDaemon
 
 	DWORD WINAPI CDaemon::CDetails::fsp_ServiceCtrlHandler(DWORD _ControlCode, DWORD _EventType, void *_pEventData, void *_pContext)
 	{ 
-		DWORD status; 
+		[[maybe_unused]] DWORD status; 
 
 		DMibLock(msp_ServiceControlLock);
 

@@ -332,8 +332,6 @@ namespace NMib::NDaemon
 			if (!f_WriteDaemonNameFile(Error))
 				f_ReportError(NStr::CStr::CFormat("Failed to write daemon name file: {}") << Error);
 		}
-
-		//fp_Trace();
 	}
 
 	bool CDaemonParams::f_WriteDaemonNameFile(NStr::CStr &_Error) const
@@ -350,27 +348,6 @@ namespace NMib::NDaemon
 			return false;
 		}
 
-		return true;
-	}
-
-	bool CDaemonParams::fp_Trace(NStr::CStr &_Error)
-	{
-		NContainer::CRegistry TraceRegistry;
-		TraceRegistry.f_SetValue("ServiceName", mp_DaemonName);
-		TraceRegistry.f_SetValue("Params", NSys::fg_Process_GetCommandLine());
-
-		NStr::CStr ServiceTracePath = NFile::CFile::fs_GetProgramDirectory() + "/ServiceTrace";
-
-		try
-		{
-			NStr::CStr OutputStr = TraceRegistry.f_GenerateStr();
-			NFile::CFile::fs_WriteStringToFile(NStr::CStr(ServiceTracePath), OutputStr, false);
-		}
-		catch (NFile::CExceptionFile const &_Exception)
-		{
-			_Error = _Exception.f_GetErrorStr();
-			return false;
-		}
 		return true;
 	}
 
