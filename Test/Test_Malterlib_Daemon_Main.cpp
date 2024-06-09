@@ -88,7 +88,7 @@ int fg_DaemonMain(void* _pNativeHandle)
 			, _pNativeHandle
 			, [&]() -> NStorage::TCUniquePointer<NDaemon::CDaemonImp>
 			{
-				NStorage::TCUniquePointer<NDaemon::CDaemonImp> ServerDaemon = fg_Explicit(DMibNew CDaemonImplementation());
+				NStorage::TCUniquePointer<NDaemon::CDaemonImp> ServerDaemon = fg_Construct<CDaemonImplementation>();
 				return ServerDaemon;
 			}
 			, [&] (NDaemon::CDaemonParams& _Params, NDaemon::CDaemon* _pDaemon, bool& _bHandled) -> NDaemon::EActionResult
