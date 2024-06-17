@@ -90,14 +90,16 @@ namespace NMib::NDaemon
 		msp_ServiceStatus.dwCheckPoint         = 0; 
 		msp_ServiceStatus.dwWaitHint           = 0; 
 
-		if (!SetServiceStatus (msp_ServiceStatusHandle, &msp_ServiceStatus)) 
+		if (!SetServiceStatus(msp_ServiceStatusHandle, &msp_ServiceStatus)) 
 		{ 
 			status = GetLastError(); 
 			DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", status); 
-		} 
+		}
 
 		// This is where the service does its work. 
 		DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] Returning the Main Thread\n", 0); 
+
+		SetProcessShutdownParameters(0x3FF, 0);
 
 		return; 
 	} 
