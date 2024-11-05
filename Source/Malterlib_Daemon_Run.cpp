@@ -106,10 +106,10 @@ namespace NMib::NDaemon
 			)
 		;
 
-		NContainer::TCVector<NStr::CStr> lArgs;
-		NSys::fg_Process_GetCommandLineArgs(lArgs);
+		NContainer::TCVector<NStr::CStr> Args;
+		NSys::fg_Process_GetCommandLineArgs(Args);
 
-		DaemonParams.f_ParseCommandLine(lArgs);
+		DaemonParams.f_ParseCommandLine(Args);
 
 		NDaemon::CDaemon Daemon(DaemonParams);
 
