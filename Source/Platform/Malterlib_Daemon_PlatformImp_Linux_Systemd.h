@@ -12,13 +12,14 @@ namespace NMib::NDaemon
 	{
 	private:
 
-		NStr::CStr fp_GetUnitConfigDirectory(EDaemonMode _Mode) const;
+		NStr::CStr fp_GetUnitConfigDirectory(CDaemonParams const &_Params) const;
 		bool fp_IsUnitConfigThisExecutable(CDaemon *pOwner, CDaemonParams const &_Params) const;
 		EActionResult fp_SetUnitEnable(CDaemonParams const &_Params, bool _bEnable) const;
 		EActionResult fp_IsUnitEnabled(CDaemonParams const &_Params, bool& _bIsEnabled) const;
+		static NStr::CStr fsp_FindExecutable(NStr::CStr const &_Executable);
 
-		NStr::CStr mp_SystemdSystemUnitDirectory;
-		NStr::CStr mp_SystemdUserUnitDirectory;
+		NContainer::TCVector<NStr::CStr> mp_SystemdSystemUnitDirectories;
+		NContainer::TCVector<NStr::CStr> mp_SystemdUserUnitDirectories;
 		NStr::CStr mp_SystemCtlExecutable;
 		NStr::CStr mp_PkgConfigExecutable;
 

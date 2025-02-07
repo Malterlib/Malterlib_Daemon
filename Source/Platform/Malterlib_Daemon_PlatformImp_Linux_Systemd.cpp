@@ -5,15 +5,28 @@
 #include <Mib/Process/ProcessLaunch>
 #include <Mib/Process/Platform>
 
-#define DPkgConfigExecutable "pkg-config"
-#define DSystemctlExecutable "systemctl"
-#define DSearchPaths NMib::NContainer::fg_CreateVector<NMib::NStr::CStr>("/usr/bin", "/bin")
+NMib::NStr::CStr gc_SystemctlExecutable = NMib::NStr::gc_Str<"systemctl">;
 
-#define DSystemdSystemDirectory1 "/usr/lib/systemd/system"
-#define DSystemdSystemDirectory2 "/etc/systemd/system"
+NMib::NStr::CStr gc_SearchPaths[] =
+	{
+		NMib::NStr::gc_Str<"/usr/bin">
+		, NMib::NStr::gc_Str<"/bin">
+	}
+;
 
-#define DSystemdUserDirectory1 "/usr/lib/systemd/user"
-#define DSystemdUserDirectory2 "/etc/systemd/user"
+NMib::NStr::CStr gc_SystemDSystemDirectories[] =
+	{
+		NMib::NStr::gc_Str<"/usr/lib/systemd/system">
+		, NMib::NStr::gc_Str<"/etc/systemd/system">
+	}
+;
+
+NMib::NStr::CStr gc_SystemDUserDirectories[] =
+	{
+		NMib::NStr::gc_Str<"/usr/lib/systemd/user">
+		, NMib::NStr::gc_Str<"/etc/systemd/user">
+	}
+;
 
 namespace NMib::NProcess::NPlatform
 {
@@ -60,24 +73,47 @@ namespace NMib::NDaemon
 	{
 		NStr::CStr ExecutablePath = _Params.f_GetExecutablePath();
 		NStr::CStr EscapedExecutablePath = fs_EscapePath(ExecutablePath);
+
 		if (EscapedExecutablePath != ExecutablePath)
 			return NStr::CStr::CFormat("/usr/bin/env {} -Service") << EscapedExecutablePath;
+
 		return NStr::CStr::CFormat("{} -Service") << ExecutablePath;
 	}
 
-	NStr::CStr CSystemd::fp_GetUnitConfigDirectory(EDaemonMode _Mode) const
+	NStr::CStr CSystemd::fp_GetUnitConfigDirectory(CDaemonParams const &_Params) const
 	{
-		if (_Mode == EDaemonMode_LocalUser)
+		auto Mode = _Params.f_GetDaemonMode();
+
+		if (Mode == EDaemonMode_LocalUser)
 			return NStr::CStr::CFormat("{}/.config/systemd/user") << NSys::NFile::fg_GetUserHomeDirectory();
-		else if (_Mode == EDaemonMode_AllUsers)
-			return mp_SystemdUserUnitDirectory;
+
+		auto UnitFileName = fs_GetUnitConfigFilename(_Params);
+
+		if (Mode == EDaemonMode_AllUsers)
+		{
+			for (auto &Directory : mp_SystemdUserUnitDirectories)
+			{
+				if (NFile::CFile::fs_FileExists(Directory / UnitFileName))
+					return Directory;
+			}
+
+			return mp_SystemdUserUnitDirectories[0];
+		}
 		else
-			return mp_SystemdSystemUnitDirectory;
+		{
+			for (auto &Directory : mp_SystemdSystemUnitDirectories)
+			{
+				if (NFile::CFile::fs_FileExists(Directory / UnitFileName))
+					return Directory;
+			}
+
+			return mp_SystemdSystemUnitDirectories[0];
+		}
 	}
 
 	bool CSystemd::fp_IsUnitConfigThisExecutable(CDaemon *pOwner, CDaemonParams const &_Params) const
 	{
-		NStr::CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params.f_GetDaemonMode());
+		NStr::CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params);
 		NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetUnitConfigFilename(_Params);
 		NStr::CStr Contents;
 
@@ -188,11 +224,23 @@ namespace NMib::NDaemon
 		return EActionResult_Success;
 	}
 
+	NStr::CStr CSystemd::fsp_FindExecutable(NStr::CStr const &_Executable)
+	{
+		return NProcess::NPlatform::fg_FindExecutable
+			(
+				_Executable
+				, true
+				, NMib::NFile::EFileAttrib_File | NMib::NFile::EFileAttrib_Executable
+				, {gc_SearchPaths, sizeof(gc_SearchPaths) / sizeof(gc_SearchPaths[0])}
+			)
+		;
+	}
+
 	bool CSystemd::fs_IsSupported()
 	{
 		return NFile::CFile::fs_FileExists
 			(
-				NProcess::NPlatform::fg_FindExecutable(DSystemctlExecutable, true, NMib::NFile::EFileAttrib_File | NMib::NFile::EFileAttrib_Executable, DSearchPaths)
+				fsp_FindExecutable(gc_SystemctlExecutable)
 				, NMib::NFile::EFileAttrib_File | NMib::NFile::EFileAttrib_Executable
 			)
 		;
@@ -201,15 +249,16 @@ namespace NMib::NDaemon
 	CSystemd::CSystemd(CDaemon *_pOwner)
 		: CDaemonSystemInterfaceShared(_pOwner, ESupportedFeature_LocalUser | ESupportedFeature_AllUsers)
 	{
+		using namespace NStr;
+
 		{
-			NStr::CStr Executable = NProcess::NPlatform::fg_FindExecutable(DPkgConfigExecutable, true, NMib::NFile::EFileAttrib_File | NMib::NFile::EFileAttrib_Executable, DSearchPaths);
+
+			CStr Executable = fsp_FindExecutable(gc_Str<"pkg-config">);
 			if (NFile::CFile::fs_FileExists(Executable, NMib::NFile::EFileAttrib_File | NMib::NFile::EFileAttrib_Executable))
 				mp_PkgConfigExecutable = Executable;
 		}
-
-
 		{
-			NStr::CStr Executable = NProcess::NPlatform::fg_FindExecutable(DSystemctlExecutable, true, NMib::NFile::EFileAttrib_File | NMib::NFile::EFileAttrib_Executable, DSearchPaths);
+			CStr Executable = fsp_FindExecutable(gc_SystemctlExecutable);
 			if (NFile::CFile::fs_FileExists(Executable, NMib::NFile::EFileAttrib_File | NMib::NFile::EFileAttrib_Executable))
 				mp_SystemCtlExecutable = Executable;
 			else
@@ -217,8 +266,8 @@ namespace NMib::NDaemon
 		}
 
 		{
-			NStr::CStr Result;
-			NStr::CStr Error;
+			CStr Result;
+			CStr Error;
 			uint32 ExitCode = 0;
 
 			if
@@ -229,17 +278,19 @@ namespace NMib::NDaemon
 					&& !Result.f_IsEmpty()
 				)
 			{
-				mp_SystemdSystemUnitDirectory = Result.f_Replace("\n", "");
+				mp_SystemdSystemUnitDirectories.f_Insert(Result.f_Replace("\n", ""));
 			}
-			else if (NFile::CFile::fs_FileExists(NStr::CStr(DSystemdSystemDirectory1)))
-				mp_SystemdSystemUnitDirectory = DSystemdSystemDirectory1;
-			else if (NFile::CFile::fs_FileExists(NStr::CStr(DSystemdSystemDirectory2)))
-				mp_SystemdSystemUnitDirectory = DSystemdSystemDirectory2;
+
+			for (auto &Directory : gc_SystemDSystemDirectories)
+			{
+				if (mp_SystemdSystemUnitDirectories.f_Contains(Directory) < 0 && NFile::CFile::fs_FileExists(Directory))
+					mp_SystemdSystemUnitDirectories.f_Insert(Directory);
+			}
 		}
 
 		{
-			NStr::CStr Result;
-			NStr::CStr Error;
+			CStr Result;
+			CStr Error;
 			uint32 ExitCode = 0;
 
 			if
@@ -250,16 +301,21 @@ namespace NMib::NDaemon
 					&& !Result.f_IsEmpty()
 				)
 			{
-				mp_SystemdUserUnitDirectory = Result.f_Replace("\n", "");
+				mp_SystemdUserUnitDirectories.f_Insert(Result.f_Replace("\n", ""));
 			}
-			else if (NFile::CFile::fs_FileExists(NStr::CStr(DSystemdUserDirectory1)))
-				mp_SystemdUserUnitDirectory = DSystemdUserDirectory1;
-			else if (NFile::CFile::fs_FileExists(NStr::CStr(DSystemdUserDirectory2)))
-				mp_SystemdUserUnitDirectory = DSystemdUserDirectory2;
+
+			for (auto &Directory : gc_SystemDUserDirectories)
+			{
+				if (mp_SystemdUserUnitDirectories.f_Contains(Directory) < 0 && NFile::CFile::fs_FileExists(Directory))
+					mp_SystemdUserUnitDirectories.f_Insert(Directory);
+			}
 		}
 
-		DMibLog(DebugVerbose1, "System unit directory: {}", mp_SystemdSystemUnitDirectory);
-		DMibLog(DebugVerbose1, "User unit directory: {}", mp_SystemdUserUnitDirectory);
+		if (mp_SystemdSystemUnitDirectories.f_IsEmpty())
+			DMibError("Could not find systemd unit directory");
+
+		if (mp_SystemdUserUnitDirectories.f_IsEmpty())
+			DMibError("Could not find systemd unit directory for users");
 	}
 
 	CSystemd::~CSystemd()
@@ -271,7 +327,7 @@ namespace NMib::NDaemon
 		if (!fp_CheckParamsSupported(_Params))
 			return EActionResult_Failure;
 
-		NStr::CStr UnitFileDirectory = fp_GetUnitConfigDirectory(_Params.f_GetDaemonMode());
+		NStr::CStr UnitFileDirectory = fp_GetUnitConfigDirectory(_Params);
 		NStr::CStr UnitFilePath = NStr::CStr::CFormat("{}/{}") << UnitFileDirectory << fs_GetUnitConfigFilename(_Params);
 
 		try
@@ -340,10 +396,9 @@ namespace NMib::NDaemon
 		if (f_Exists(_Params, bDaemonExists) == EActionResult_Failure)
 			return EActionResult_Failure;
 
-
 		if (!bDaemonExists)
 		{
-			NStr::CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params.f_GetDaemonMode());
+			NStr::CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params);
 			NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetUnitConfigFilename(_Params);
 
 			mp_pOwner->f_ReportInformation("Stop Daemon", NStr::CStr::CFormat("Daemon is not installed at '{}' so it has not been stopped") << LaunchFilePath);
@@ -399,7 +454,7 @@ namespace NMib::NDaemon
 
 		if (!bDaemonExists)
 		{
-			NStr::CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params.f_GetDaemonMode());
+			NStr::CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params);
 			NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetUnitConfigFilename(_Params);
 
 			mp_pOwner->f_ReportInformation("Restart Daemon", NStr::CStr::CFormat("Daemon is not installed at '{}' so it has not been restarted") << LaunchFilePath);
@@ -428,7 +483,7 @@ namespace NMib::NDaemon
 		if (!fp_CheckParamsSupported(_Params))
 			return EActionResult_Failure;
 
-		NStr::CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params.f_GetDaemonMode());
+		NStr::CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params);
 		NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetUnitConfigFilename(_Params);
 
 		if (LaunchFileDirectory.f_IsEmpty())
@@ -506,7 +561,7 @@ namespace NMib::NDaemon
 		if (!fp_CheckParamsSupported(_Params))
 			return EActionResult_Failure;
 
-		NStr::CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params.f_GetDaemonMode());
+		NStr::CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params);
 		NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetUnitConfigFilename(_Params);
 
 		bool bDaemonExists;
@@ -554,7 +609,7 @@ namespace NMib::NDaemon
 			return EActionResult_Failure;
 
 		_bExists = false;
-		NStr::CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params.f_GetDaemonMode());
+		NStr::CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params);
 		NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetUnitConfigFilename(_Params);
 
 		try
