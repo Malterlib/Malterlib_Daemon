@@ -324,23 +324,25 @@ namespace NMib::NDaemon
 
 	EActionResult CSystemd::f_Start(CDaemonParams const &_Params)
 	{
+		using namespace NStr;
+
 		if (!fp_CheckParamsSupported(_Params))
 			return EActionResult_Failure;
 
-		NStr::CStr UnitFileDirectory = fp_GetUnitConfigDirectory(_Params);
-		NStr::CStr UnitFilePath = NStr::CStr::CFormat("{}/{}") << UnitFileDirectory << fs_GetUnitConfigFilename(_Params);
+		CStr UnitFileDirectory = fp_GetUnitConfigDirectory(_Params);
+		CStr UnitFilePath = "{}/{}"_f << UnitFileDirectory << fs_GetUnitConfigFilename(_Params);
 
 		try
 		{
 			if (!NFile::CFile::fs_FileExists(UnitFilePath, NFile::EFileAttrib_File))
 			{
-				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Daemon file does not exist: {}") << UnitFilePath);
+				mp_pOwner->f_ReportError("Daemon file does not exist: {}"_f << UnitFilePath);
 				return EActionResult_Failure;
 			}
 		}
 		catch (NFile::CExceptionFile const &_Exception)
 		{
-			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to check for existing daemon file {}: {}") << UnitFilePath << _Exception.f_GetErrorStr());
+			mp_pOwner->f_ReportError("Failed to check for existing daemon file {}: {}"_f << UnitFilePath << _Exception.f_GetErrorStr());
 			return EActionResult_Failure;
 		}
 
@@ -348,44 +350,47 @@ namespace NMib::NDaemon
 			return EActionResult_Failure;
 
 		{
-			NStr::CStr Result;
-			NStr::CStr Error;
+			CStr Result;
+			CStr Error;
 			uint32 ExitCode = 0;
 
-			NStr::CStr Command = NStr::CStr::CFormat("{}show {} --property=MainPID") << fs_GetSystemctlOptions(_Params) << _Params.f_GetDaemonName();
+			CStr Command = "{}show {} --property=MainPID"_f << fs_GetSystemctlOptions(_Params) << _Params.f_GetDaemonName();
 
 			if (NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode))
 			{
-				NStr::CStr MainPID;
-				(NStr::CStr::CParse("MainPID={}") >> MainPID).f_Parse(Result);
+				CStr MainPID;
+				(CStr::CParse("MainPID={}") >> MainPID).f_Parse(Result);
 
 				if (MainPID.f_ToInt(0) != 0)
 				{
-					mp_pOwner->f_ReportInformation("Start daemon", NStr::CStr::CFormat("Daemon {} already running") << _Params.f_GetDaemonName());
+					mp_pOwner->f_ReportInformation("Start daemon", "Daemon {} already running"_f << _Params.f_GetDaemonName());
 					return EActionResult_Success;
 				}
 			}
 		}
 
-		NStr::CStr Result;
-		NStr::CStr Error;
+		CStr Result;
+		CStr Error;
 		uint32 ExitCode = 0;
 
-		NStr::CStr Command = NStr::CStr::CFormat("{}start {}") << fs_GetSystemctlOptions(_Params) << _Params.f_GetDaemonName();
-		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode)
-			|| ExitCode
-			|| !Error.f_IsEmpty())
+		CStr Command = "{}start {}"_f << fs_GetSystemctlOptions(_Params) << _Params.f_GetDaemonName();
+		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode) || ExitCode)
 		{
-			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Error starting daemon {}\nCommand {} returned with code {}: {}") << _Params.f_GetDaemonName() << Command << ExitCode << Error);
+			mp_pOwner->f_ReportError("Error starting daemon {}\nCommand {} returned with code {}: {}"_f << _Params.f_GetDaemonName() << Command << ExitCode << Error);
 			return EActionResult_Failure;
 		}
 
-		mp_pOwner->f_ReportInformation("Start daemon", NStr::CStr::CFormat("Successfully started daemon {}") << _Params.f_GetDaemonName());
+		if (!Error.f_IsEmpty())
+			mp_pOwner->f_ReportInformation("Start daemon", "Starting daemon {} reported: {}"_f << _Params.f_GetDaemonName() << Error);
+
+		mp_pOwner->f_ReportInformation("Start daemon", "Successfully started daemon {}"_f << _Params.f_GetDaemonName());
 		return EActionResult_Success;
 	}
 
 	EActionResult CSystemd::f_Stop(CDaemonParams const &_Params, bool _bWait)
 	{
+		using namespace NStr;
+
 		if (!fp_CheckParamsSupported(_Params))
 			return EActionResult_Failure;
 
@@ -398,50 +403,52 @@ namespace NMib::NDaemon
 
 		if (!bDaemonExists)
 		{
-			NStr::CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params);
-			NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetUnitConfigFilename(_Params);
+			CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params);
+			CStr LaunchFilePath = "{}/{}"_f << LaunchFileDirectory << fs_GetUnitConfigFilename(_Params);
 
-			mp_pOwner->f_ReportInformation("Stop Daemon", NStr::CStr::CFormat("Daemon is not installed at '{}' so it has not been stopped") << LaunchFilePath);
+			mp_pOwner->f_ReportInformation("Stop Daemon", "Daemon is not installed at '{}' so it has not been stopped"_f << LaunchFilePath);
 			return EActionResult_Success;
 		}
 
 		{
-			NStr::CStr Result;
-			NStr::CStr Error;
+			CStr Result;
+			CStr Error;
 			uint32 ExitCode = 0;
 
-			NStr::CStr Command = NStr::CStr::CFormat("{}show {} --property=MainPID") << fs_GetSystemctlOptions(_Params) << _Params.f_GetDaemonName();
+			CStr Command = "{}show {} --property=MainPID"_f << fs_GetSystemctlOptions(_Params) << _Params.f_GetDaemonName();
 			NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode);
 
-			NStr::CStr MainPID;
-			(NStr::CStr::CParse("MainPID={}") >> MainPID).f_Parse(Result);
+			CStr MainPID;
+			(CStr::CParse("MainPID={}") >> MainPID).f_Parse(Result);
 
 			if (!ExitCode && MainPID.f_ToInt(0) == 0)
 			{
-				mp_pOwner->f_ReportInformation("Stop daemon", NStr::CStr::CFormat("Daemon {} was not running so it was not stopped") << _Params.f_GetDaemonName());
+				mp_pOwner->f_ReportInformation("Stop daemon", "Daemon {} was not running so it was not stopped"_f << _Params.f_GetDaemonName());
 				return EActionResult_Success;
 			}
 		}
-		NStr::CStr Result;
-		NStr::CStr Error;
+		CStr Result;
+		CStr Error;
 		uint32 ExitCode = 0;
 
-		NStr::CStr Command = NStr::CStr::CFormat("{}stop {}") << fs_GetSystemctlOptions(_Params) << _Params.f_GetDaemonName();
-		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode)
-			|| ExitCode
-			|| !Error.f_IsEmpty())
+		CStr Command = "{}stop {}"_f << fs_GetSystemctlOptions(_Params) << _Params.f_GetDaemonName();
+		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode) || ExitCode)
 		{
-			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Error stopping daemon {}\nCommand {} returned with code {}: {}") << _Params.f_GetDaemonName() << Command << ExitCode << Error);
+			mp_pOwner->f_ReportError("Error stopping daemon {}\nCommand {} returned with code {}: {}"_f << _Params.f_GetDaemonName() << Command << ExitCode << Error);
 			return EActionResult_Failure;
 		}
 
+		if (!Error.f_IsEmpty())
+			mp_pOwner->f_ReportInformation("Stop daemon", "Stopping daemon {} reported: {}"_f << _Params.f_GetDaemonName() << Error);
 
-		mp_pOwner->f_ReportInformation("Stop daemon", NStr::CStr::CFormat("Successfully stopped daemon {}") << _Params.f_GetDaemonName());
+		mp_pOwner->f_ReportInformation("Stop daemon", "Successfully stopped daemon {}"_f << _Params.f_GetDaemonName());
 		return EActionResult_Success;
 	}
 
 	EActionResult CSystemd::f_Restart(CDaemonParams const &_Params, bool _bWait)
 	{
+		using namespace NStr;
+
 		if (!fp_CheckParamsSupported(_Params))
 			return EActionResult_Failure;
 
@@ -454,27 +461,28 @@ namespace NMib::NDaemon
 
 		if (!bDaemonExists)
 		{
-			NStr::CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params);
-			NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetUnitConfigFilename(_Params);
+			CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params);
+			CStr LaunchFilePath = "{}/{}"_f << LaunchFileDirectory << fs_GetUnitConfigFilename(_Params);
 
-			mp_pOwner->f_ReportInformation("Restart Daemon", NStr::CStr::CFormat("Daemon is not installed at '{}' so it has not been restarted") << LaunchFilePath);
+			mp_pOwner->f_ReportInformation("Restart Daemon", "Daemon is not installed at '{}' so it has not been restarted"_f << LaunchFilePath);
 			return EActionResult_Success;
 		}
 
-		NStr::CStr Result;
-		NStr::CStr Error;
+		CStr Result;
+		CStr Error;
 		uint32 ExitCode = 0;
 
-		NStr::CStr Command = NStr::CStr::CFormat("{}restart {}") << fs_GetSystemctlOptions(_Params) << _Params.f_GetDaemonName();
-		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode)
-			|| ExitCode
-			|| !Error.f_IsEmpty())
+		CStr Command = "{}restart {}"_f << fs_GetSystemctlOptions(_Params) << _Params.f_GetDaemonName();
+		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode) || ExitCode)
 		{
-			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Error restarting daemon {}\nCommand {} returned with code {}: {}") << _Params.f_GetDaemonName() << Command << ExitCode << Error);
+			mp_pOwner->f_ReportError("Error restarting daemon {}\nCommand {} returned with code {}: {}"_f << _Params.f_GetDaemonName() << Command << ExitCode << Error);
 			return EActionResult_Failure;
 		}
 
-		mp_pOwner->f_ReportInformation("Restart daemon", NStr::CStr::CFormat("Successfully restarted daemon {}") << _Params.f_GetDaemonName());
+		if (!Error.f_IsEmpty())
+			mp_pOwner->f_ReportInformation("Restart daemon", "Restarting daemon {} reported: {}"_f << _Params.f_GetDaemonName() << Error);
+
+		mp_pOwner->f_ReportInformation("Restart daemon", "Successfully restarted daemon {}"_f << _Params.f_GetDaemonName());
 		return EActionResult_Success;
 	}
 
