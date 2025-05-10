@@ -231,7 +231,7 @@ namespace NMib::NDaemon
 				_Executable
 				, true
 				, NMib::NFile::EFileAttrib_File | NMib::NFile::EFileAttrib_Executable
-				, {gc_SearchPaths, sizeof(gc_SearchPaths) / sizeof(gc_SearchPaths[0])}
+				, {gc_SearchPaths, fg_ArraySize(gc_SearchPaths)}
 			)
 		;
 	}
