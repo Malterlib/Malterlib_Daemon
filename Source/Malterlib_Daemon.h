@@ -56,17 +56,17 @@ namespace NMib::NDaemon
 		EActionResult_Test = 25		// For unit test
 	};
 
-	typedef NStorage::TCVariant<void, bool> CDaemonActionParam;
+	using CDaemonActionParam = NStorage::TCVariant<void, bool>;
 
 	class CDaemonParams;
-	typedef NFunction::TCFunction<NStorage::TCUniquePointer<CDaemonImp> ()> FImplementationFactory;
-	typedef NFunction::TCFunction<EActionResult (CDaemonParams&, CDaemon* _pDaemon, bool& _bHandled)> FProcessCommand;
-	typedef NFunction::TCFunction<void (NStr::CStr const&)> FErrorReporter;
-	typedef NFunction::TCFunction<void (NStr::CStr const&, NStr::CStr const&)> FInformationReporter;
-	typedef NFunction::TCFunction<EReportError (NStr::CStr const&, EReportError)> FErrorReporterYesNo;
 
-	typedef NContainer::TCVector<NMib::NStr::CStr> CCommandLineVector;
-	typedef NContainer::TCMap<NStr::CStr, NFunction::TCFunction<void (CCommandLineVector &)>> COptionHandlerMap;
+	using FImplementationFactory = NFunction::TCFunction<NStorage::TCUniquePointer<CDaemonImp> ()>;
+	using FProcessCommand = NFunction::TCFunction<EActionResult (CDaemonParams&, CDaemon* _pDaemon, bool& _bHandled)>;
+	using FErrorReporter = NFunction::TCFunction<void (NStr::CStr const&)>;
+	using FInformationReporter = NFunction::TCFunction<void (NStr::CStr const&, NStr::CStr const&)>;
+	using FErrorReporterYesNo = NFunction::TCFunction<EReportError (NStr::CStr const&, EReportError)>;
+	using CCommandLineVector = NContainer::TCVector<NMib::NStr::CStr>;
+	using COptionHandlerMap = NContainer::TCMap<NStr::CStr, NFunction::TCFunction<void (CCommandLineVector &)>>;
 
 	class CDaemonParams
 	{
