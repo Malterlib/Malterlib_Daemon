@@ -3,6 +3,7 @@
 
 #include "Malterlib_Daemon.h"
 
+#include <Mib/Core/Core>
 #include <Mib/Container/Registry>
 
 namespace NMib::NDaemon
@@ -533,6 +534,11 @@ namespace NMib::NDaemon
 	NContainer::TCVector<NStr::CStr> const& CDaemonParams::f_GetDaemonDependencies() const
 	{
 		return mp_DaemonDependencies;
+	}
+
+	void CDaemonParams::f_SetDaemonDependencies(NContainer::TCVector<NStr::CStr> _Dependencies)
+	{
+		mp_DaemonDependencies = fg_Move(_Dependencies);
 	}
 
 	NStr::CStr CDaemonParams::f_GetExecutablePath() const

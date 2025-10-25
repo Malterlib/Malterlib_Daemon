@@ -122,6 +122,7 @@ namespace NMib::NDaemon
 		fp64 f_GetMaxShutdownTime() const;
 
 		NContainer::TCVector<NStr::CStr> const& f_GetDaemonDependencies() const;
+		void f_SetDaemonDependencies(NContainer::TCVector<NStr::CStr> _Dependencies);
 
 		NStr::CStr f_GetExecutablePath() const;
 		void f_SetExecutablePath(NStr::CStr const &_Path);
