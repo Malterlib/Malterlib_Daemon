@@ -1,4 +1,4 @@
-// Copyright © 2015 Hansoft AB 
+// Copyright © 2015 Hansoft AB
 // Distributed under the MIT license, see license text in LICENSE.Malterlib
 
 #include "Malterlib_Daemon_PlatformImp_Windows.h"
@@ -21,6 +21,9 @@ namespace NMib::NDaemon
 
 	LRESULT CALLBACK CDaemon::CDetails::CTaskIconCleaner::fs_ReportWindowProc(HWND _hWnd, UINT _Message, WPARAM _WParam, LPARAM _LParam)
 	{
+		if (_Message == WM_ENDSESSION || _Message == WM_QUERYENDSESSION)
+			NPlatform::fg_ReportIsShuttingDown();
+
 		if (_Message == WM_COMMAND)
 		{
 			if (_WParam == 123)
@@ -106,7 +109,7 @@ namespace NMib::NDaemon
 	}
 
 	bool CDaemon::CDetails::CTaskIconCleaner::f_Update()
-	{	
+	{
 		MSG Message;
 
 		int32 Ret = GetMessage( &Message, nullptr, 0, 0 );
