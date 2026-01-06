@@ -1,4 +1,4 @@
-// Copyright © 2015 Hansoft AB 
+// Copyright © 2015 Hansoft AB
 // Distributed under the MIT license, see license text in LICENSE.Malterlib
 
 #include "Malterlib_Daemon_PlatformImp_Windows.h"
@@ -75,7 +75,7 @@ namespace NMib::NDaemon
 						}
 
 						{
-							if 
+							if
 								(
 									!ChangeServiceConfigW
 									(
@@ -148,29 +148,29 @@ namespace NMib::NDaemon
 
 		NStr::CWStr ServiceGroup = NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonGroup());
 		SC_HANDLE schService = CreateServiceW
-			( 
-				schSCManager              // SCManager database 
+			(
+				schSCManager              // SCManager database
 				, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName())              // name of daemon
 				, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonDisplayName())           // daemon name to display
-				, SERVICE_ALL_ACCESS        // desired access 
+				, SERVICE_ALL_ACCESS        // desired access
 				, SERVICE_WIN32_OWN_PROCESS | (mp_pOwner->f_GetDaemonParams().f_GetInteractive() ? SERVICE_INTERACTIVE_PROCESS : 0) // daemon type
-				, SERVICE_AUTO_START      // start type 
-				, SERVICE_ERROR_NORMAL      // error control type 
-				, NStr::NPlatform::fg_StrToWindows(fp_GetAddCommandLine())        // service's binary 
-				, !mp_pOwner->f_GetDaemonParams().f_GetDaemonGroup().f_IsEmpty() ? ServiceGroup.f_GetStr() : nullptr          // no load ordering group 
-				, nullptr                      // no tag identifier 
-				, !Deps.f_IsEmpty() ? Deps.f_GetArray() : nullptr                      // no dependencies 
+				, SERVICE_AUTO_START      // start type
+				, SERVICE_ERROR_NORMAL      // error control type
+				, NStr::NPlatform::fg_StrToWindows(fp_GetAddCommandLine())        // service's binary
+				, !mp_pOwner->f_GetDaemonParams().f_GetDaemonGroup().f_IsEmpty() ? ServiceGroup.f_GetStr() : nullptr          // no load ordering group
+				, nullptr                      // no tag identifier
+				, !Deps.f_IsEmpty() ? Deps.f_GetArray() : nullptr                      // no dependencies
 				, !RunAsUser.f_IsEmpty() ? RunAsUser.f_GetStr() : nullptr
 				, !RunAsUserPasssword.f_IsEmpty() ? RunAsUserPasssword.f_GetStr() : nullptr
 			)
 		;
 
-		if (schService == nullptr) 
+		if (schService == nullptr)
 		{
 			f_ReportError(NStr::CStr::CFormat("Error returned when creating daemon {}\r\n{}") << fp_GetAddCommandLine() << NMib::NPlatform::fg_Win32_GetLastErrorStr(0) );
 			return EActionResult_Failure;
 		}
-		else 
+		else
 			DMibTrace("Creation of daemon successful", 0);
 
 		auto CleanupService = fg_OnScopeExit
@@ -185,7 +185,7 @@ namespace NMib::NDaemon
 		NStr::CStr Error;
 		if (!fp_GetDaemonParams().f_GetDisableWriteDaemon() && !fp_GetDaemonParams().f_WriteDaemonModeFile(Error))
 			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to write daemon mode file: {}") << Error);
-				
+
 		fp_UpdateService(schService);
 		return EActionResult_Success;
 	}
@@ -194,14 +194,14 @@ namespace NMib::NDaemon
 	{
 		if (!fp_CheckParamsSupported(fp_GetDaemonParams()))
 			return EActionResult_Failure;
-				
+
 		if (fp_GetDaemonParams().f_GetDaemonMode() != EDaemonMode_Global)
 			return fp_UserDaemonRemove();
 
 		bool bDaemonExists;
 		if (f_Exists(bDaemonExists) == EActionResult_Failure)
 			return EActionResult_Failure;
-				
+
 		if (!bDaemonExists)
 		{
 			f_ReportInformation("Remove Daemon", "Daemon is not installed so it has not been removed");
@@ -210,7 +210,7 @@ namespace NMib::NDaemon
 
 		if (f_Stop(true) == EActionResult_Failure)
 			return EActionResult_Failure;
-				
+
 		SC_HANDLE schSCManager = fp_OpenSCManager();
 		if (!schSCManager)
 		{
@@ -269,11 +269,11 @@ namespace NMib::NDaemon
 		Actions[1].Type = SC_ACTION_RESTART;
 		Actions[2].Delay = 60 * 1000;
 		Actions[2].Type = SC_ACTION_RESTART;
-		RestartActions.lpsaActions = Actions;	
+		RestartActions.lpsaActions = Actions;
 
 		if (!ChangeServiceConfig2W(_Service, SERVICE_CONFIG_FAILURE_ACTIONS, &RestartActions))
 			f_ReportError(NStr::CStr::CFormat("Failed to change service config: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
-	
+
 		SERVICE_FAILURE_ACTIONS_FLAG FailureActionFlags = {0};
 		FailureActionFlags.fFailureActionsOnNonCrashFailures = true;
 		if (!ChangeServiceConfig2W(_Service, SERVICE_CONFIG_FAILURE_ACTIONS_FLAG, &FailureActionFlags))

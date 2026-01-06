@@ -1,4 +1,4 @@
-// Copyright © 2015 Hansoft AB 
+// Copyright © 2015 Hansoft AB
 // Distributed under the MIT license, see license text in LICENSE.Malterlib
 
 #include <Mib/Daemon/Daemon>
@@ -85,8 +85,8 @@ namespace NMib::NDaemon
 		NStorage::TCUniquePointer<NThread::CThreadObject> mp_pStopThread;
 		NStorage::TCUniquePointer<NThread::CThreadObject> mp_pStopReportThread;
 
-		static NThread::CMutual        msp_ServiceControlLock; 
-		static SERVICE_STATUS          msp_ServiceStatus; 
+		static NThread::CMutual        msp_ServiceControlLock;
+		static SERVICE_STATUS          msp_ServiceStatus;
 		static SERVICE_STATUS_HANDLE   msp_ServiceStatusHandle;
 		static CDetails*			   msp_pThis;
 		static bool					   msp_bIsShutdown;

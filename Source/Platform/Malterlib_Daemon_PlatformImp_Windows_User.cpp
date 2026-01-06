@@ -1,4 +1,4 @@
-// Copyright © 2015 Hansoft AB 
+// Copyright © 2015 Hansoft AB
 // Distributed under the MIT license, see license text in LICENSE.Malterlib
 
 #include "Malterlib_Daemon_PlatformImp_Windows.h"
@@ -68,7 +68,7 @@ namespace NMib::NDaemon
 		bool bDaemonExists;
 		if (f_Exists(bDaemonExists) == EActionResult_Failure)
 			return EActionResult_Failure;
-				
+
 		if (!bDaemonExists)
 		{
 			f_ReportError("Daemon is not installed so it can not be started");
@@ -119,7 +119,7 @@ namespace NMib::NDaemon
 				if (Clock.f_GetTime() >= 60.0)
 					DMibError("Timed out waiting for daemon to start");
 				Sleep(10);
-			}			
+			}
 		}
 		catch (NException::CException const &_Exception)
 		{
@@ -134,7 +134,7 @@ namespace NMib::NDaemon
 		bool bDaemonExists;
 		if (f_Exists(bDaemonExists) == EActionResult_Failure)
 			return EActionResult_Failure;
-				
+
 		if (!bDaemonExists)
 		{
 			f_ReportInformation("Stop Daemon", "Daemon is not installed so it can not be stopped");
@@ -212,7 +212,7 @@ namespace NMib::NDaemon
 		bool bDaemonExists;
 		if (f_Exists(bDaemonExists) == EActionResult_Failure)
 			return EActionResult_Failure;
-				
+
 		if (!bDaemonExists)
 		{
 			f_ReportInformation("Remove Daemon", "Daemon is not installed so it has not been removed");

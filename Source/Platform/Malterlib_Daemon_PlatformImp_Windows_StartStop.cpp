@@ -1,4 +1,4 @@
-// Copyright © 2015 Hansoft AB 
+// Copyright © 2015 Hansoft AB
 // Distributed under the MIT license, see license text in LICENSE.Malterlib
 
 #include "Malterlib_Daemon_PlatformImp_Windows.h"
@@ -20,7 +20,7 @@ namespace NMib::NDaemon
 			f_ReportError(NStr::CStr::CFormat("Unable to open service manager: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 			return EActionResult_Failure;
 		}
-				
+
 		auto CleanupServiceManager = fg_OnScopeExit
 			(
 				[&]
@@ -70,7 +70,7 @@ namespace NMib::NDaemon
 			}
 		}
 		else
-		{	
+		{
 			f_ReportError(NStr::CStr::CFormat("Unable to start daemon: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 			return EActionResult_Failure;
 		}
@@ -82,20 +82,20 @@ namespace NMib::NDaemon
 	{
 		if (!fp_CheckParamsSupported(fp_GetDaemonParams()))
 			return EActionResult_Failure;
-				
+
 		if (fp_GetDaemonParams().f_GetDaemonMode() != EDaemonMode_Global)
 			return fp_UserDaemonStop(_bWait);
 
 		bool bDaemonExists;
 		if (f_Exists(bDaemonExists) == EActionResult_Failure)
 			return EActionResult_Failure;
-				
+
 		if (!bDaemonExists)
 		{
 			f_ReportInformation("Stop Daemon", "Daemon is not installed so it has not been stopped");
 			return EActionResult_Success;
 		}
-				
+
 		SC_HANDLE schSCManager = fp_OpenSCManager();
 		if (!schSCManager)
 		{
@@ -198,7 +198,7 @@ namespace NMib::NDaemon
 			}
 		}
 		else
-		{	
+		{
 			f_ReportError(NStr::CStr::CFormat("Unable to stop daemon: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 			return EActionResult_Failure;
 		}

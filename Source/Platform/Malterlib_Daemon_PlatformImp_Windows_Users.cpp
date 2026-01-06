@@ -1,4 +1,4 @@
-// Copyright © 2015 Hansoft AB 
+// Copyright © 2015 Hansoft AB
 // Distributed under the MIT license, see license text in LICENSE.Malterlib
 
 #include "Malterlib_Daemon_PlatformImp_Windows.h"
@@ -8,14 +8,14 @@ namespace NMib::NDaemon
 	bool CDaemon::CDetails::fp_PrepareUserAndGroup(CDaemonParams const &_Params, NMib::NStr::CWStr &o_RunAsUser, NMib::NStr::CWStrSecure &o_RunAsUserPassword)
 	{
 		NStr::CStr StdOut, StdErr;
-				
+
 		NStr::CStr GroupName = _Params.f_GetRunAsGroup();
 		NStr::CStr UserName = _Params.f_GetRunAsUser();
-				
+
 		if (!GroupName.f_IsEmpty())
 		{
 			NStr::CStr ReturnGID;
-				
+
 			try
 			{
 				if (!NSys::fg_UserManagement_GroupExists(GroupName, ReturnGID))
@@ -29,14 +29,14 @@ namespace NMib::NDaemon
 				return false;
 			}
 		}
-				
+
 		if (!UserName.f_IsEmpty())
 		{
 			NStr::CStr ReturnUID;
 
 			NMib::NStr::CWStrSecure UserWindows = UserName;
 			o_RunAsUser = ".\\" + UserName;
-					
+
 			try
 			{
 				if (!NSys::fg_UserManagement_UserExists(UserName, ReturnUID))

@@ -1,4 +1,4 @@
-// Copyright © 2015 Hansoft AB 
+// Copyright © 2015 Hansoft AB
 // Distributed under the MIT license, see license text in LICENSE.Malterlib
 
 #include "Malterlib_Daemon_PlatformImp_Windows.h"
@@ -31,8 +31,8 @@ namespace NMib::NDaemon
 		case EDaemonMode_Global:
 			break;
 		}
-			
-		return bRet;			
+
+		return bRet;
 	}
 
 	void CDaemon::CDetails::f_ReportInformation(NStr::CStr const &_Heading, NStr::CStr const &_Message) const

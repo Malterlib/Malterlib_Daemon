@@ -1,4 +1,4 @@
-// Copyright © 2015 Hansoft AB 
+// Copyright © 2015 Hansoft AB
 // Distributed under the MIT license, see license text in LICENSE.Malterlib
 
 #include "Malterlib_Daemon_PlatformImp_Windows.h"
@@ -91,29 +91,29 @@ namespace NMib::NDaemon
 			if (mp_pStopThread->f_GetState() == NThread::EThreadState_Stopped)
 			{
 				DMibLock(msp_ServiceControlLock);
-				msp_ServiceStatus.dwCurrentState  = SERVICE_STOPPED; 
+				msp_ServiceStatus.dwCurrentState  = SERVICE_STOPPED;
 
 				DMibDTrace("Daemon stopped: {}" DMibNewLine, msp_ServiceStatus.dwCheckPoint);
 
 				if (!SetServiceStatus (msp_ServiceStatusHandle, &msp_ServiceStatus))
-				{ 
-					[[maybe_unused]] HRESULT status = GetLastError(); 
-					DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", status); 
+				{
+					[[maybe_unused]] HRESULT status = GetLastError();
+					DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", status);
 				}
 				return 0;
 			}
 			else
 			{
 				DMibLock(msp_ServiceControlLock);
-				msp_ServiceStatus.dwCurrentState  = SERVICE_STOP_PENDING; 
-				++msp_ServiceStatus.dwCheckPoint; 
+				msp_ServiceStatus.dwCurrentState  = SERVICE_STOP_PENDING;
+				++msp_ServiceStatus.dwCheckPoint;
 				msp_ServiceStatus.dwWaitHint      += 1500;
 				DMibDTrace("Daemon stop pending: {}" DMibNewLine, msp_ServiceStatus.dwCheckPoint);
 
 				if (!SetServiceStatus (msp_ServiceStatusHandle, &msp_ServiceStatus))
-				{ 
-					[[maybe_unused]] HRESULT status = GetLastError(); 
-					DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", status); 
+				{
+					[[maybe_unused]] HRESULT status = GetLastError();
+					DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", status);
 				}
 			}
 			WaitForSingleObject(mp_pStopThread->f_GetThread(), 1000);
