@@ -166,10 +166,6 @@ int fg_DaemonMain(void* _pNativeHandle)
 
 #include <Windows.h>
 
-int __cdecl wmain(int argc, wchar_t *argv[], wchar_t *envp[]) {}
-int __cdecl main(int argc, char *argv[]){}
-int __stdcall WinMain(struct HINSTANCE__ * hInstance, struct HINSTANCE__ * hPrevInstance, char *lpCmdLine,int nShowCmd){;}
-
 int WINAPI wWinMain(IN HINSTANCE hInstance,IN HINSTANCE hPrevInstance,IN wchar_t *lpCmdLine,IN int nShowCmd)
 {
 	return fg_DaemonMain((void*)hInstance);
