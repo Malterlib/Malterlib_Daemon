@@ -87,6 +87,7 @@ Property
 	}
 	{
 		Dependency.Link false
+		Dependency.Stage "Runtime"
 	}
 }
 
