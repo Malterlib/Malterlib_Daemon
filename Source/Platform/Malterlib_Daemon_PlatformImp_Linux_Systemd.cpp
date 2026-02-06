@@ -602,8 +602,12 @@ namespace NMib::NDaemon
 			return EActionResult_Success;
 		}
 
-		if (f_Stop(_Params, false) == EActionResult_Failure)
-			return EActionResult_Failure;
+		// For AllUsers user services, skip stop when running as root - no user session D-Bus available
+		if (_Params.f_GetDaemonMode() != EDaemonMode_AllUsers || NProcess::NPlatform::fg_Process_GetElevation() < NProcess::EProcessElevation_IsElevated)
+		{
+			if (f_Stop(_Params, false) == EActionResult_Failure)
+				return EActionResult_Failure;
+		}
 
 		fp_SetUnitEnable(_Params, false);
 
