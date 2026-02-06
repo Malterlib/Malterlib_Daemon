@@ -164,7 +164,13 @@ namespace NMib::NDaemon
 		NStr::CStr Conf;
 
 		Conf += NStr::CStr::CFormat("[Unit]\nDescription={}\n") << _Params.f_GetDaemonDisplayName();
-		Conf += NStr::CStr::CFormat("After=local-fs.target network.target\n") << 0;
+		if (_Params.f_GetRequiresGraphicalSessionInUserMode() && _Params.f_GetDaemonMode() != EDaemonMode_Global)
+		{
+			Conf += "After=graphical-session.target\n";
+			Conf += "PartOf=graphical-session.target\n";
+		}
+		else
+			Conf += NStr::CStr::CFormat("After=local-fs.target network.target\n") << 0;
 		Conf += "\n";
 
 		Conf += NStr::CStr::CFormat("[Service]\nExecStart={}\n") << fs_GetExecutableCommand(_Params);
@@ -178,7 +184,12 @@ namespace NMib::NDaemon
 		Conf += "Restart=always\n";
 		Conf += "\n";
 
-		Conf += NStr::CStr::CFormat("[Install]\nWantedBy=multi-user.target\n") << 0;
+		if (_Params.f_GetDaemonMode() == EDaemonMode_Global)
+			Conf += NStr::CStr::CFormat("[Install]\nWantedBy=multi-user.target\n") << 0;
+		else if (_Params.f_GetRequiresGraphicalSessionInUserMode())
+			Conf += "[Install]\nWantedBy=graphical-session.target\n";
+		else
+			Conf += NStr::CStr::CFormat("[Install]\nWantedBy=default.target\n") << 0;
 		Conf += "\n";
 
 		return Conf;

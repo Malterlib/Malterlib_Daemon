@@ -450,6 +450,16 @@ namespace NMib::NDaemon
 		mp_ExecutionPriority = _Priority;
 	}
 
+	bool CDaemonParams::f_GetRequiresGraphicalSessionInUserMode() const
+	{
+		return mp_bRequiresGraphicalSessionInUserMode;
+	}
+
+	void CDaemonParams::f_SetRequiresGraphicalSessionInUserMode(bool _bValue)
+	{
+		mp_bRequiresGraphicalSessionInUserMode = _bValue;
+	}
+
 	CDaemonActionParam const &CDaemonParams::f_GetActionParam() const
 	{
 		return mp_ActionParam;

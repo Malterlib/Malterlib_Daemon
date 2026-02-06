@@ -161,6 +161,9 @@ namespace NMib::NDaemon
 		EExecutionPriority f_GetExecutionPriority() const;
 		void f_SetExecutionPriority(EExecutionPriority _Priority);
 
+		bool f_GetRequiresGraphicalSessionInUserMode() const;
+		void f_SetRequiresGraphicalSessionInUserMode(bool _bValue);
+
 	protected:
 		NStr::CStr mp_DaemonName;
 		NStr::CStr mp_DisplayName;
@@ -205,6 +208,7 @@ namespace NMib::NDaemon
 		bool mp_bDaemonize;
 		bool mp_bAlwaysRunStatusApp = false;
 		bool mp_bCanPause = true;
+		bool mp_bRequiresGraphicalSessionInUserMode = true;
 
 		NMib::NStr::CStr fp_CleanDaemonName(NMib::NStr::CStr const &_DaemonName);
 		void fp_CopyElementsToCommandLine(CCommandLineVector const &_CommandLine);
