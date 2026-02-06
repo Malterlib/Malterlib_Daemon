@@ -35,7 +35,9 @@ namespace NMib::NProcess::NPlatform
 
 namespace NMib::NDaemon
 {
-	static NStr::CStr fs_GetSystemctlOptions(CDaemonParams const &_Params)
+	// _bEnableDisable: true for enable/disable operations where --global is valid
+	//                  false for start/stop/restart/show where --global is NOT valid
+	static NStr::CStr fs_GetSystemctlOptions(CDaemonParams const &_Params, bool _bEnableDisable = false)
 	{
 		NStr::CStr Options;
 		EDaemonMode Mode = _Params.f_GetDaemonMode();
@@ -43,7 +45,14 @@ namespace NMib::NDaemon
 		if (Mode == EDaemonMode_LocalUser)
 			Options += "--user ";
 		else if (Mode == EDaemonMode_AllUsers)
-			Options += "--global ";
+		{
+			// --global is only valid for enable/disable operations
+			// For start/stop/restart, user services must use --user
+			if (_bEnableDisable)
+				Options += "--global ";
+			else
+				Options += "--user ";
+		}
 		else
 			Options += "--system ";
 
@@ -208,7 +217,7 @@ namespace NMib::NDaemon
 				return EActionResult_Success;
 		}
 
-		NStr::CStr Command = NStr::CStr::CFormat("{}{} {}") << fs_GetSystemctlOptions(_Params) << (_bEnable ? "enable" : "disable") << _Params.f_GetDaemonName();
+		NStr::CStr Command = NStr::CStr::CFormat("{}{} {}") << fs_GetSystemctlOptions(_Params, true) << (_bEnable ? "enable" : "disable") << _Params.f_GetDaemonName();
 		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode) || ExitCode)
 			return EActionResult_Failure;
 
