@@ -16,6 +16,7 @@ namespace NMib::NDaemon
 		bool fp_IsUnitConfigThisExecutable(CDaemon *pOwner, CDaemonParams const &_Params) const;
 		EActionResult fp_SetUnitEnable(CDaemonParams const &_Params, bool _bEnable) const;
 		EActionResult fp_IsUnitEnabled(CDaemonParams const &_Params, bool& _bIsEnabled) const;
+		void fp_RemoveWantsSymlinks(CDaemonParams const &_Params) const;
 		static NStr::CStr fsp_FindExecutable(NStr::CStr const &_Executable);
 
 		NContainer::TCVector<NStr::CStr> mp_SystemdSystemUnitDirectories;

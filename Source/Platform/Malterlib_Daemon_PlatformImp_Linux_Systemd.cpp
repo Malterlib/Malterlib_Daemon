@@ -611,6 +611,11 @@ namespace NMib::NDaemon
 
 		fp_SetUnitEnable(_Params, false);
 
+		// Manually remove any remaining .wants symlinks, as systemctl disable
+		// has known bugs where it silently fails to remove symlinks in certain cases
+		// (see https://github.com/systemd/systemd/issues/10578)
+		fp_RemoveWantsSymlinks(_Params);
+
 		try
 		{
 			NFile::CFile::fs_DeleteFile(LaunchFilePath);
@@ -628,6 +633,47 @@ namespace NMib::NDaemon
 		}
 
 		return EActionResult_Failure;
+	}
+
+	void CSystemd::fp_RemoveWantsSymlinks(CDaemonParams const &_Params) const
+	{
+		NStr::CStr UnitFileName = fs_GetUnitConfigFilename(_Params);
+		auto Mode = _Params.f_GetDaemonMode();
+
+		NContainer::TCVector<NStr::CStr> Directories;
+
+		if (Mode == EDaemonMode_Global)
+			Directories = mp_SystemdSystemUnitDirectories;
+		else
+		{
+			if (Mode == EDaemonMode_LocalUser)
+				Directories.f_Insert(NStr::CStr::CFormat("{}/.config/systemd/user") << NSys::NFile::fg_GetUserHomeDirectory());
+			else
+				Directories = mp_SystemdUserUnitDirectories;
+		}
+
+		for (auto &BaseDir : Directories)
+		{
+			try
+			{
+				auto SubDirs = NFile::CFile::fs_FindFiles(BaseDir + "/*.wants", NFile::EFileAttrib_Directory, false);
+				for (auto &WantsDir : SubDirs)
+				{
+					NStr::CStr SymlinkPath = WantsDir + "/" + UnitFileName;
+					try
+					{
+						if (NFile::CFile::fs_FileExists(SymlinkPath))
+							NFile::CFile::fs_DeleteFile(SymlinkPath);
+					}
+					catch (NFile::CExceptionFile const &)
+					{
+					}
+				}
+			}
+			catch (NFile::CExceptionFile const &)
+			{
+			}
+		}
 	}
 
 	bool CSystemd::f_SupportsAutoRestart() const
