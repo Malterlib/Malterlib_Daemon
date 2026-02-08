@@ -129,6 +129,9 @@ namespace NMib::NDaemon
 		NStr::CStr f_GetCommandLine() const;
 		NStr::CStr f_GetLocalizedStr(NStr::CStr const& _Key) const;
 
+		void f_SetRootDirectory(NStr::CStr const &_RootDirectory);
+		NStr::CStr f_GetRootDirectory() const;
+
 		void f_SetValueForKey(NStr::CStr const &_Key, NStr::CStr const &_Value);
 		NStr::CStr f_GetValueForKey(NStr::CStr const& _Key) const;
 		void f_SetKey(NStr::CStr const& _Key, bool _bKeySet);
@@ -197,6 +200,7 @@ namespace NMib::NDaemon
 		EExecutionPriority mp_ExecutionPriority = EExecutionPriority_Normal;
 
 		NStr::CStr mp_AddCommandLine;
+		NStr::CStr mp_RootDirectory = NFile::CFile::fs_GetProgramDirectory();
 
 		void* mp_pNativeHandle;
 

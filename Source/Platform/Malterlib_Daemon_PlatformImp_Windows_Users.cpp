@@ -48,7 +48,7 @@ namespace NMib::NDaemon
 							, UserName
 							, o_RunAsUserPassword
 							, _Params.f_GetDaemonDescription()
-							, NFile::CFile::fs_GetProgramDirectory()
+							, _Params.f_GetRootDirectory()
 							, ReturnUID
 							, NSys::EUserManagementCreateUserFlag_None
 						)

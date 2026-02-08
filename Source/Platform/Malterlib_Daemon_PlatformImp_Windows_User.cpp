@@ -40,9 +40,9 @@ namespace NMib::NDaemon
 			return NMib::NPlatform::CWin32_Registry(Root, "Software\\Microsoft\\Windows\\CurrentVersion\\Run");
 		}
 
-		bool fg_IsRunning()
+		bool fg_IsRunning(NStr::CStr const &_RootDirectory)
 		{
-			CStr DaemonPidPath = NFile::CFile::fs_GetProgramDirectory() / (NFile::CFile::fs_GetFileNoExt(NFile::CFile::fs_GetProgramPath()) + ".ServicePID");
+			CStr DaemonPidPath = _RootDirectory / (NFile::CFile::fs_GetFileNoExt(NFile::CFile::fs_GetProgramPath()) + ".ServicePID");
 			return NFile::CFile::fs_FileExists(DaemonPidPath);
 		}
 	}
@@ -75,7 +75,9 @@ namespace NMib::NDaemon
 			return EActionResult_Failure;
 		}
 
-		if (fg_IsRunning())
+		CStr RootDirectory = fp_GetDaemonParams().f_GetRootDirectory();
+
+		if (fg_IsRunning(RootDirectory))
 		{
 			f_ReportInformation("Start Daemon", "Daemon is already running");
 			return EActionResult_Success;
@@ -114,7 +116,7 @@ namespace NMib::NDaemon
 			LaunchResult.f_MoveFuture().f_CallSync(60.0);
 
 			NTime::CClock Clock{true};
-			while (!fg_IsRunning())
+			while (!fg_IsRunning(RootDirectory))
 			{
 				if (Clock.f_GetTime() >= 60.0)
 					DMibError("Timed out waiting for daemon to start");
@@ -131,25 +133,25 @@ namespace NMib::NDaemon
 
 	EActionResult CDaemon::CDetails::fp_UserDaemonStop(bool _bWait)
 	{
-		bool bDaemonExists;
-		if (f_Exists(bDaemonExists) == EActionResult_Failure)
-			return EActionResult_Failure;
+		CStr RootDirectory = fp_GetDaemonParams().f_GetRootDirectory();
 
-		if (!bDaemonExists)
+		if (!fg_IsRunning(RootDirectory))
 		{
-			f_ReportInformation("Stop Daemon", "Daemon is not installed so it can not be stopped");
-			return EActionResult_Success;
-		}
+			bool bDaemonExists;
+			if (f_Exists(bDaemonExists) == EActionResult_Failure)
+				return EActionResult_Failure;
 
-		if (!fg_IsRunning())
-		{
-			f_ReportInformation("Stop Daemon", "Daemon was not running");
+			if (!bDaemonExists)
+				f_ReportInformation("Stop Daemon", "Daemon is not installed so it can not be stopped");
+			else
+				f_ReportInformation("Stop Daemon", "Daemon was not running");
+
 			return EActionResult_Success;
 		}
 
 		try
 		{
-			CStr DaemonPidPath = NFile::CFile::fs_GetProgramDirectory() / (NFile::CFile::fs_GetFileNoExt(NFile::CFile::fs_GetProgramPath()) + ".ServicePID");
+			CStr DaemonPidPath = RootDirectory / (NFile::CFile::fs_GetFileNoExt(NFile::CFile::fs_GetProgramPath()) + ".ServicePID");
 			mint PID = NFile::CFile::fs_ReadStringFromFile(DaemonPidPath, true).f_ToInt(0);
 
 			HANDLE hProcess = nullptr;
@@ -166,7 +168,7 @@ namespace NMib::NDaemon
 				)
 			;
 
-			CStr DaemonStateFile = NFile::CFile::fs_GetProgramDirectory() / (NFile::CFile::fs_GetFileNoExt(NFile::CFile::fs_GetProgramPath()) + ".ServiceState");
+			CStr DaemonStateFile = RootDirectory / (NFile::CFile::fs_GetFileNoExt(NFile::CFile::fs_GetProgramPath()) + ".ServiceState");
 			NFile::CFile::fs_WriteStringToFile(DaemonStateFile, "Stop", false);
 
 			if (hProcess)

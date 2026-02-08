@@ -230,7 +230,7 @@ namespace NMib::NDaemon
 			try
 			{
 				if (!NSys::fg_UserManagement_UserExists(UserName, ReturnUID))
-					NSys::fg_UserManagement_CreateUser(GroupName, UserName, "", UserName, NFile::CFile::fs_GetProgramDirectory(), ReturnUID, NSys::EUserManagementCreateUserFlag_None);
+					NSys::fg_UserManagement_CreateUser(GroupName, UserName, "", UserName, _Params.f_GetRootDirectory(), ReturnUID, NSys::EUserManagementCreateUserFlag_None);
 			}
 			catch (NMib::NException::CException &_Exception)
 			{
@@ -248,8 +248,8 @@ namespace NMib::NDaemon
 
 			try
 			{
-				NFile::CFile::fs_SetOwner(NFile::CFile::fs_GetProgramDirectory(), UserName);
-				NFile::CFile::fs_SetGroup(NFile::CFile::fs_GetProgramDirectory(), GroupName);
+				NFile::CFile::fs_SetOwner(_Params.f_GetRootDirectory(), UserName);
+				NFile::CFile::fs_SetGroup(_Params.f_GetRootDirectory(), GroupName);
 			}
 			catch (NFile::CExceptionFile const &_Exception)
 			{

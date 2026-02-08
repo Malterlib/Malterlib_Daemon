@@ -129,7 +129,7 @@ namespace NMib::NDaemon
 							, UserName
 							, ""
 							, _Params.f_GetDaemonDescription()
-							, NFile::CFile::fs_GetProgramDirectory()
+							, _Params.f_GetRootDirectory()
 							, ReturnUID
 							, NSys::EUserManagementCreateUserFlag_None
 						)
@@ -191,8 +191,8 @@ namespace NMib::NDaemon
 
 			try
 			{
-				NFile::CFile::fs_SetOwner(NFile::CFile::fs_GetProgramDirectory(), UserName);
-				NFile::CFile::fs_SetGroup(NFile::CFile::fs_GetProgramDirectory(), GroupName);
+				NFile::CFile::fs_SetOwner(_Params.f_GetRootDirectory(), UserName);
+				NFile::CFile::fs_SetGroup(_Params.f_GetRootDirectory(), GroupName);
 			}
 			catch (NFile::CExceptionFile const &_Exception)
 			{

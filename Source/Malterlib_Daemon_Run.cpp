@@ -59,7 +59,7 @@ namespace NMib::NDaemon
 					if (_Params.f_GetAction() == NDaemon::EDaemonAction_Run)
 					{
 						{
-							NFile::CFile File(NFile::CFile::fs_GetProgramDirectory() + "/ServiceName", NFile::EFileOpen_Write);
+							NFile::CFile File(_Params.f_GetRootDirectory() + "/ServiceName", NFile::EFileOpen_Write);
 							NStr::CStr DaemonName = _Params.f_GetDaemonName();
 							File.f_Write(DaemonName.f_GetStr(), DaemonName.f_GetLen());
 						}

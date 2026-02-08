@@ -123,7 +123,7 @@ namespace NMib::NDaemon
 		if (mp_ExecutablePath.f_IsEmpty())
 			mp_ExecutablePath = NFile::CFile::fs_GetProgramPath();
 
-		NStr::CStr DaemonNamePath = NFile::CFile::fs_GetProgramDirectory() + "/ServiceName";
+		NStr::CStr DaemonNamePath = mp_RootDirectory + "/ServiceName";
 		try
 		{
 			if (NFile::CFile::fs_FileExists(DaemonNamePath))
@@ -141,7 +141,7 @@ namespace NMib::NDaemon
 			f_ReportError(NStr::CStr::CFormat("Failed to read daemon name file {}. The error was: {}") << DaemonNamePath << _Exception.f_GetErrorStr());
 		}
 
-		NStr::CStr DaemonModePath = NFile::CFile::fs_GetProgramDirectory() + "/ServiceMode";
+		NStr::CStr DaemonModePath = mp_RootDirectory + "/ServiceMode";
 		try
 		{
 			if (NFile::CFile::fs_FileExists(DaemonModePath))
@@ -337,7 +337,7 @@ namespace NMib::NDaemon
 
 	bool CDaemonParams::f_WriteDaemonNameFile(NStr::CStr &_Error) const
 	{
-		NStr::CStr DaemonNamePath = NFile::CFile::fs_GetProgramDirectory() + "/ServiceName";
+		NStr::CStr DaemonNamePath = mp_RootDirectory + "/ServiceName";
 
 		try
 		{
@@ -368,7 +368,7 @@ namespace NMib::NDaemon
 			break;
 		}
 
-		NStr::CStr DaemonModePath = NFile::CFile::fs_GetProgramDirectory() + "/ServiceMode";
+		NStr::CStr DaemonModePath = mp_RootDirectory + "/ServiceMode";
 
 		try
 		{
@@ -385,7 +385,7 @@ namespace NMib::NDaemon
 
 	bool CDaemonParams::f_RemoveDaemonModeFile(NStr::CStr &_Error) const
 	{
-		NStr::CStr DaemonModePath = NFile::CFile::fs_GetProgramDirectory() + "/ServiceMode";
+		NStr::CStr DaemonModePath = mp_RootDirectory + "/ServiceMode";
 		try
 		{
 			if (NFile::CFile::fs_FileExists(DaemonModePath))
@@ -611,6 +611,16 @@ namespace NMib::NDaemon
 	NStr::CStr CDaemonParams::f_GetAddCommandLine() const
 	{
 		return mp_AddCommandLine;
+	}
+
+	void CDaemonParams::f_SetRootDirectory(NStr::CStr const &_RootDirectory)
+	{
+		mp_RootDirectory = _RootDirectory;
+	}
+
+	NStr::CStr CDaemonParams::f_GetRootDirectory() const
+	{
+		return mp_RootDirectory;
 	}
 
 	bool CDaemonParams::f_IsKeySet(NStr::CStr const &_Key) const
