@@ -285,6 +285,11 @@ namespace NMib::NDaemon
 			PreShutDown.dwPreshutdownTimeout = (fp_GetDaemonParams().f_GetMaxShutdownTime() * 1000.0).f_ToInt();
 			ChangeServiceConfig2W(_Service, SERVICE_CONFIG_PRESHUTDOWN_INFO, &PreShutDown);
 		}
+
+		SERVICE_SID_INFO ServiceSidInfo = {0};
+		ServiceSidInfo.dwServiceSidType = SERVICE_SID_TYPE_UNRESTRICTED;
+		if (!ChangeServiceConfig2W(_Service, SERVICE_CONFIG_SERVICE_SID_INFO, &ServiceSidInfo))
+			f_ReportError(NStr::CStr::CFormat("Failed to set service SID type: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 	}
 
 	EActionResult CDaemon::CDetails::f_Exists(bool &_bExists) const
