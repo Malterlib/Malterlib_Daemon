@@ -341,8 +341,8 @@ namespace NMib::NDaemon
 
 			fp64 Timeout = mp_pOwner->mp_Params.f_GetValueForKey("-DoStop").f_ToFloat(fp64(1200.0));
 
-			NTime::CClock Clock;
-			Clock.f_Start();
+			NTime::CStopwatch Stopwatch;
+			Stopwatch.f_Start();
 			if (kill(PidOfProcess, SIGTERM))
 			{
 				int ErrNo = errno;
@@ -358,7 +358,7 @@ namespace NMib::NDaemon
 			bool bTriedKill = false;
 			while (true)
 			{
-				if (Clock.f_GetTime() > Timeout && !bTriedKill)
+				if (Stopwatch.f_GetTime() > Timeout && !bTriedKill)
 				{
 					bTriedKill = true;
 					if (kill(PidOfProcess, SIGKILL))

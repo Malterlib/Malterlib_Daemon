@@ -309,14 +309,14 @@ namespace
 
 				FileChangeNotification.f_Open(DaemonDir, NMib::NFile::EFileChange_All, &FileChangeEvent);
 
-				NMib::NTime::CClock Clock;
-				Clock.f_Start();
+				NMib::NTime::CStopwatch Stopwatch;
+				Stopwatch.f_Start();
 				bExists = NMib::NFile::CFile::fs_FileExists(File);
 				while (!bExists)
 				{
 					FileChangeEvent.f_WaitTimeout(0.1f);
 					bExists = NMib::NFile::CFile::fs_FileExists(File);
-					if (Clock.f_GetTime() > 120.0)
+					if (Stopwatch.f_GetTime() > 120.0)
 					{
 						bTimedOut = true;
 						break;
@@ -327,14 +327,14 @@ namespace
 			}
 			else
 			{
-				NMib::NTime::CClock Clock;
-				Clock.f_Start();
+				NMib::NTime::CStopwatch Stopwatch;
+				Stopwatch.f_Start();
 				bool bExists = NMib::NFile::CFile::fs_FileExists(File);
 				while (!bExists)
 				{
 					NMib::NSys::fg_Thread_Sleep(0.1f);
 					bExists = NMib::NFile::CFile::fs_FileExists(File);
-					if (Clock.f_GetTime() > 120.0)
+					if (Stopwatch.f_GetTime() > 120.0)
 					{
 						bTimedOut = true;
 						break;

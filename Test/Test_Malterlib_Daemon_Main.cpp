@@ -52,9 +52,9 @@ int fg_DaemonMain(void* _pNativeHandle)
 
 		~CDaemonImplementation()
 		{
-			NTime::CClock Clock;
-			Clock.f_Start();
-			while (Clock.f_GetTime() < 1.0f)
+			NTime::CStopwatch Stopwatch;
+			Stopwatch.f_Start();
+			while (Stopwatch.f_GetTime() < 1.0f)
 				NSys::fg_Thread_Sleep(0.1f);
 			CStr File = NFile::CFile::fs_GetProgramDirectory() + "/Running";
 			try

@@ -115,10 +115,10 @@ namespace NMib::NDaemon
 			NMib::NProcess::CProcessLaunch ProcessLaunch(Params, NMib::NProcess::EProcessLaunchCloseFlag_None);
 			LaunchResult.f_MoveFuture().f_CallSync(60.0);
 
-			NTime::CClock Clock{true};
+			NTime::CStopwatch Stopwatch{true};
 			while (!fg_IsRunning(RootDirectory))
 			{
-				if (Clock.f_GetTime() >= 60.0)
+				if (Stopwatch.f_GetTime() >= 60.0)
 					DMibError("Timed out waiting for daemon to start");
 				Sleep(10);
 			}
@@ -173,7 +173,7 @@ namespace NMib::NDaemon
 
 			if (hProcess)
 			{
-				NTime::CClock Clock{true};
+				NTime::CStopwatch Stopwatch{true};
 				auto WaitResult = WaitForSingleObject(hProcess, 240000);
 				if (WaitResult == WAIT_TIMEOUT)
 					DMibError("Timed out waiting for process to exit");
