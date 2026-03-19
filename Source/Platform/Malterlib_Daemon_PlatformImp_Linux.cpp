@@ -272,13 +272,13 @@ namespace NMib::NDaemon
 
 		int fp_DoStart(NStr::CStr const &_PidFilePath)
 		{
-			mint PidOfProcess = 0;
+			umint PidOfProcess = 0;
 			try
 			{
 				if (NFile::CFile::fs_FileExists(_PidFilePath))
 				{
 					NStr::CStr PidContents = NFile::CFile::fs_ReadStringFromFile(NStr::CStr(_PidFilePath));
-					PidOfProcess = PidContents.f_ToInt(mint(0));
+					PidOfProcess = PidContents.f_ToInt(umint(0));
 				}
 			}
 			catch (NFile::CExceptionFile const &_Exception)
@@ -298,13 +298,13 @@ namespace NMib::NDaemon
 
 		int fp_DoStop(NStr::CStr const &_PidFilePath)
 		{
-			mint PidOfProcess = 0;
+			umint PidOfProcess = 0;
 			try
 			{
 				if (NFile::CFile::fs_FileExists(_PidFilePath))
 				{
 					NStr::CStr PidContents = NFile::CFile::fs_ReadStringFromFile(NStr::CStr(_PidFilePath));
-					PidOfProcess = PidContents.f_ToInt(mint(0));
+					PidOfProcess = PidContents.f_ToInt(umint(0));
 				}
 			}
 			catch (NFile::CExceptionFile const &_Exception)
@@ -386,13 +386,13 @@ namespace NMib::NDaemon
 
 		int fp_DoStatus(NStr::CStr const &_PidFilePath)
 		{
-			mint PidOfProcess = 0;
+			umint PidOfProcess = 0;
 			try
 			{
 				if (NFile::CFile::fs_FileExists(_PidFilePath))
 				{
 					NStr::CStr PidContents = NFile::CFile::fs_ReadStringFromFile(NStr::CStr(_PidFilePath));
-					PidOfProcess = PidContents.f_ToInt(mint(0));
+					PidOfProcess = PidContents.f_ToInt(umint(0));
 				}
 			}
 			catch (NFile::CExceptionFile const &_Exception)
@@ -591,7 +591,7 @@ namespace NMib::NDaemon
 					return fConvertResult(EActionResult_Failure);
 				}
 
-				mint ProcessPID = Launcher.f_GetProcessID();
+				umint ProcessPID = Launcher.f_GetProcessID();
 
 				if (!ProcessPID)
 				{

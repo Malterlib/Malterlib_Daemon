@@ -84,7 +84,7 @@ namespace
 				NMib::NStr::CStr DaemonFile = NMib::NFile::CFile::fs_GetFile(NMib::NFile::CFile::fs_GetProgramPath()).f_Replace("Test_Malterlib_Daemon", "Test_Malterlib_Helper_Daemon");
 				NMib::NStr::CStr SourceFile = ProgramDirectory + "/" + DaemonFile;
 				NMib::NStr::CStr DestFile = DaemonDir + "/" + DaemonFile;
-				for (mint i = 0; i < 5; ++i)
+				for (umint i = 0; i < 5; ++i)
 				{
 					try
 					{
@@ -143,7 +143,7 @@ namespace
 		{
 			for (auto &Dir : m_CreatedDirs)
 			{
-				for (mint i = 0; i < 5; ++i)
+				for (umint i = 0; i < 5; ++i)
 				{
 					try
 					{

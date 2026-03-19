@@ -152,7 +152,7 @@ namespace NMib::NDaemon
 		try
 		{
 			CStr DaemonPidPath = RootDirectory / (NFile::CFile::fs_GetFileNoExt(NFile::CFile::fs_GetProgramPath()) + ".ServicePID");
-			mint PID = NFile::CFile::fs_ReadStringFromFile(DaemonPidPath, true).f_ToInt(0);
+			umint PID = NFile::CFile::fs_ReadStringFromFile(DaemonPidPath, true).f_ToInt(0);
 
 			HANDLE hProcess = nullptr;
 			if (PID && _bWait)

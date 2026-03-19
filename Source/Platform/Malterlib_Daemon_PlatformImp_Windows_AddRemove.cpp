@@ -63,10 +63,10 @@ namespace NMib::NDaemon
 					{
 						NContainer::TCVector<NStr::CStr> const &lDependencies = mp_pOwner->f_GetDaemonParams().f_GetDaemonDependencies();
 						NContainer::TCVector<ch16> Deps;
-						mint nDeps = lDependencies.f_GetLen();
+						umint nDeps = lDependencies.f_GetLen();
 						if (nDeps)
 						{
-							for (mint i = 0; i < nDeps; ++i)
+							for (umint i = 0; i < nDeps; ++i)
 							{
 								NStr::CWStr Temp = NStr::NPlatform::fg_StrToWindows(lDependencies[i]);
 								Deps.f_Insert(Temp.f_GetStr(), Temp.f_GetLen() + 1);
@@ -135,10 +135,10 @@ namespace NMib::NDaemon
 
 		NContainer::TCVector<NStr::CStr> const& lDependencies = mp_pOwner->f_GetDaemonParams().f_GetDaemonDependencies();
 		NContainer::TCVector<ch16> Deps;
-		mint nDeps = lDependencies.f_GetLen();
+		umint nDeps = lDependencies.f_GetLen();
 		if (nDeps)
 		{
-			for (mint i = 0; i < nDeps; ++i)
+			for (umint i = 0; i < nDeps; ++i)
 			{
 				NStr::CWStr Temp = NStr::NPlatform::fg_StrToWindows(lDependencies[i]);
 				Deps.f_Insert(Temp.f_GetStr(), Temp.f_GetLen() + 1);
