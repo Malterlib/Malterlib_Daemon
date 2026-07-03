@@ -54,7 +54,10 @@ namespace NMib::NDaemon
 			}
 			else
 			{
-				mp_pOwner->f_ReportError(NStr::CStr::CFormat("No supported daemon system detected."));
+				// Custom actions are handled by the application and never use the
+				// daemon integration, so they work without a daemon system.
+				if (_pOwner->mp_Params.f_GetAction() != EDaemonAction_Custom)
+					mp_pOwner->f_ReportError(NStr::CStr::CFormat("No supported daemon system detected."));
 			}
 		}
 
@@ -897,6 +900,11 @@ namespace NMib::NDaemon
 				}
 				else if (CScript::fs_IsSupported())
 				{
+				}
+				else
+				{
+					// No supported daemon system detected (e.g. inside containers)
+					m_SupportedFeatures &= ~EDaemonFeature_GlobalDaemon;
 				}
 			}
 		};

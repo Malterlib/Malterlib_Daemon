@@ -517,6 +517,8 @@ namespace
 		void f_TestCustomAction()
 		{
 			DMibTestPath("CustomAction");
+
+			// Custom actions are handled by the application and work without a daemon system
 			f_LaunchDaemonProcess("-CustomAction", false, 0, true, true, false, false);
 
 			NMib::NStr::CStr DaemonDir = f_GetDaemonDir();

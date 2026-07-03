@@ -258,6 +258,10 @@ namespace NMib::NDaemon
 
 	bool CSystemd::fs_IsSupported()
 	{
+		// systemd can be installed without being the running init system (e.g. inside containers)
+		if (!NFile::CFile::fs_FileExists(NStr::CStr("/run/systemd/system"), NMib::NFile::EFileAttrib_Directory))
+			return false;
+
 		return NFile::CFile::fs_FileExists
 			(
 				fsp_FindExecutable(gc_SystemctlExecutable)
