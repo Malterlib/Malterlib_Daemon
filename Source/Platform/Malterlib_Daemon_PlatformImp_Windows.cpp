@@ -22,6 +22,11 @@ namespace NMib::NDaemon
 		return EDaemonFeature_GlobalDaemon | EDaemonFeature_LocalUserDaemon | EDaemonFeature_AllUsersDaemon;
 	}
 
+	EDaemonFeature CDaemon::fs_SessionSupportedFeatures()
+	{
+		return fs_SupportedFeatures();
+	}
+
 	EActionResult CDaemon::f_Start()
 	{
 		return mp_pD->f_Start();

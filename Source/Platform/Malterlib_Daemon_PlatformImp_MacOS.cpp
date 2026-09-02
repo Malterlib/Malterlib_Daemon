@@ -4,6 +4,7 @@
 #include <Mib/Daemon/Daemon>
 #include <CoreFoundation/CoreFoundation.h>
 #include <sys/signal.h>
+#include <bsm/audit.h>
 #include <ServiceManagement/ServiceManagement.h>
 #include <Mib/Process/ProcessLaunch>
 #include <Mib/Core/PlatformSpecific/MacOSQualityOfService>
@@ -51,6 +52,12 @@ namespace NMib::NDaemon
 			if (!Params.f_GetDaemonDependencies().f_IsEmpty())
 			{
 				mp_pOwner->f_ReportError("Daemon dependencies are not supported on this platform");
+				bRet = false;
+			}
+
+			if (Params.f_GetDaemonMode() == EDaemonMode_LocalUser && !(fs_SessionSupportedFeatures() & EDaemonFeature_LocalUserDaemon))
+			{
+				mp_pOwner->f_ReportError("Local user services (-LocalUser) need the session that holds the graphical login");
 				bRet = false;
 			}
 
@@ -869,6 +876,19 @@ namespace NMib::NDaemon
 	EDaemonFeature CDaemon::fs_SupportedFeatures()
 	{
 		return EDaemonFeature_GlobalDaemon | EDaemonFeature_AllUsersDaemon | EDaemonFeature_LocalUserDaemon;
+	}
+
+	EDaemonFeature CDaemon::fs_SessionSupportedFeatures()
+	{
+		EDaemonFeature Features = fs_SupportedFeatures();
+
+		// launchctl loads a user agent into the audit session that holds the graphical login and
+		// refuses from any other session, such as one sshd started
+		auditinfo_addr_t AuditInfo = {};
+		if (getaudit_addr(&AuditInfo, sizeof(AuditInfo)) != 0 || !(AuditInfo.ai_flags & AU_SESSION_FLAG_HAS_GRAPHIC_ACCESS))
+			Features &= ~EDaemonFeature_LocalUserDaemon;
+
+		return Features;
 	}
 
 	EActionResult CDaemon::f_Start()

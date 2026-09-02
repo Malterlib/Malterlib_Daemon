@@ -916,6 +916,11 @@ namespace NMib::NDaemon
 		return (*g_SupportedFeatures).m_SupportedFeatures;
 	}
 
+	EDaemonFeature CDaemon::fs_SessionSupportedFeatures()
+	{
+		return fs_SupportedFeatures();
+	}
+
 
 	NStr::CStr CDaemon::fs_GetUniquePrefix()
 	{

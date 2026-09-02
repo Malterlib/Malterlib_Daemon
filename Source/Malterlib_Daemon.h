@@ -261,6 +261,9 @@ namespace NMib::NDaemon
 
 		static NStr::CStr fs_GetUniquePrefix();
 		static EDaemonFeature fs_SupportedFeatures();
+		// The subset of fs_SupportedFeatures the calling session can use: a local user daemon on
+		// macOS needs the session that holds the graphical login
+		static EDaemonFeature fs_SessionSupportedFeatures();
 		static void fs_QuitDaemon();
 		static bool fs_SupportsAutoRestart();
 

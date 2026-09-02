@@ -476,10 +476,27 @@ namespace
 						}
 					)
 				;
-				f_LaunchDaemon("-LocalUser", false, false, !(NMib::NDaemon::CDaemon::fs_SupportedFeatures() & NMib::NDaemon::EDaemonFeature_LocalUserDaemon) || _bUnsupported);
+				f_LaunchDaemon
+					(
+						"-LocalUser"
+						, false
+						, false
+						, !(NMib::NDaemon::CDaemon::fs_SessionSupportedFeatures() & NMib::NDaemon::EDaemonFeature_LocalUserDaemon) || _bUnsupported
+					)
+				;
 				{
 					DMibTestPath("StartDaemonDoesNotExist");
-					f_LaunchDaemonProcess("-StartService FakeDaemonDoesNotExist -LocalUser", false, 1, true, true, false, !(NMib::NDaemon::CDaemon::fs_SupportedFeatures() & NMib::NDaemon::EDaemonFeature_LocalUserDaemon) || _bUnsupported);
+					f_LaunchDaemonProcess
+						(
+							"-StartService FakeDaemonDoesNotExist -LocalUser"
+							, false
+							, 1
+							, true
+							, true
+							, false
+							, !(NMib::NDaemon::CDaemon::fs_SessionSupportedFeatures() & NMib::NDaemon::EDaemonFeature_LocalUserDaemon) || _bUnsupported
+						)
+					;
 				}
 			};
 		}
