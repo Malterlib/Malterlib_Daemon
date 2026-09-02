@@ -261,6 +261,7 @@ namespace NMib::NDaemon
 
 		static NStr::CStr fs_GetUniquePrefix();
 		static EDaemonFeature fs_SupportedFeatures();
+		static EDaemonFeature fs_SessionSupportedFeatures();
 		static void fs_QuitDaemon();
 		static bool fs_SupportsAutoRestart();
 
