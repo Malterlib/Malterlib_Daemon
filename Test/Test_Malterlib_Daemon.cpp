@@ -243,10 +243,8 @@ namespace
 				{
 					DMibTest(DMibExpr(Errors) == DMibExpr(""))(ETest_ExpectFail);
 					DMibTest(DMibExpr(Exited) == DMibExpr(EExitResult_Exited))(_bFailAndStop ? ETest_FailAndStop : ETest_Fail);
-					if (_ExpectedExitCode == 0)
-						DMibTest(DMibExpr(ExitCode) == DMibExpr(_ExpectedExitCode))(ETest_ExpectFail);
-					else
-						DMibTest(DMibExpr(ExitCode) == DMibExpr(_ExpectedExitCode))(_bFailAndStop ? ETest_FailAndStop : ETest_Fail);
+					uint32 ExpectedFailureCode = _ExpectedExitCode ? _ExpectedExitCode : uint32(NMib::NDaemon::EActionResult_Failure);
+					DMibTest(DMibExpr(ExitCode) == DMibExpr(ExpectedFailureCode))(_bFailAndStop ? ETest_FailAndStop : ETest_Fail);
 				}
 				else if (_bFailAndStop)
 				{

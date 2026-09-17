@@ -52,13 +52,6 @@ namespace NMib::NDaemon
 				DMibLog(DebugVerbose1, "Script supported.", 0);
 				mp_pDaemonIntegration = fg_Construct<CScript>(_pOwner);
 			}
-			else
-			{
-				// Custom actions are handled by the application and never use the
-				// daemon integration, so they work without a daemon system.
-				if (_pOwner->mp_Params.f_GetAction() != EDaemonAction_Custom)
-					mp_pOwner->f_ReportError(NStr::CStr::CFormat("No supported daemon system detected."));
-			}
 		}
 
 		~CDetails()
@@ -78,6 +71,15 @@ namespace NMib::NDaemon
 			if (!mp_pDaemonIntegration)
 				return false;
 			return mp_pDaemonIntegration->f_SupportsAutoRestart();
+		}
+
+		bool fp_CheckDaemonIntegration() const
+		{
+			if (mp_pDaemonIntegration)
+				return true;
+
+			mp_pOwner->f_ReportError("No supported daemon system detected.");
+			return false;
 		}
 
 		bool f_PrepareUserAndGroup(CDaemonParams const &_Params)
@@ -210,26 +212,42 @@ namespace NMib::NDaemon
 
 		EActionResult f_Start()
 		{
+			if (!fp_CheckDaemonIntegration())
+				return EActionResult_Failure;
+
 			return mp_pDaemonIntegration->f_Start(mp_pOwner->mp_Params);
 		}
 
 		EActionResult f_Stop(bool _bWait)
 		{
+			if (!fp_CheckDaemonIntegration())
+				return EActionResult_Failure;
+
 			return mp_pDaemonIntegration->f_Stop(mp_pOwner->mp_Params, _bWait);
 		}
 
 		EActionResult f_Restart(bool _bWait)
 		{
+			if (!fp_CheckDaemonIntegration())
+				return EActionResult_Failure;
+
 			return mp_pDaemonIntegration->f_Restart(mp_pOwner->mp_Params, _bWait);
 		}
 
 		EActionResult f_Exists(bool &_bExists) const
 		{
+			_bExists = false;
+			if (!fp_CheckDaemonIntegration())
+				return EActionResult_Failure;
+
 			return mp_pDaemonIntegration->f_Exists(mp_pOwner->mp_Params, _bExists);
 		}
 
 		EActionResult f_Add(bool _bCheckForExisting)
 		{
+			if (!fp_CheckDaemonIntegration())
+				return EActionResult_Failure;
+
 			if ((!mp_pOwner->mp_Params.f_GetRunAsUser().f_IsEmpty() || !mp_pOwner->mp_Params.f_GetRunAsGroup().f_IsEmpty()) && !f_PrepareUserAndGroup(mp_pOwner->mp_Params))
 				return EActionResult_Failure;
 
@@ -238,6 +256,9 @@ namespace NMib::NDaemon
 
 		EActionResult f_Remove()
 		{
+			if (!fp_CheckDaemonIntegration())
+				return EActionResult_Failure;
+
 			return mp_pDaemonIntegration->f_Remove(mp_pOwner->mp_Params);
 		}
 
