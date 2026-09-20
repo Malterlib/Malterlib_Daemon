@@ -195,6 +195,15 @@ namespace NMib::NDaemon
 		// makes the io loops fall back to epoll. Only the hard limit is lifted, as the process raises its own
 		// soft limit to the hard limit at startup
 		Conf += "LimitMEMLOCK=8M:infinity\n";
+
+		// The limit does not lower the process, and a priority above normal is one its threads raise themselves to.
+		// An unsigned LimitNICE is the raw limit, a signed one a nice level
+		auto PriorityGrant = NSys::fg_Process_GetLinuxPriorityGrant(_Params.f_GetExecutionPriority());
+		if (PriorityGrant.m_StartNice)
+			Conf += NStr::CStr::CFormat("Nice={}\n") << PriorityGrant.m_StartNice;
+		Conf += NStr::CStr::CFormat("LimitNICE={}\n") << PriorityGrant.m_NiceLimit;
+		if (PriorityGrant.m_RealTimePriorityLimit)
+			Conf += NStr::CStr::CFormat("LimitRTPRIO={}\n") << PriorityGrant.m_RealTimePriorityLimit;
 		Conf += "\n";
 
 		if (_Params.f_GetDaemonMode() == EDaemonMode_Global)

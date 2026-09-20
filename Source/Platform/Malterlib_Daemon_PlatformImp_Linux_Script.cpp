@@ -322,7 +322,18 @@ namespace NMib::NDaemon
 					// makes the io loops fall back to epoll. Only the hard limit is lifted, as the process raises its
 					// own soft limit to the hard limit at startup
 					"	ulimit -H -l unlimited 2>/dev/null\n"
-					"	\"$DAEMON\" \"${DAEMON_ARGS[@]:0}\" -DoStart \"${DAEMON_USER_ARGS[@]:0}\"\n"
+		;
+
+		auto PriorityGrant = NSys::fg_Process_GetLinuxPriorityGrant(_Params.f_GetExecutionPriority());
+		Script += NStr::CStr::CFormat("	ulimit -H -e {} 2>/dev/null\n") << PriorityGrant.m_NiceLimit;
+		if (PriorityGrant.m_RealTimePriorityLimit)
+			Script += NStr::CStr::CFormat("	ulimit -H -r {} 2>/dev/null\n") << PriorityGrant.m_RealTimePriorityLimit;
+
+		Script += "	";
+		if (PriorityGrant.m_StartNice)
+			Script += NStr::CStr::CFormat("nice -n {} ") << PriorityGrant.m_StartNice;
+
+		Script +=	"\"$DAEMON\" \"${DAEMON_ARGS[@]:0}\" -DoStart \"${DAEMON_USER_ARGS[@]:0}\"\n"
 					"	return $?\n"
 					"}\n\n"
 		;

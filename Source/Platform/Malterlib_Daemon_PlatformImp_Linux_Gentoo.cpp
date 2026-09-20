@@ -279,7 +279,15 @@ namespace NMib::NDaemon
 		// io_uring rings are charged against RLIMIT_MEMLOCK, whose default ceiling of a few megabytes makes the
 		// io loops fall back to epoll. Only the hard limit is lifted, as the process raises its own soft limit
 		// to the hard limit at startup
-		Script += "rc_ulimit=\"-H -l unlimited\"\n";
+
+		auto PriorityGrant = NSys::fg_Process_GetLinuxPriorityGrant(_Params.f_GetExecutionPriority());
+		NStr::CStr PriorityLimits = NStr::CStr::CFormat(" -e {}") << PriorityGrant.m_NiceLimit;
+		if (PriorityGrant.m_RealTimePriorityLimit)
+			PriorityLimits += NStr::CStr::CFormat(" -r {}") << PriorityGrant.m_RealTimePriorityLimit;
+
+		Script += NStr::CStr::CFormat("rc_ulimit=\"-H -l unlimited{}\"\n") << PriorityLimits;
+		if (PriorityGrant.m_StartNice)
+			Script += NStr::CStr::CFormat("export SSD_NICELEVEL={}\n") << PriorityGrant.m_StartNice;
 
 		Script += "\n";
 

@@ -298,6 +298,13 @@ namespace NMib::NDaemon
 		// limit to the hard limit at startup
 		Conf += "limit memlock 8388608 unlimited\n";
 
+		auto PriorityGrant = NSys::fg_Process_GetLinuxPriorityGrant(_Params.f_GetExecutionPriority());
+		if (PriorityGrant.m_StartNice)
+			Conf += NStr::CStr::CFormat("nice {}\n") << PriorityGrant.m_StartNice;
+		Conf += NStr::CStr::CFormat("limit nice {} {}\n") << PriorityGrant.m_NiceLimit << PriorityGrant.m_NiceLimit;
+		if (PriorityGrant.m_RealTimePriorityLimit)
+			Conf += NStr::CStr::CFormat("limit rtprio {} {}\n") << PriorityGrant.m_RealTimePriorityLimit << PriorityGrant.m_RealTimePriorityLimit;
+
 		Conf += NStr::CStr::CFormat("respawn\n");
 
 		return Conf;
