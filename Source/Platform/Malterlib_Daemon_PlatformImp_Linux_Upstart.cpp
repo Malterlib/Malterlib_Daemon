@@ -293,6 +293,11 @@ namespace NMib::NDaemon
 
 		Conf += NStr::CStr::CFormat("kill timeout {}\n") << _Params.f_GetMaxShutdownTime().f_ToInt();
 
+		// io_uring rings are charged against RLIMIT_MEMLOCK, whose default ceiling of a few megabytes makes the
+		// io loops fall back to epoll. The soft limit keeps the default, as the process raises its own soft
+		// limit to the hard limit at startup
+		Conf += "limit memlock 8388608 unlimited\n";
+
 		Conf += NStr::CStr::CFormat("respawn\n");
 
 		return Conf;

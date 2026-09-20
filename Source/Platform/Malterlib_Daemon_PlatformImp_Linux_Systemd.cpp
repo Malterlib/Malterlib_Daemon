@@ -191,6 +191,10 @@ namespace NMib::NDaemon
 		if (!_Params.f_GetRunAsGroup().f_IsEmpty())
 			Conf += NStr::CStr::CFormat("Group={}\n") << _Params.f_GetRunAsGroup();
 		Conf += "Restart=always\n";
+		// io_uring rings are charged against RLIMIT_MEMLOCK, whose systemd default ceiling of a few megabytes
+		// makes the io loops fall back to epoll. Only the hard limit is lifted, as the process raises its own
+		// soft limit to the hard limit at startup
+		Conf += "LimitMEMLOCK=8M:infinity\n";
 		Conf += "\n";
 
 		if (_Params.f_GetDaemonMode() == EDaemonMode_Global)

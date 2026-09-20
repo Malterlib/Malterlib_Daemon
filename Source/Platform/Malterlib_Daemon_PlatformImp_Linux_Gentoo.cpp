@@ -276,6 +276,10 @@ namespace NMib::NDaemon
 		Script += NStr::CStr::CFormat("DAEMON_ARGS=( '-Service' {} '-Daemonize' {} )\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(_Params.f_GetDaemonName()) << NMib::NStr::fg_StrEscapeBashSingleQuotes(PidFilePath);
 		Script += NStr::CStr::CFormat("PIDFILE={}\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(PidFilePath);
 		Script += NStr::CStr::CFormat("STOPTIMEOUT={}\n") << _Params.f_GetMaxShutdownTime().f_ToInt();
+		// io_uring rings are charged against RLIMIT_MEMLOCK, whose default ceiling of a few megabytes makes the
+		// io loops fall back to epoll. Only the hard limit is lifted, as the process raises its own soft limit
+		// to the hard limit at startup
+		Script += "rc_ulimit=\"-H -l unlimited\"\n";
 
 		Script += "\n";
 

@@ -318,6 +318,10 @@ namespace NMib::NDaemon
 */
 		Script +=	"do_start()\n"
 					"\{\n"
+					// io_uring rings are charged against RLIMIT_MEMLOCK, whose default ceiling of a few megabytes
+					// makes the io loops fall back to epoll. Only the hard limit is lifted, as the process raises its
+					// own soft limit to the hard limit at startup
+					"	ulimit -H -l unlimited 2>/dev/null\n"
 					"	\"$DAEMON\" \"${DAEMON_ARGS[@]:0}\" -DoStart \"${DAEMON_USER_ARGS[@]:0}\"\n"
 					"	return $?\n"
 					"}\n\n"
