@@ -16,6 +16,7 @@ extern "C"
 }
 
 #include <Mib/Core/PlatformSpecific/PosixErrNo>
+#include <Mib/Core/PlatformSpecific/PosixSignal>
 #include <Mib/Process/ProcessLaunch>
 
 namespace NMib::NDaemon
@@ -722,10 +723,10 @@ namespace NMib::NDaemon
 
 						NMib::NProcess::CProcessLaunch Launcher(Params, NMib::NProcess::EProcessLaunchCloseFlag_BlockOnExit);
 
-						signal(SIGTERM, (sig_t) fs_SigHandler);
-						signal(SIGINT, (sig_t) fs_SigHandler);
-						signal(SIGTSTP, (sig_t) fs_SigHandler);
-						signal(SIGCONT, (sig_t) fs_SigHandler);
+						NPlatform::fg_SetSignalHandler(SIGTERM, fs_SigHandler);
+						NPlatform::fg_SetSignalHandler(SIGINT, fs_SigHandler);
+						NPlatform::fg_SetSignalHandler(SIGTSTP, fs_SigHandler);
+						NPlatform::fg_SetSignalHandler(SIGCONT, fs_SigHandler);
 
 						while(!bExit)
 						{
@@ -755,18 +756,18 @@ namespace NMib::NDaemon
 	private:
 		EActionResult fp_RunDaemon()
 		{
-			auto pSigterm = signal(SIGTERM, (sig_t) fs_SigHandler);
-			auto pSigint = signal(SIGINT, (sig_t) fs_SigHandler);
-			auto pSigstp = signal(SIGTSTP, (sig_t) fs_SigHandler);
-			auto pSigcont = signal(SIGCONT, (sig_t) fs_SigHandler);
+			auto pSigterm = NPlatform::fg_SetSignalHandler(SIGTERM, fs_SigHandler);
+			auto pSigint = NPlatform::fg_SetSignalHandler(SIGINT, fs_SigHandler);
+			auto pSigstp = NPlatform::fg_SetSignalHandler(SIGTSTP, fs_SigHandler);
+			auto pSigcont = NPlatform::fg_SetSignalHandler(SIGCONT, fs_SigHandler);
 
 			auto Cleanup
 				= g_OnScopeExit / [&]
 				{
-					signal(SIGTERM, pSigterm);
-					signal(SIGINT, pSigint);
-					signal(SIGTSTP, pSigstp);
-					signal(SIGCONT, pSigcont);
+					NPlatform::fg_SetSignalHandler(SIGTERM, pSigterm);
+					NPlatform::fg_SetSignalHandler(SIGINT, pSigint);
+					NPlatform::fg_SetSignalHandler(SIGTSTP, pSigstp);
+					NPlatform::fg_SetSignalHandler(SIGCONT, pSigcont);
 				}
 			;
 

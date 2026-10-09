@@ -8,6 +8,7 @@
 #include <ServiceManagement/ServiceManagement.h>
 #include <Mib/Process/ProcessLaunch>
 #include <Mib/Core/PlatformSpecific/MacOSQualityOfService>
+#include <Mib/Core/PlatformSpecific/PosixSignal>
 
 namespace NMib::NDaemon
 {
@@ -294,14 +295,14 @@ namespace NMib::NDaemon
 
 			mp_InterruptedEvent.f_ResetSignaled();
 
-			auto pSigterm = signal(SIGTERM, (sig_t)fs_SigTermHandler);
-			auto pSigint = signal(SIGINT, (sig_t)fs_SigTermHandler);
+			auto pSigterm = NPlatform::fg_SetSignalHandler(SIGTERM, fs_SigTermHandler);
+			auto pSigint = NPlatform::fg_SetSignalHandler(SIGINT, fs_SigTermHandler);
 
 			auto Cleanup
 				= g_OnScopeExit / [&]
 				{
-					signal(SIGTERM, pSigterm);
-					signal(SIGINT, pSigint);
+					NPlatform::fg_SetSignalHandler(SIGTERM, pSigterm);
+					NPlatform::fg_SetSignalHandler(SIGINT, pSigint);
 				}
 			;
 
@@ -337,14 +338,14 @@ namespace NMib::NDaemon
 			if (!_bDebug && !mp_pOwner->mp_Params.f_GetAlwaysRunStatusApp())
 				return f_Run();
 
-			auto pSigterm = signal(SIGTERM, (sig_t)fs_CancelDaemonStatusHandler);
-			auto pSigint = signal(SIGINT, (sig_t)fs_CancelDaemonStatusHandler);
+			auto pSigterm = NPlatform::fg_SetSignalHandler(SIGTERM, fs_CancelDaemonStatusHandler);
+			auto pSigint = NPlatform::fg_SetSignalHandler(SIGINT, fs_CancelDaemonStatusHandler);
 
 			auto Cleanup
 				= g_OnScopeExit / [&]
 				{
-					signal(SIGTERM, pSigterm);
-					signal(SIGINT, pSigint);
+					NPlatform::fg_SetSignalHandler(SIGTERM, pSigterm);
+					NPlatform::fg_SetSignalHandler(SIGINT, pSigint);
 				}
 			;
 
