@@ -32,8 +32,14 @@ namespace NMib::NDaemon
 		NMib::NStr::CWStr RunAsUser;
 		NMib::NStr::CWStrSecure RunAsUserPasssword;
 
-		if ((!mp_pOwner->mp_Params.f_GetRunAsUser().f_IsEmpty() || !mp_pOwner->mp_Params.f_GetRunAsGroup().f_IsEmpty()) && !fp_PrepareUserAndGroup(mp_pOwner->mp_Params, RunAsUser, RunAsUserPasssword))
+		if
+		(
+			(!mp_pOwner->mp_Params.f_GetRunAsUser().f_IsEmpty() || !mp_pOwner->mp_Params.f_GetRunAsGroup().f_IsEmpty())
+			&& !fp_PrepareUserAndGroup(mp_pOwner->mp_Params, RunAsUser, RunAsUserPasssword)
+		)
+		{
 			return EActionResult_Failure;
+		}
 
 		if (_bCheckForExisting)
 		{
@@ -76,22 +82,22 @@ namespace NMib::NDaemon
 
 						{
 							if
+							(
+								!ChangeServiceConfigW
 								(
-									!ChangeServiceConfigW
-									(
-										schService
-										, SERVICE_NO_CHANGE
-										, SERVICE_NO_CHANGE
-										, SERVICE_NO_CHANGE
-										, NStr::NPlatform::fg_StrToWindows(fp_GetAddCommandLine())
-										, nullptr
-										, nullptr
-										, !Deps.f_IsEmpty() ? Deps.f_GetArray() : nullptr
-										, !RunAsUser.f_IsEmpty() ? RunAsUser.f_GetStr() : nullptr
-										, !RunAsUserPasssword.f_IsEmpty() ? RunAsUserPasssword.f_GetStr() : nullptr
-										, nullptr
-									)
+									schService
+									, SERVICE_NO_CHANGE
+									, SERVICE_NO_CHANGE
+									, SERVICE_NO_CHANGE
+									, NStr::NPlatform::fg_StrToWindows(fp_GetAddCommandLine())
+									, nullptr
+									, nullptr
+									, !Deps.f_IsEmpty() ? Deps.f_GetArray() : nullptr
+									, !RunAsUser.f_IsEmpty() ? RunAsUser.f_GetStr() : nullptr
+									, !RunAsUserPasssword.f_IsEmpty() ? RunAsUserPasssword.f_GetStr() : nullptr
+									, nullptr
 								)
+							)
 							{
 								DMibTrace("Could not change daemon config\n", 0);
 							}
@@ -133,7 +139,7 @@ namespace NMib::NDaemon
 			}
 		}
 
-		NContainer::TCVector<NStr::CStr> const& lDependencies = mp_pOwner->f_GetDaemonParams().f_GetDaemonDependencies();
+		NContainer::TCVector<NStr::CStr> const &lDependencies = mp_pOwner->f_GetDaemonParams().f_GetDaemonDependencies();
 		NContainer::TCVector<ch16> Deps;
 		umint nDeps = lDependencies.f_GetLen();
 		if (nDeps)
@@ -149,17 +155,17 @@ namespace NMib::NDaemon
 		NStr::CWStr ServiceGroup = NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonGroup());
 		SC_HANDLE schService = CreateServiceW
 			(
-				schSCManager              // SCManager database
-				, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName())              // name of daemon
-				, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonDisplayName())           // daemon name to display
-				, SERVICE_ALL_ACCESS        // desired access
+				schSCManager // SCManager database
+				, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName()) // name of daemon
+				, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonDisplayName()) // daemon name to display
+				, SERVICE_ALL_ACCESS // desired access
 				, SERVICE_WIN32_OWN_PROCESS | (mp_pOwner->f_GetDaemonParams().f_GetInteractive() ? SERVICE_INTERACTIVE_PROCESS : 0) // daemon type
-				, SERVICE_AUTO_START      // start type
-				, SERVICE_ERROR_NORMAL      // error control type
-				, NStr::NPlatform::fg_StrToWindows(fp_GetAddCommandLine())        // service's binary
-				, !mp_pOwner->f_GetDaemonParams().f_GetDaemonGroup().f_IsEmpty() ? ServiceGroup.f_GetStr() : nullptr          // no load ordering group
-				, nullptr                      // no tag identifier
-				, !Deps.f_IsEmpty() ? Deps.f_GetArray() : nullptr                      // no dependencies
+				, SERVICE_AUTO_START // start type
+				, SERVICE_ERROR_NORMAL // error control type
+				, NStr::NPlatform::fg_StrToWindows(fp_GetAddCommandLine()) // service's binary
+				, !mp_pOwner->f_GetDaemonParams().f_GetDaemonGroup().f_IsEmpty() ? ServiceGroup.f_GetStr() : nullptr // no load ordering group
+				, nullptr // no tag identifier
+				, !Deps.f_IsEmpty() ? Deps.f_GetArray() : nullptr // no dependencies
 				, !RunAsUser.f_IsEmpty() ? RunAsUser.f_GetStr() : nullptr
 				, !RunAsUserPasssword.f_IsEmpty() ? RunAsUserPasssword.f_GetStr() : nullptr
 			)
@@ -167,7 +173,7 @@ namespace NMib::NDaemon
 
 		if (schService == nullptr)
 		{
-			f_ReportError(NStr::CStr::CFormat("Error returned when creating daemon {}\r\n{}") << fp_GetAddCommandLine() << NMib::NPlatform::fg_Win32_GetLastErrorStr(0) );
+			f_ReportError(NStr::CStr::CFormat("Error returned when creating daemon {}\r\n{}") << fp_GetAddCommandLine() << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 			return EActionResult_Failure;
 		}
 		else
@@ -328,7 +334,7 @@ namespace NMib::NDaemon
 					}
 				)
 			;
-			_bExists = true;;
+			_bExists = true;
 		}
 		return EActionResult_Success;
 	}

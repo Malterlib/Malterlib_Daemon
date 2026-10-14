@@ -28,8 +28,7 @@ namespace NMib::NDaemon
 				}
 			}
 			break;
-		case EDaemonMode_Global:
-			break;
+		case EDaemonMode_Global: break;
 		}
 
 		return bRet;

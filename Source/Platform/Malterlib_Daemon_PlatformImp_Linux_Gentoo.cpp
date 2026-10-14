@@ -23,9 +23,7 @@ namespace NMib::NDaemon
 				Result += " ";
 		}
 		else if (!_Params.f_GetRunAsGroup().f_IsEmpty())
-		{
 			Result += NStr::CStr::CFormat("-g {} ") << _Params.f_GetRunAsGroup();
-		}
 
 		Result += NStr::CStr::CFormat("-d {} ") << NFile::CFile::fs_GetPath(_Params.f_GetExecutablePath()).f_EscapeStr();
 
@@ -80,9 +78,7 @@ namespace NMib::NDaemon
 			{
 				NStr::CStr ExpectedExec = NMib::NStr::fg_StrEscapeBashDoubleQuotes(_Params.f_GetExecutablePath());
 				if (ExpectedExec.f_CmpNoCase(Value) == 0)
-				{
 					return true;
-				}
 				else
 				{
 					mp_pOwner->f_ReportError(NStr::CStr::CFormat("Daemon name is already in use: {} and '{}' != '{}'") << ScriptFilePath << Value << ExpectedExec);
@@ -97,9 +93,7 @@ namespace NMib::NDaemon
 
 	bool CGentoo::fs_IsSupported()
 	{
-		return NFile::CFile::fs_FileExists(NStr::CStr(DInitD))
-			&& NFile::CFile::fs_FileExists(NStr::CStr(DGentooReleaseFile))
-			&& NFile::CFile::fs_FileExists(NStr::CStr(DRCUpdateBin));
+		return NFile::CFile::fs_FileExists(NStr::CStr(DInitD)) && NFile::CFile::fs_FileExists(NStr::CStr(DGentooReleaseFile)) && NFile::CFile::fs_FileExists(NStr::CStr(DRCUpdateBin));
 	}
 
 	CGentoo::CGentoo(CDaemon *_pOwner)
@@ -172,8 +166,7 @@ namespace NMib::NDaemon
 			return EActionResult_Success;
 		}
 
-		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(ScriptFilePath, "start", Result, Error, ExitCode)
-			|| ExitCode)
+		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(ScriptFilePath, "start", Result, Error, ExitCode) || ExitCode)
 		{
 			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Error starting daemon {}\nReturned with code {}: {}") << ScriptFilePath << ExitCode << Error);
 			return EActionResult_Failure;
@@ -202,7 +195,6 @@ namespace NMib::NDaemon
 			return EActionResult_Success;
 		}
 
-
 		NStr::CStr Result;
 		NStr::CStr Error;
 		uint32 ExitCode = 0;
@@ -213,8 +205,7 @@ namespace NMib::NDaemon
 			return EActionResult_Success;
 		}
 
-		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(ScriptFilePath, "stop", Result, Error, ExitCode)
-			|| ExitCode)
+		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(ScriptFilePath, "stop", Result, Error, ExitCode) || ExitCode)
 		{
 			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Error stopping daemon {}\nReturned with code {}: {}") << ScriptFilePath << ExitCode << Error);
 			return EActionResult_Failure;
@@ -261,9 +252,7 @@ namespace NMib::NDaemon
 	{
 		NStr::CStr Script;
 
-
 		Script += "#!/sbin/runscript\n\n";
-
 
 		Script += "# Author: " DMibStringize(DProductContact) "\n\n";
 
@@ -273,7 +262,11 @@ namespace NMib::NDaemon
 		Script += NStr::CStr::CFormat("DESC={}\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(_Params.f_GetDaemonDisplayName());
 		Script += NStr::CStr::CFormat("DAEMON={}\n") << NMib::NStr::fg_StrEscapeBashDoubleQuotes(_Params.f_GetExecutablePath());
 		Script += NStr::CStr::CFormat("NAME={}\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(_Params.f_GetDaemonName());
-		Script += NStr::CStr::CFormat("DAEMON_ARGS=( '-Service' {} '-Daemonize' {} )\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(_Params.f_GetDaemonName()) << NMib::NStr::fg_StrEscapeBashSingleQuotes(PidFilePath);
+		Script
+			+= NStr::CStr::CFormat("DAEMON_ARGS=( '-Service' {} '-Daemonize' {} )\n")
+			<< NMib::NStr::fg_StrEscapeBashSingleQuotes(_Params.f_GetDaemonName())
+			<< NMib::NStr::fg_StrEscapeBashSingleQuotes(PidFilePath)
+		;
 		Script += NStr::CStr::CFormat("PIDFILE={}\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(PidFilePath);
 		Script += NStr::CStr::CFormat("STOPTIMEOUT={}\n") << _Params.f_GetMaxShutdownTime().f_ToInt();
 		// io_uring rings are charged against RLIMIT_MEMLOCK, whose default ceiling of a few megabytes makes the
@@ -296,47 +289,58 @@ namespace NMib::NDaemon
 			"	need localmount\n"
 			"	need net\n"
 			"	after bootmisc\n"
-			"}\n\n";
+			"}\n\n"
+		;
 
 		Script += "checkconfig() {\n";
-		Script += NStr::CStr::CFormat("	if [ ! -d {0} ] ; then\n"
-			"		mkdir {0}\n") << PidFileDirectory;
+		Script += NStr::CStr::CFormat
+			(
+				"	if [ ! -d {0} ] ; then\n"
+				"		mkdir {0}\n"
+			)
+			<< PidFileDirectory
+		;
 		if (!_Params.f_GetRunAsUser().f_IsEmpty() || !_Params.f_GetRunAsGroup().f_IsEmpty())
 			Script += NStr::CStr::CFormat("		chown {1}:{2} {0}\n") << PidFileDirectory << _Params.f_GetRunAsUser() << _Params.f_GetRunAsGroup();
 		Script += "	fi\n}\n\n";
 
-/*
-# Return
-#   0 if daemon has been started
-#   1 if daemon was already running
-#   2 if daemon could not be started
-*/
-		Script += NStr::CStr::CFormat(	"start() {{\n"
-										"	checkconfig\n"
-										"	ebegin \"Starting $NAME\"\n"
-										"	start-stop-daemon --start --quiet --pidfile \"$PIDFILE\" --exec \"$DAEMON\" {0} --test > /dev/null || return 1\n"
-										"	start-stop-daemon --start --quiet --pidfile \"$PIDFILE\" --exec \"$DAEMON\" {0} -- \"${{DAEMON_ARGS[@]:0}\" || return 2\n"
-										"	eend $?\n"
-										"}\n\n") << fs_GetStartStopDaemonParams(_Params);
+		/*
+		# Return
+		#   0 if daemon has been started
+		#   1 if daemon was already running
+		#   2 if daemon could not be started
+		*/
+		Script += NStr::CStr::CFormat
+			(
+				"start() {{\n"
+				"	checkconfig\n"
+				"	ebegin \"Starting $NAME\"\n"
+				"	start-stop-daemon --start --quiet --pidfile \"$PIDFILE\" --exec \"$DAEMON\" {0} --test > /dev/null || return 1\n"
+				"	start-stop-daemon --start --quiet --pidfile \"$PIDFILE\" --exec \"$DAEMON\" {0} -- \"${{DAEMON_ARGS[@]:0}\" || return 2\n"
+				"	eend $?\n"
+				"}\n\n"
+			)
+			<< fs_GetStartStopDaemonParams(_Params)
+		;
 
-
-/*
-# Return
-#   0 if daemon has been stopped
-#   1 if daemon was already stopped
-#   2 if daemon could not be stopped
-#   other if a failure occurred
-*/
-		Script +=	"stop() {\n"
-					"	ebegin \"Stopping $NAME\"\n"
-					"	start-stop-daemon --stop --quiet --retry=TERM/$STOPTIMEOUT/KILL/5 --pidfile \"$PIDFILE\" --name \"$NAME\"\n"
-					"	RETVAL=\"$?\"\n"
-					"	[ \"$RETVAL\" = 2 ] && eend 2\n"
-					"	start-stop-daemon --stop --quiet --retry=0/$STOPTIMEOUT/KILL/5 --exec \"$DAEMON\"\n"
-					"	[ \"$?\" = 2 ] && eend 2\n"
-					"	rm -f \"$PIDFILE\"\n"
-					"	eend \"$RETVAL\"\n"
-					"}\n\n";
+		/*
+		# Return
+		#   0 if daemon has been stopped
+		#   1 if daemon was already stopped
+		#   2 if daemon could not be stopped
+		#   other if a failure occurred
+		*/
+		Script += "stop() {\n"
+			"	ebegin \"Stopping $NAME\"\n"
+			"	start-stop-daemon --stop --quiet --retry=TERM/$STOPTIMEOUT/KILL/5 --pidfile \"$PIDFILE\" --name \"$NAME\"\n"
+			"	RETVAL=\"$?\"\n"
+			"	[ \"$RETVAL\" = 2 ] && eend 2\n"
+			"	start-stop-daemon --stop --quiet --retry=0/$STOPTIMEOUT/KILL/5 --exec \"$DAEMON\"\n"
+			"	[ \"$?\" = 2 ] && eend 2\n"
+			"	rm -f \"$PIDFILE\"\n"
+			"	eend \"$RETVAL\"\n"
+			"}\n\n"
+		;
 
 		return Script;
 	}
@@ -407,9 +411,7 @@ namespace NMib::NDaemon
 		NStr::CStr Error;
 		uint32 ExitCode = 0;
 
-		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DRCUpdateBin, NStr::CStr::CFormat("add {} default") << DaemonName, Result, Error, ExitCode)
-			|| ExitCode
-			|| !Error.f_IsEmpty())
+		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DRCUpdateBin, NStr::CStr::CFormat("add {} default") << DaemonName, Result, Error, ExitCode) || ExitCode || !Error.f_IsEmpty())
 		{
 			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to add daemon {} to runlevel default: {}") << DaemonName << Error);
 			return EActionResult_Failure;
@@ -437,9 +439,7 @@ namespace NMib::NDaemon
 			NStr::CStr Error;
 			uint32 ExitCode = 0;
 
-			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DRCUpdateBin, NStr::CStr::CFormat("del {} default") << DaemonName, Result, Error, ExitCode)
-				|| ExitCode
-				|| !Error.f_IsEmpty())
+			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DRCUpdateBin, NStr::CStr::CFormat("del {} default") << DaemonName, Result, Error, ExitCode) || ExitCode || !Error.f_IsEmpty())
 			{
 				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to remove daemon {} from runlevel default: {}") << DaemonName << Error);
 				return EActionResult_Failure;

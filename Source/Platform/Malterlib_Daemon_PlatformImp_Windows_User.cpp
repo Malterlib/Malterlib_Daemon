@@ -105,8 +105,7 @@ namespace NMib::NDaemon
 								LaunchResult.f_SetResult();
 								break;
 							}
-						case NMib::NProcess::EProcessLaunchState_Exited:
-							break;
+						case NMib::NProcess::EProcessLaunchState_Exited: break;
 						}
 					}
 				)
