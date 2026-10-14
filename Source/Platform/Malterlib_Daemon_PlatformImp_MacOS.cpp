@@ -14,8 +14,8 @@ namespace NMib::NDaemon
 {
 	void fg_RunDaemonStatusApp
 		(
-			NFunction::TCFunction<void ()> const& _fPause
-			, NFunction::TCFunction<void ()> const& _fResume
+			NFunction::TCFunction<void ()> const &_fPause
+			, NFunction::TCFunction<void ()> const &_fResume
 			, NStr::CStr const &_DaemonName
 			, NContainer::CByteVector const &_IconData
 			, bool _bRunningAsDaemon
@@ -34,7 +34,6 @@ namespace NMib::NDaemon
 
 	class CDaemon::CDetails
 	{
-
 		bool fp_CheckParamsSupported() const
 		{
 			auto &Params = mp_pOwner->mp_Params;
@@ -66,8 +65,7 @@ namespace NMib::NDaemon
 		}
 
 	public:
-
-		CDetails(CDaemon* _pOwner)
+		CDetails(CDaemon *_pOwner)
 			: mp_pOwner(_pOwner)
 		{
 			if (msp_pThis)
@@ -133,8 +131,7 @@ namespace NMib::NDaemon
 			Params.m_bMakeEffectiveUserReal = true;
 			Params.m_bMakeEffectiveGroupReal = true;
 
-			Params.m_fOnStateChange
-				= [&](NMib::NProcess::CProcessLaunchStateChangeVariant const &_State, fp64 _TimeSinceStart)
+			Params.m_fOnStateChange = [&](NMib::NProcess::CProcessLaunchStateChangeVariant const &_State, fp64 _TimeSinceStart)
 				{
 					switch (_State.f_GetTypeID())
 					{
@@ -149,14 +146,12 @@ namespace NMib::NDaemon
 							*_pError += "\n";
 						}
 						break;
-					case NMib::NProcess::EProcessLaunchState_Launched:
-						break;
+					case NMib::NProcess::EProcessLaunchState_Launched: break;
 					}
 				}
 			;
 
-			Params.m_fOnOutput
-				= [&](NMib::NProcess::EProcessLaunchOutputType _OutputType, NMib::NStr::CStr const &_Output)
+			Params.m_fOnOutput = [&](NMib::NProcess::EProcessLaunchOutputType _OutputType, NMib::NStr::CStr const &_Output)
 				{
 					if (_pResult && _OutputType == NMib::NProcess::EProcessLaunchOutputType_StdOut)
 						*_pResult += _Output;
@@ -298,8 +293,7 @@ namespace NMib::NDaemon
 			auto pSigterm = NPlatform::fg_SetSignalHandler(SIGTERM, fs_SigTermHandler);
 			auto pSigint = NPlatform::fg_SetSignalHandler(SIGINT, fs_SigTermHandler);
 
-			auto Cleanup
-				= g_OnScopeExit / [&]
+			auto Cleanup = g_OnScopeExit / [&]
 				{
 					NPlatform::fg_SetSignalHandler(SIGTERM, pSigterm);
 					NPlatform::fg_SetSignalHandler(SIGINT, pSigint);
@@ -341,8 +335,7 @@ namespace NMib::NDaemon
 			auto pSigterm = NPlatform::fg_SetSignalHandler(SIGTERM, fs_CancelDaemonStatusHandler);
 			auto pSigint = NPlatform::fg_SetSignalHandler(SIGINT, fs_CancelDaemonStatusHandler);
 
-			auto Cleanup
-				= g_OnScopeExit / [&]
+			auto Cleanup = g_OnScopeExit / [&]
 				{
 					NPlatform::fg_SetSignalHandler(SIGTERM, pSigterm);
 					NPlatform::fg_SetSignalHandler(SIGINT, pSigint);
@@ -354,7 +347,7 @@ namespace NMib::NDaemon
 			NContainer::CByteVector IconData;
 			if (mp_pOwner->mp_Params.f_GetNativeHandle())
 			{
-				NContainer::CByteVector* pIconData = static_cast<NContainer::CByteVector*>(mp_pOwner->mp_Params.f_GetNativeHandle());
+				NContainer::CByteVector *pIconData = static_cast<NContainer::CByteVector *>(mp_pOwner->mp_Params.f_GetNativeHandle());
 				if (pIconData)
 					IconData = *pIconData;
 			}
@@ -375,7 +368,7 @@ namespace NMib::NDaemon
 						, IconData
 						, NMib::fg_GetSys()->f_GetRunningAsDaemon()
 					)
-				 ;
+				;
 			}
 			else
 				fg_RunDaemonStatusApp(nullptr, nullptr, mp_pOwner->mp_Params.f_GetDaemonDisplayName(), IconData, NMib::fg_GetSys()->f_GetRunningAsDaemon());
@@ -555,12 +548,12 @@ namespace NMib::NDaemon
 
 		CFDictionaryRef fg_CreateDictionaryFromParams(CDaemonParams const &_Params, bool _bDisabled = false)
 		{
-			CFMutableDictionaryRef Dict = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks,	&kCFTypeDictionaryValueCallBacks);
-
+			CFMutableDictionaryRef Dict = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 
 			fg_SetDictionaryValue(Dict, "Label", NStr::CStr::CFormat(CDaemon::fs_GetUniquePrefix() + ".{}") << _Params.f_GetDaemonName());
 			NContainer::TCVector<NStr::CStr> ProgramArguments;
-			ProgramArguments.f_Insert(_Params.f_GetExecutablePath());		// We write executable as arguments as Launchd seems to be broken in this regard, it has to have executable as argument or none will be sent
+			// We write executable as arguments as Launchd seems to be broken in this regard, it has to have executable as argument or none will be sent
+			ProgramArguments.f_Insert(_Params.f_GetExecutablePath());
 			ProgramArguments.f_Insert("-Service");
 			if (_Params.f_GetDisableWriteDaemon())
 				ProgramArguments.f_Insert(_Params.f_GetDaemonName());
@@ -596,8 +589,6 @@ namespace NMib::NDaemon
 
 			return Dict;
 		}
-
-
 
 		EActionResult f_Add(bool _bCheckForExisting)
 		{
@@ -742,7 +733,7 @@ namespace NMib::NDaemon
 						PlistFile.f_Close();
 					}
 				}
-				catch (NMib::NFile::CExceptionFile const&)
+				catch (NMib::NFile::CExceptionFile const &)
 				{
 					// Failure here doesn't matter, just continue.
 				}
@@ -812,23 +803,22 @@ namespace NMib::NDaemon
 			return false;
 		}
 
-		void f_ReportInformation(NStr::CStr const& _Heading, NStr::CStr const& _Message) const
+		void f_ReportInformation(NStr::CStr const &_Heading, NStr::CStr const &_Message) const
 		{
 			mp_pOwner->f_GetDaemonParams().f_ReportInformation(_Heading, _Message);
 		}
 
-		void f_ReportError(NStr::CStr const& _Message) const
+		void f_ReportError(NStr::CStr const &_Message) const
 		{
 			mp_pOwner->f_GetDaemonParams().f_ReportError(_Message);
 		}
 
-		EReportError f_ReportErrorYesNo(NStr::CStr const& _Message, EReportError _Default) const
+		EReportError f_ReportErrorYesNo(NStr::CStr const &_Message, EReportError _Default) const
 		{
 			return mp_pOwner->f_GetDaemonParams().f_ReportErrorYesNo(_Message, _Default);
 		}
 
 	protected:
-
 		void fp_DaemonResume()
 		{
 			if (mp_pImp)
@@ -852,26 +842,23 @@ namespace NMib::NDaemon
 				mp_pImp = nullptr;
 		}
 
-		static CDetails*			   msp_pThis;
-
+		static CDetails *msp_pThis;
 
 		NThread::CEvent mp_InterruptedEvent;
-		CDaemon*					   mp_pOwner;
-		NStorage::TCUniquePointer<CDaemonImp>   mp_pImp;
+		CDaemon *mp_pOwner;
+		NStorage::TCUniquePointer<CDaemonImp> mp_pImp;
 	};
 
-	CDaemon::CDetails* CDaemon::CDetails::msp_pThis = nullptr;
+	CDaemon::CDetails *CDaemon::CDetails::msp_pThis = nullptr;
 
-	CDaemon::CDaemon(CDaemonParams const& _Params)
+	CDaemon::CDaemon(CDaemonParams const &_Params)
 		: mp_pD(fg_Construct(this))
 		, mp_Params(_Params)
 	{
-
 	}
 
 	CDaemon::~CDaemon()
 	{
-
 	}
 
 	EDaemonFeature CDaemon::fs_SupportedFeatures()
@@ -937,17 +924,17 @@ namespace NMib::NDaemon
 		return mp_pD->f_IsShutdown();
 	}
 
-	void CDaemon::f_ReportError(NStr::CStr const& _Error)
+	void CDaemon::f_ReportError(NStr::CStr const &_Error)
 	{
 		mp_pD->f_ReportError(_Error);
 	}
 
-	void CDaemon::f_ReportInformation(NStr::CStr const& _Heading, NStr::CStr const& _Information)
+	void CDaemon::f_ReportInformation(NStr::CStr const &_Heading, NStr::CStr const &_Information)
 	{
 		mp_pD->f_ReportInformation(_Heading, _Information);
 	}
 
-	EReportError CDaemon::f_ReportErrorYesNo(NStr::CStr const& _Error, EReportError _Default)
+	EReportError CDaemon::f_ReportErrorYesNo(NStr::CStr const &_Error, EReportError _Default)
 	{
 		return mp_pD->f_ReportErrorYesNo(_Error, _Default);
 	}
@@ -957,6 +944,7 @@ namespace NMib::NDaemon
 		CDetails::fs_SigTermHandler(SIGTERM);
 		fg_CancelRunDaemonStatusApp();
 	}
+
 	bool CDaemon::fs_SupportsAutoRestart()
 	{
 		return true;

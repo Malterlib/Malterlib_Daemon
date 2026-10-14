@@ -17,15 +17,22 @@ namespace
 		, EExitResult_Exited
 		, EExitResult_NotLaunched
 	};
+
 	class CDaemon_Tests : public CTest
 	{
 	public:
-
 		NMib::NStr::CStr m_DaemonName;
 
 		CDaemon_Tests()
 		{
-			m_DaemonName = "Malterlib_TestDaemon_" + NMib::NCryptography::fg_GetHashedUuidString(NMib::NFile::CFile::fs_GetProgramPath(), NMib::NCryptography::CUniversallyUniqueIdentifier("{469e17ec-9536-44bc-8c8d-ab80a5dcbf13}"));
+			m_DaemonName
+				= "Malterlib_TestDaemon_"
+				+ NMib::NCryptography::fg_GetHashedUuidString
+				(
+					NMib::NFile::CFile::fs_GetProgramPath()
+					, NMib::NCryptography::CUniversallyUniqueIdentifier("{469e17ec-9536-44bc-8c8d-ab80a5dcbf13}")
+				)
+			;
 		}
 
 		static NMib::NStr::CStr fs_GetTestPath(NMib::NStr::CStr const &_TestPath, NMib::NStr::CStr const &_Test)
@@ -169,7 +176,6 @@ namespace
 				, bool _bExpectFail
 			)
 		{
-
 			EExitResult Exited = EExitResult_None;
 			uint32 ExitCode = 66;
 			NMib::NProcess::CProcessLaunchParams Params;
@@ -187,8 +193,7 @@ namespace
 
 			NMib::NStr::CStr Errors;
 
-			Params.m_fOnStateChange
-				= [&](NMib::NProcess::CProcessLaunchStateChangeVariant const &_State, fp64 _TimeSinceStart)
+			Params.m_fOnStateChange = [&](NMib::NProcess::CProcessLaunchStateChangeVariant const &_State, fp64 _TimeSinceStart)
 				{
 					switch (_State.f_GetTypeID())
 					{
@@ -205,14 +210,12 @@ namespace
 							//DMibDTrace("Error: {}\r\n", _State.f_Get<NMib::NProcess::EProcessLaunchState_LaunchFailed>());
 						}
 						break;
-					case NMib::NProcess::EProcessLaunchState_Launched:
-						break;
+					case NMib::NProcess::EProcessLaunchState_Launched: break;
 					}
 				}
 			;
 			NMib::NStr::CStr Output;
-			Params.m_fOnOutput
-				= [&](NMib::NProcess::EProcessLaunchOutputType _OutputType, NMib::NStr::CStr const &_Output)
+			Params.m_fOnOutput = [&](NMib::NProcess::EProcessLaunchOutputType _OutputType, NMib::NStr::CStr const &_Output)
 				{
 					if (_OutputType == NMib::NProcess::EProcessLaunchOutputType_StdOut)
 					{
@@ -229,13 +232,9 @@ namespace
 
 			{
 				if (_bElevate)
-				{
 					auto pLaunch = f_GetClient().f_GetFactory()(Params, NMib::NProcess::EProcessLaunchCloseFlag_BlockOnExit);
-				}
 				else
-				{
 					NMib::NProcess::CProcessLaunch Launcher(Params, NMib::NProcess::EProcessLaunchCloseFlag_BlockOnExit);
-				}
 			}
 			if (_bRunTest)
 			{
@@ -268,13 +267,9 @@ namespace
 			else
 			{
 				if (Exited != EExitResult_Exited)
-				{
 					DMibError("Failed to launch process");
-				}
 				if (ExitCode != _ExpectedExitCode)
-				{
 					DMibError("Unexpected exit code");
-				}
 				if (_ExpectedExitCode == 0 || _bExpectNoError)
 				{
 					if (!Errors.f_IsEmpty())
@@ -391,7 +386,6 @@ namespace
 					}
 #endif
 					DMibTest(DMibExpr(ProgramDir) == DMibExpr(DaemonDir));
-
 				}
 			}
 		}
@@ -457,7 +451,6 @@ namespace
 					f_LaunchDaemonProcess(NMib::NStr::CStr::CFormat("-Exists {} {}") << m_DaemonName << _ExtraParams, _bElevatedRun, 1, true, false, true, _bShouldFail);
 				}
 			}
-
 		}
 
 		void f_TestLocalUserDaemon(bool _bUnsupported)
@@ -465,8 +458,7 @@ namespace
 			{
 				DMibTestPath("LocalUserDaemon");
 				m_bUserDaemon = true;
-				auto Cleanup
-					= NMib::fg_OnScopeExit
+				auto Cleanup = NMib::fg_OnScopeExit
 					(
 						[&]
 						{
@@ -474,14 +466,7 @@ namespace
 						}
 					)
 				;
-				f_LaunchDaemon
-					(
-						"-LocalUser"
-						, false
-						, false
-						, !(NMib::NDaemon::CDaemon::fs_SessionSupportedFeatures() & NMib::NDaemon::EDaemonFeature_LocalUserDaemon) || _bUnsupported
-					)
-				;
+				f_LaunchDaemon("-LocalUser", false, false, !(NMib::NDaemon::CDaemon::fs_SessionSupportedFeatures() & NMib::NDaemon::EDaemonFeature_LocalUserDaemon) || _bUnsupported);
 				{
 					DMibTestPath("StartDaemonDoesNotExist");
 					f_LaunchDaemonProcess
@@ -506,8 +491,7 @@ namespace
 			{
 				DMibTestPath("AllUsersDaemons");
 				m_bUserDaemon = true;
-				auto Cleanup
-					= NMib::fg_OnScopeExit
+				auto Cleanup = NMib::fg_OnScopeExit
 					(
 						[&]
 						{
@@ -573,8 +557,7 @@ namespace
 				{
 					DMibTestPath("User");
 					m_RunAsUser = "_idstestuser";
-					auto Cleanup
-						= NMib::fg_OnScopeExit
+					auto Cleanup = NMib::fg_OnScopeExit
 						(
 							[&]
 							{
@@ -589,8 +572,7 @@ namespace
 				{
 					DMibTestPath("Group");
 					m_RunAsGroup = "_idstestgroup";
-					auto Cleanup
-						= NMib::fg_OnScopeExit
+					auto Cleanup = NMib::fg_OnScopeExit
 						(
 							[&]
 							{
@@ -605,8 +587,7 @@ namespace
 					DMibTestPath("GroupAndUser");
 					m_RunAsUser = "_idstestuser";
 					m_RunAsGroup = "_idstestgroup";
-					auto Cleanup
-						= NMib::fg_OnScopeExit
+					auto Cleanup = NMib::fg_OnScopeExit
 						(
 							[&]
 							{
@@ -637,7 +618,13 @@ namespace
 	#ifndef DPlatformFamily_Windows
 				EvilDir += " \"From hell\"";
 	#endif
-				f_DoTestsInPath("EvilDir", EvilDir, !!(NMib::NDaemon::CDaemon::fs_SupportedFeatures() & (NMib::NDaemon::EDaemonFeature_EscapedPathBroken|NMib::NDaemon::EDaemonFeature_EscapeCharBroken)));
+				f_DoTestsInPath
+					(
+						"EvilDir"
+						, EvilDir
+						, !!(NMib::NDaemon::CDaemon::fs_SupportedFeatures() & (NMib::NDaemon::EDaemonFeature_EscapedPathBroken | NMib::NDaemon::EDaemonFeature_EscapeCharBroken))
+					)
+				;
 
 				NMib::NStr::CStr SlightlyLessEvilDir = NMib::NStr::CWStr(str_utf16("'Evil' Dir 日本語 ÖÖÖ (Paren)"));
 

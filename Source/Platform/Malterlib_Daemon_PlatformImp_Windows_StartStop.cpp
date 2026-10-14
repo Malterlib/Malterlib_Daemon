@@ -116,7 +116,6 @@ namespace NMib::NDaemon
 
 		if (schService)
 		{
-
 			auto CleanupService = fg_OnScopeExit
 				(
 					[&]
@@ -160,13 +159,7 @@ namespace NMib::NDaemon
 
 			DWORD SizeNeeded = 0;
 
-			QueryServiceStatusEx(
-				schService,
-				SC_STATUS_PROCESS_INFO,
-				(LPBYTE) &ProcessStatus,
-				sizeof(ProcessStatus),
-				&SizeNeeded
-				);
+			QueryServiceStatusEx(schService, SC_STATUS_PROCESS_INFO, (LPBYTE) &ProcessStatus, sizeof(ProcessStatus), &SizeNeeded);
 
 			HANDLE hProcess = nullptr;
 			if (ProcessStatus.dwProcessId)
@@ -193,9 +186,7 @@ namespace NMib::NDaemon
 			}
 
 			if (hProcess)
-			{
 				WaitForSingleObject(hProcess, 240000);
-			}
 		}
 		else
 		{

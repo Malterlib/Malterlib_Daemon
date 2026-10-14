@@ -11,18 +11,18 @@ namespace NMib::NDaemon
 	class CGentoo : public CDaemonSystemInterfaceShared
 	{
 		// These values are taken from /lib64/rc/runscript.sh
-		enum EGentooDaemonStatus {
-			EGentooDaemonStatus_Started = 0,
-			EGentooDaemonStatus_Stopped = 3,
-			EGentooDaemonStatus_Crashed = 32,
-			EGentooDaemonStatus_Inactive = 16,
-			EGentooDaemonStatus_Starting = 8,
-			EGentooDaemonStatus_Stopping = 4,
-			EGentooDaemonStatus_InvalidDaemon = 255
+		enum EGentooDaemonStatus
+		{
+			EGentooDaemonStatus_Started = 0
+			, EGentooDaemonStatus_Stopped = 3
+			, EGentooDaemonStatus_Crashed = 32
+			, EGentooDaemonStatus_Inactive = 16
+			, EGentooDaemonStatus_Starting = 8
+			, EGentooDaemonStatus_Stopping = 4
+			, EGentooDaemonStatus_InvalidDaemon = 255
 		};
 
 	private:
-
 		NStr::CStr fp_GetScriptDirectory(EDaemonMode _Mode) const;
 		NStr::CStr fp_GetScriptPath(CDaemonParams const &_Params) const;
 		bool fp_IsScriptThisExecutable(CDaemonParams const &_Params) const;

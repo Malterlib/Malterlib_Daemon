@@ -63,8 +63,7 @@ namespace NMib::NDaemon
 				}
 			}
 			break;
-		case EDaemonMode_Global:
-			break;
+		case EDaemonMode_Global: break;
 		}
 
 		if (!_Params.f_GetDaemonDependencies().f_IsEmpty())

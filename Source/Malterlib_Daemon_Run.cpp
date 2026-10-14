@@ -6,24 +6,23 @@
 #include "Malterlib_Daemon.h"
 
 #ifdef DPlatformFamily_Windows
-	void * g_hDllInstance = 0;
+	void *g_hDllInstance = 0;
 #endif
 
 namespace NMib::NDaemon
 {
 	namespace
 	{
-		void fg_ReportError(NStr::CStr const& _Title, NStr::CStr const& _Error)
+		void fg_ReportError(NStr::CStr const &_Title, NStr::CStr const &_Error)
 		{
 			DMibConErrOut("{}{\n}", _Error);
 		}
 
-		NDaemon::EReportError fg_ReportErrorYesNo(NStr::CStr const& _Title, NStr::CStr const& _Message, NDaemon::EReportError _Default)
+		NDaemon::EReportError fg_ReportErrorYesNo(NStr::CStr const &_Title, NStr::CStr const &_Message, NDaemon::EReportError _Default)
 		{
 			DMibConOut("{}{\n}", _Message);
 			return _Default;
 		}
-
 	}
 	aint fg_RunDaemon(NStr::CStr const &_DaemonIdentifier, NStr::CStr const &_Name, NStr::CStr const &_SupportEmail, FImplementationFactory const &_fImpFactory)
 	{
@@ -52,7 +51,7 @@ namespace NMib::NDaemon
 				{
 					return _fImpFactory();
 				}
-				, [&] (NDaemon::CDaemonParams &_Params, NDaemon::CDaemon *_pDaemon, bool &_bHandled) -> EActionResult
+				, [&](NDaemon::CDaemonParams &_Params, NDaemon::CDaemon *_pDaemon, bool &_bHandled) -> EActionResult
 				{
 					NMib::fg_GetSys()->f_RegisterProgram(_Name, _SupportEmail, false);
 
@@ -91,15 +90,15 @@ namespace NMib::NDaemon
 
 					return EActionResult_Success;
 				}
-				, [&] (NStr::CStr const& _Errors)
+				, [&](NStr::CStr const &_Errors)
 				{
 					fg_ReportError("Error", _Errors);
 				}
-				, [] (NStr::CStr const& _Heading, NStr::CStr const& _Information)
+				, [](NStr::CStr const &_Heading, NStr::CStr const &_Information)
 				{
 					fg_ReportError(_Heading, _Information);
 				}
-				, [&] (NStr::CStr const& _Errors, NDaemon::EReportError _Default) -> NMib::NDaemon::EReportError
+				, [&](NStr::CStr const &_Errors, NDaemon::EReportError _Default) -> NMib::NDaemon::EReportError
 				{
 					return fg_ReportErrorYesNo("Error", _Errors, _Default);
 				}
