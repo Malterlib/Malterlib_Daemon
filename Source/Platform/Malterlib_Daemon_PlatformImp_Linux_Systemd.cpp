@@ -30,7 +30,15 @@ NMib::NStr::CStr gc_SystemDUserDirectories[] =
 
 namespace NMib::NProcess::NPlatform
 {
-	NStr::CStr fg_FindExecutable(NStr::CStr const &_Path, bool _bAllowLocate, NMib::NFile::EFileAttrib _Type, NContainer::TCVector<NStr::CStr> const &_ExtraPaths, NStr::CStr const &_LocalPaths = {});
+	NStr::CStr fg_FindExecutable
+		(
+			NStr::CStr const &_Path
+			, bool _bAllowLocate
+			, NMib::NFile::EFileAttrib _Type
+			, NContainer::TCVector<NStr::CStr> const &_ExtraPaths
+			, NStr::CStr const &_LocalPaths = {}
+		)
+	;
 }
 
 namespace NMib::NDaemon
@@ -153,9 +161,7 @@ namespace NMib::NDaemon
 			{
 				NStr::CStr ExpectedExec = fs_GetExecutableCommand(_Params);
 				if (ExpectedExec.f_CmpNoCase(Value) == 0)
-				{
 					return true;
-				}
 				else
 				{
 					pOwner->f_ReportError(NStr::CStr::CFormat("Daemon name is already in use: {}") << LaunchFilePath);
@@ -184,7 +190,7 @@ namespace NMib::NDaemon
 
 		Conf += NStr::CStr::CFormat("[Service]\nExecStart={}\n") << fs_GetExecutableCommand(_Params);
 		Conf += "KillMode=mixed\n";
-		Conf += NStr::CStr::CFormat("TimeoutStopSec={}\n") <<  _Params.f_GetMaxShutdownTime().f_ToInt();
+		Conf += NStr::CStr::CFormat("TimeoutStopSec={}\n") << _Params.f_GetMaxShutdownTime().f_ToInt();
 		Conf += NStr::CStr::CFormat("WorkingDirectory={}\n") << NFile::CFile::fs_GetPath(_Params.f_GetExecutablePath());
 		if (!_Params.f_GetRunAsUser().f_IsEmpty())
 			Conf += NStr::CStr::CFormat("User={}\n") << _Params.f_GetRunAsUser();
@@ -237,7 +243,7 @@ namespace NMib::NDaemon
 		return EActionResult_Success;
 	}
 
-	EActionResult CSystemd::fp_IsUnitEnabled(CDaemonParams const &_Params, bool& _bIsEnabled) const
+	EActionResult CSystemd::fp_IsUnitEnabled(CDaemonParams const &_Params, bool &_bIsEnabled) const
 	{
 		NStr::CStr Result;
 		NStr::CStr Error;
@@ -259,14 +265,7 @@ namespace NMib::NDaemon
 
 	NStr::CStr CSystemd::fsp_FindExecutable(NStr::CStr const &_Executable)
 	{
-		return NProcess::NPlatform::fg_FindExecutable
-			(
-				_Executable
-				, true
-				, NMib::NFile::EFileAttrib_File | NMib::NFile::EFileAttrib_Executable
-				, {gc_SearchPaths, fg_ArraySize(gc_SearchPaths)}
-			)
-		;
+		return NProcess::NPlatform::fg_FindExecutable(_Executable, true, NMib::NFile::EFileAttrib_File | NMib::NFile::EFileAttrib_Executable, {gc_SearchPaths, fg_ArraySize(gc_SearchPaths)});
 	}
 
 	bool CSystemd::fs_IsSupported()
@@ -275,12 +274,7 @@ namespace NMib::NDaemon
 		if (!NFile::CFile::fs_FileExists(NStr::CStr("/run/systemd/system"), NMib::NFile::EFileAttrib_Directory))
 			return false;
 
-		return NFile::CFile::fs_FileExists
-			(
-				fsp_FindExecutable(gc_SystemctlExecutable)
-				, NMib::NFile::EFileAttrib_File | NMib::NFile::EFileAttrib_Executable
-			)
-		;
+		return NFile::CFile::fs_FileExists(fsp_FindExecutable(gc_SystemctlExecutable), NMib::NFile::EFileAttrib_File | NMib::NFile::EFileAttrib_Executable);
 	}
 
 	CSystemd::CSystemd(CDaemon *_pOwner)
@@ -289,7 +283,6 @@ namespace NMib::NDaemon
 		using namespace NStr;
 
 		{
-
 			CStr Executable = fsp_FindExecutable(gc_Str<"pkg-config">);
 			if (NFile::CFile::fs_FileExists(Executable, NMib::NFile::EFileAttrib_File | NMib::NFile::EFileAttrib_Executable))
 				mp_PkgConfigExecutable = Executable;
@@ -308,12 +301,12 @@ namespace NMib::NDaemon
 			uint32 ExitCode = 0;
 
 			if
-				(
-					!mp_PkgConfigExecutable.f_IsEmpty()
-					&& NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_PkgConfigExecutable, "systemd --variable=systemdsystemunitdir", Result, Error, ExitCode)
-					&& !ExitCode
-					&& !Result.f_IsEmpty()
-				)
+			(
+				!mp_PkgConfigExecutable.f_IsEmpty()
+				&& NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_PkgConfigExecutable, "systemd --variable=systemdsystemunitdir", Result, Error, ExitCode)
+				&& !ExitCode
+				&& !Result.f_IsEmpty()
+			)
 			{
 				mp_SystemdSystemUnitDirectories.f_Insert(Result.f_Replace("\n", ""));
 			}
@@ -331,12 +324,12 @@ namespace NMib::NDaemon
 			uint32 ExitCode = 0;
 
 			if
-				(
-					!mp_PkgConfigExecutable.f_IsEmpty()
-					&& NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_PkgConfigExecutable, "systemd --variable=systemduserunitdir", Result, Error, ExitCode)
-					&& !ExitCode
-					&& !Result.f_IsEmpty()
-				)
+			(
+				!mp_PkgConfigExecutable.f_IsEmpty()
+				&& NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_PkgConfigExecutable, "systemd --variable=systemduserunitdir", Result, Error, ExitCode)
+				&& !ExitCode
+				&& !Result.f_IsEmpty()
+			)
 			{
 				mp_SystemdUserUnitDirectories.f_Insert(Result.f_Replace("\n", ""));
 			}
@@ -552,7 +545,7 @@ namespace NMib::NDaemon
 						return EActionResult_Failure;
 				}
 			}
-			catch (NFile::CExceptionFile const& _Exception)
+			catch (NFile::CExceptionFile const &_Exception)
 			{
 				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to check for existing launch file path: {}. The error was: {}") << LaunchFilePath << _Exception.f_GetErrorStr());
 				return EActionResult_Failure;
