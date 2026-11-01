@@ -12,7 +12,7 @@
 
 extern "C"
 {
-	#include <unistd.h>
+#include <unistd.h>
 }
 
 #include <Mib/Core/PlatformSpecific/PosixErrNo>
@@ -24,7 +24,7 @@ namespace NMib::NDaemon
 	class CDaemon::CDetails
 	{
 	public:
-		CDetails(CDaemon* _pOwner)
+		CDetails(CDaemon *_pOwner)
 			: mp_pOwner(_pOwner)
 			, mp_InterruptedReason(EDaemonInterrupt_None)
 		{
@@ -282,15 +282,9 @@ namespace NMib::NDaemon
 
 			switch (_sigid)
 			{
-				case SIGTSTP:
-					msp_pThis->mp_InterruptedReason.f_FetchOr(EDaemonInterrupt_Pause);
-					break;
-				case SIGCONT:
-					msp_pThis->mp_InterruptedReason.f_FetchOr(EDaemonInterrupt_Resume);
-					break;
-				default:
-					msp_pThis->mp_InterruptedReason.f_FetchOr(EDaemonInterrupt_Exit);
-					break;
+			case SIGTSTP: msp_pThis->mp_InterruptedReason.f_FetchOr(EDaemonInterrupt_Pause); break;
+			case SIGCONT: msp_pThis->mp_InterruptedReason.f_FetchOr(EDaemonInterrupt_Resume); break;
+			default: msp_pThis->mp_InterruptedReason.f_FetchOr(EDaemonInterrupt_Exit); break;
 			}
 			msp_pThis->mp_InterruptedEvent.f_Signal();
 		}
@@ -338,8 +332,7 @@ namespace NMib::NDaemon
 				return 2;
 			}
 
-			auto fl_DeletePidFile
-				= [&]
+			auto fl_DeletePidFile = [&]
 				{
 					try
 					{
@@ -359,7 +352,6 @@ namespace NMib::NDaemon
 					fl_DeletePidFile();
 					return 1; // Already stopped
 				}
-
 			}
 			else
 				return 1; // Already stopped
@@ -443,23 +435,21 @@ namespace NMib::NDaemon
 
 			return 0;
 #if 0
-					0	program is running or service is OK
-					1	program is dead and /var/run pid file exists
-					2	program is dead and /var/lock lock file exists
-					3	program is not running
-					4	program or service status is unknown
-					5-99	reserved for future LSB use
-					100-149	reserved for distribution use
-					150-199	reserved for application use
-					200-254	reserved
+			0	program is running or service is OK
+			1	program is dead and / var/run pid file exists
+			2	program is dead and / var/lock lock file exists
+			3	program is not running
+			4	program or service status is unknown
+			5 - 99	reserved for future LSB use
+			100 - 149	reserved for distribution use
+			150 - 199	reserved for application use
+			200 - 254	reserved
 #endif
 		}
 
-
 		EActionResult f_Run()
 		{
-			NFunction::TCFunction<EActionResult (EActionResult _Result)> fConvertResult
-				= [](EActionResult _Result) -> EActionResult
+			NFunction::TCFunction<EActionResult (EActionResult _Result)> fConvertResult = [](EActionResult _Result) -> EActionResult
 				{
 					return _Result;
 				}
@@ -469,8 +459,7 @@ namespace NMib::NDaemon
 			{
 				if (mp_pOwner->mp_Params.f_IsKeySet("-DoStart") || mp_pOwner->mp_Params.f_IsKeySet("-DoStop") || mp_pOwner->mp_Params.f_IsKeySet("-DoStatus"))
 				{
-					fConvertResult
-						= [](EActionResult _Result) -> EActionResult
+					fConvertResult = [](EActionResult _Result) -> EActionResult
 						{
 							if (_Result == EActionResult_Failure)
 								return (EActionResult)2;
@@ -496,14 +485,9 @@ namespace NMib::NDaemon
 						return (EActionResult)Ret;
 				}
 				else if (mp_pOwner->mp_Params.f_IsKeySet("-DoStop"))
-				{
 					return (EActionResult)fp_DoStop(PidFilePath);
-				}
 				else if (mp_pOwner->mp_Params.f_IsKeySet("-DoStatus"))
-				{
 					return (EActionResult)fp_DoStatus(PidFilePath);
-				}
-
 
 				NMib::NProcess::CProcessLaunchParams Params;
 				Params.m_Target = mp_pOwner->mp_Params.f_GetExecutablePath();
@@ -532,8 +516,7 @@ namespace NMib::NDaemon
 				bool bLaunchFailed = false;
 				bool bPIDReceived = false;
 
-				Params.m_fOnStateChange
-					= [&](NMib::NProcess::CProcessLaunchStateChangeVariant const &_State, fp64 _TimeSinceStart)
+				Params.m_fOnStateChange = [&](NMib::NProcess::CProcessLaunchStateChangeVariant const &_State, fp64 _TimeSinceStart)
 					{
 						switch (_State.f_GetTypeID())
 						{
@@ -558,8 +541,7 @@ namespace NMib::NDaemon
 					}
 				;
 
-				Params.m_fOnOutput
-					= [&](NMib::NProcess::EProcessLaunchOutputType _OutputType, NMib::NStr::CStr const &_Output)
+				Params.m_fOnOutput = [&](NMib::NProcess::EProcessLaunchOutputType _OutputType, NMib::NStr::CStr const &_Output)
 					{
 						if (_OutputType == NMib::NProcess::EProcessLaunchOutputType_StdOut)
 						{
@@ -648,7 +630,6 @@ namespace NMib::NDaemon
 							Launcher.f_Close(NMib::NProcess::EProcessLaunchCloseFlag_BlockOnExit);
 							return fConvertResult(EActionResult_Failure);
 						}
-
 					}
 				}
 
@@ -680,8 +661,7 @@ namespace NMib::NDaemon
 						uint32 ExitCode = 1;
 						bool bExit = false;
 
-						Params.m_fOnStateChange
-							= [&](NMib::NProcess::CProcessLaunchStateChangeVariant const &_State, fp64 _TimeSinceStart)
+						Params.m_fOnStateChange = [&](NMib::NProcess::CProcessLaunchStateChangeVariant const &_State, fp64 _TimeSinceStart)
 							{
 								switch (_State.f_GetTypeID())
 								{
@@ -707,17 +687,12 @@ namespace NMib::NDaemon
 							}
 						;
 
-						Params.m_fOnOutput
-							= [&](NMib::NProcess::EProcessLaunchOutputType _OutputType, NMib::NStr::CStr const &_Output)
+						Params.m_fOnOutput = [&](NMib::NProcess::EProcessLaunchOutputType _OutputType, NMib::NStr::CStr const &_Output)
 							{
 								if (_OutputType == NMib::NProcess::EProcessLaunchOutputType_StdOut)
-								{
 									DMibConOutRaw(_Output);
-								}
 								else
-								{
 									DMibConErrOutRaw(_Output);
-								}
 							}
 						;
 
@@ -728,7 +703,7 @@ namespace NMib::NDaemon
 						NPlatform::fg_SetSignalHandler(SIGTSTP, fs_SigHandler);
 						NPlatform::fg_SetSignalHandler(SIGCONT, fs_SigHandler);
 
-						while(!bExit)
+						while (!bExit)
 						{
 							auto Interrupts = mp_InterruptedReason.f_Exchange(EDaemonInterrupt_None);
 							if (Interrupts & EDaemonInterrupt_Pause)
@@ -742,12 +717,8 @@ namespace NMib::NDaemon
 						}
 
 						return (EActionResult)ExitCode;
-
 					}
-
 				}
-
-
 
 				return fp_RunDaemon();
 			}
@@ -761,8 +732,7 @@ namespace NMib::NDaemon
 			auto pSigstp = NPlatform::fg_SetSignalHandler(SIGTSTP, fs_SigHandler);
 			auto pSigcont = NPlatform::fg_SetSignalHandler(SIGCONT, fs_SigHandler);
 
-			auto Cleanup
-				= g_OnScopeExit / [&]
+			auto Cleanup = g_OnScopeExit / [&]
 				{
 					NPlatform::fg_SetSignalHandler(SIGTERM, pSigterm);
 					NPlatform::fg_SetSignalHandler(SIGINT, pSigint);
@@ -777,7 +747,7 @@ namespace NMib::NDaemon
 				return EActionResult_Failure;
 
 			bool bExit = false;
-			while(!bExit)
+			while (!bExit)
 			{
 				auto Interrupts = mp_InterruptedReason.f_Exchange(EDaemonInterrupt_None);
 				if (Interrupts & EDaemonInterrupt_Exit)
@@ -823,36 +793,35 @@ namespace NMib::NDaemon
 				mp_pImp = nullptr;
 		}
 
-		static CDetails*			   msp_pThis;
+		static CDetails *msp_pThis;
 
 		NStorage::TCUniquePointer<CDaemonSystemInterface> mp_pDaemonIntegration;
 		bool mp_bDaemonize;
 
 		enum EDaemonInterrupt : uint32
 		{
-			EDaemonInterrupt_None = 0,
-			EDaemonInterrupt_Exit = DMibBit(0),
-			EDaemonInterrupt_Pause = DMibBit(1),
-			EDaemonInterrupt_Resume = DMibBit(2),
+			EDaemonInterrupt_None     = 0
+			, EDaemonInterrupt_Exit   = DMibBit(0)
+			, EDaemonInterrupt_Pause  = DMibBit(1)
+			, EDaemonInterrupt_Resume = DMibBit(2)
 		};
+
 		NAtomic::TCAtomic<uint32> mp_InterruptedReason;
 		NThread::CEventAutoReset mp_InterruptedEvent;
-		CDaemon*					   mp_pOwner;
-		NStorage::TCUniquePointer<CDaemonImp>   mp_pImp;
+		CDaemon *mp_pOwner;
+		NStorage::TCUniquePointer<CDaemonImp> mp_pImp;
 	};
 
-	CDaemon::CDetails* CDaemon::CDetails::msp_pThis = nullptr;
+	CDaemon::CDetails *CDaemon::CDetails::msp_pThis = nullptr;
 
-	CDaemon::CDaemon(CDaemonParams const& _Params)
+	CDaemon::CDaemon(CDaemonParams const &_Params)
 		: mp_pD(fg_Construct(this))
 		, mp_Params(_Params)
 	{
-
 	}
 
 	CDaemon::~CDaemon()
 	{
-
 	}
 
 	namespace
@@ -869,12 +838,10 @@ namespace NMib::NDaemon
 					{
 						NStr::CStr Contents = NMib::NFile::CFile::fs_ReadStringFromFile(NStr::CStr("/etc/redhat-release"));
 
-						if (Contents.f_StartsWith("Fedora release 18 ")
-							|| Contents.f_StartsWith("Fedora release 19 "))
+						if (Contents.f_StartsWith("Fedora release 18 ") || Contents.f_StartsWith("Fedora release 19 "))
 							m_SupportedFeatures |= EDaemonFeature_EscapedPathBroken;
-						else if (Contents.f_StartsWith("CentOS release 6.")
-							|| Contents.f_StartsWith("Red Hat Enterprise Linux Server release 6."))
-							m_SupportedFeatures |= EDaemonFeature_EscapeCharBroken;	// Upstart escape character is broken
+						else if (Contents.f_StartsWith("CentOS release 6.") || Contents.f_StartsWith("Red Hat Enterprise Linux Server release 6."))
+							m_SupportedFeatures |= EDaemonFeature_EscapeCharBroken; // Upstart escape character is broken
 					}
 				}
 				catch (NMib::NException::CException const &)
@@ -902,7 +869,7 @@ namespace NMib::NDaemon
 						NStr::CStr Contents = NMib::NFile::CFile::fs_ReadStringFromFile(NStr::CStr("/etc/lsb-release"));
 
 						if (Contents.f_Find("DISTRIB_ID=Ubuntu") != -1)
-							m_SupportedFeatures |= EDaemonFeature_EscapeCharBroken;	// Upstart escape character is broken
+							m_SupportedFeatures |= EDaemonFeature_EscapeCharBroken; // Upstart escape character is broken
 					}
 				}
 				catch (NMib::NException::CException const &)
@@ -910,13 +877,9 @@ namespace NMib::NDaemon
 				}
 
 				if (CSystemd::fs_IsSupported())
-				{
 					m_SupportedFeatures |= EDaemonFeature_LocalUserDaemon | EDaemonFeature_AllUsersDaemon;
-				}
 				else if (CUpstart::fs_IsSupported())
-				{
 					m_SupportedFeatures |= EDaemonFeature_LocalUserDaemon | EDaemonFeature_AllUsersDaemon;
-				}
 				else if (CGentoo::fs_IsSupported())
 				{
 				}
@@ -930,6 +893,7 @@ namespace NMib::NDaemon
 				}
 			}
 		};
+
 		constinit NStorage::TCAggregate<CCalcFeatures> g_SupportedFeatures = {DAggregateInit};
 	}
 
@@ -942,7 +906,6 @@ namespace NMib::NDaemon
 	{
 		return fs_SupportedFeatures();
 	}
-
 
 	NStr::CStr CDaemon::fs_GetUniquePrefix()
 	{
@@ -998,17 +961,17 @@ namespace NMib::NDaemon
 		return false;
 	}
 
-	void CDaemon::f_ReportInformation(NStr::CStr const& _Heading, NStr::CStr const& _Message)
+	void CDaemon::f_ReportInformation(NStr::CStr const &_Heading, NStr::CStr const &_Message)
 	{
 		f_GetDaemonParams().f_ReportInformation(_Heading, _Message);
 	}
 
-	void CDaemon::f_ReportError(NStr::CStr const& _Message)
+	void CDaemon::f_ReportError(NStr::CStr const &_Message)
 	{
 		f_GetDaemonParams().f_ReportError(_Message);
 	}
 
-	EReportError CDaemon::f_ReportErrorYesNo(NStr::CStr const& _Message, EReportError _Default)
+	EReportError CDaemon::f_ReportErrorYesNo(NStr::CStr const &_Message, EReportError _Default)
 	{
 		return f_GetDaemonParams().f_ReportErrorYesNo(_Message, _Default);
 	}

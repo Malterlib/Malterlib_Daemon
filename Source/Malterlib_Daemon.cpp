@@ -10,15 +10,15 @@ namespace NMib::NDaemon
 {
 	CDaemonParams::CDaemonParams
 		(
-			NStr::CStr const& _DaemonName
-			, NStr::CStr const& _DisplayName
-			, NStr::CStr const& _DaemonDesc
-			, void* _pNativeHandle
-			, FImplementationFactory const& _ImplementationFactory
-			, FProcessCommand const& _ProcessCommand
-			, FErrorReporter const& _ErrorReporter
-			, FInformationReporter const& _InformationReporter
-			, FErrorReporterYesNo const& _ErrorReporterYesNo
+			NStr::CStr const &_DaemonName
+			, NStr::CStr const &_DisplayName
+			, NStr::CStr const &_DaemonDesc
+			, void *_pNativeHandle
+			, FImplementationFactory const &_ImplementationFactory
+			, FProcessCommand const &_ProcessCommand
+			, FErrorReporter const &_ErrorReporter
+			, FInformationReporter const &_InformationReporter
+			, FErrorReporterYesNo const &_ErrorReporterYesNo
 		)
 		: mp_DaemonName(_DaemonName)
 		, mp_DisplayName(_DisplayName)
@@ -41,7 +41,6 @@ namespace NMib::NDaemon
 
 	CDaemonParams::~CDaemonParams()
 	{
-
 	}
 
 	NMib::NStr::CStr CDaemonParams::fp_CleanDaemonName(NMib::NStr::CStr const &_DaemonName)
@@ -80,7 +79,7 @@ namespace NMib::NDaemon
 			NStr::CStr Keyname = _CommandLine.f_Pop();
 			if (!Keyname.f_IsEmpty() && Keyname.f_Left(1) == "-")
 			{
-				Keyname = Keyname.f_Delete(0,1);
+				Keyname = Keyname.f_Delete(0, 1);
 				if (_OptionHandlers.f_Exists(Keyname))
 					_OptionHandlers[Keyname](_CommandLine);
 				else
@@ -118,7 +117,7 @@ namespace NMib::NDaemon
 		NContainer::TCVector<NMib::NStr::CStr> Cmd(_CommandLine);
 
 		if (!Cmd.f_IsEmpty())
-			Cmd.f_Pop();		// Executable name
+			Cmd.f_Pop(); // Executable name
 
 		if (mp_ExecutablePath.f_IsEmpty())
 			mp_ExecutablePath = NFile::CFile::fs_GetProgramPath();
@@ -165,7 +164,6 @@ namespace NMib::NDaemon
 
 		if (!Cmd.f_IsEmpty())
 		{
-
 			COptionHandlerMap OptionHandlers;
 
 			OptionHandlers["-daemon-add"] = OptionHandlers["AddService"] = [&](CCommandLineVector &_Cmd)
@@ -229,10 +227,10 @@ namespace NMib::NDaemon
 				}
 			;
 			OptionHandlers["-daemon-exists"] = OptionHandlers["Exists"] = [&](CCommandLineVector &_Cmd)
-			{
-				mp_Action = EDaemonAction_Exists;
-				fs_ParseOptionArgument(Cmd, mp_DaemonName);
-			}
+				{
+					mp_Action = EDaemonAction_Exists;
+					fs_ParseOptionArgument(Cmd, mp_DaemonName);
+				}
 			;
 			OptionHandlers["-daemon-run"] = OptionHandlers["Service"] = [&](CCommandLineVector &_Cmd)
 				{
@@ -287,13 +285,13 @@ namespace NMib::NDaemon
 
 			OptionHandlers["DisableWriteService"] = [&](CCommandLineVector &_Cmd)
 				{
-					mp_bDisableWriteDaemon  = true;
+					mp_bDisableWriteDaemon = true;
 				}
 			;
 
 			OptionHandlers["KeepRunning"] = [&](CCommandLineVector &_Cmd)
 				{
-					mp_bKeepRunning  = true;
+					mp_bKeepRunning = true;
 				}
 			;
 
@@ -305,10 +303,9 @@ namespace NMib::NDaemon
 
 			OptionHandlers["-daemonize"] = OptionHandlers["Daemonize"] = [&](CCommandLineVector &_Cmd)
 				{
-					mp_bDaemonize  = true;
+					mp_bDaemonize = true;
 				}
 			;
-
 
 			OptionHandlers["Custom"] = [&](CCommandLineVector &_Cmd)
 				{
@@ -357,15 +354,9 @@ namespace NMib::NDaemon
 		NStr::CStr ModeString;
 		switch (mp_DaemonMode)
 		{
-		case EDaemonMode_AllUsers:
-			ModeString = "AllUsers";
-				break;
-		case EDaemonMode_LocalUser:
-			ModeString = "LocalUser";
-				break;
-		default:
-			ModeString = "Global";
-			break;
+		case EDaemonMode_AllUsers: ModeString = "AllUsers"; break;
+		case EDaemonMode_LocalUser: ModeString = "LocalUser"; break;
+		default: ModeString = "Global"; break;
 		}
 
 		NStr::CStr DaemonModePath = mp_RootDirectory + "/ServiceMode";
@@ -541,7 +532,7 @@ namespace NMib::NDaemon
 		return mp_DaemonDesc;
 	}
 
-	NContainer::TCVector<NStr::CStr> const& CDaemonParams::f_GetDaemonDependencies() const
+	NContainer::TCVector<NStr::CStr> const &CDaemonParams::f_GetDaemonDependencies() const
 	{
 		return mp_DaemonDependencies;
 	}
@@ -603,7 +594,7 @@ namespace NMib::NDaemon
 		return {};
 	}
 
-	void CDaemonParams::f_SetAddCommandLine(NStr::CStr const& _CommandLine)
+	void CDaemonParams::f_SetAddCommandLine(NStr::CStr const &_CommandLine)
 	{
 		mp_AddCommandLine = _CommandLine;
 	}
@@ -661,7 +652,7 @@ namespace NMib::NDaemon
 					return;
 				}
 				mp_lRawArguments.f_Insert(_Value);
-				return ;
+				return;
 			}
 		}
 
@@ -669,7 +660,7 @@ namespace NMib::NDaemon
 		mp_lRawArguments.f_Insert(_Value);
 	}
 
-	NStr::CStr CDaemonParams::f_GetValueForKey(NStr::CStr const& _Key) const
+	NStr::CStr CDaemonParams::f_GetValueForKey(NStr::CStr const &_Key) const
 	{
 		for (auto iArg = mp_lRawArguments.f_GetIterator(); iArg; ++iArg)
 		{
@@ -694,7 +685,7 @@ namespace NMib::NDaemon
 		return mp_fImplementationFactory();
 	}
 
-	EActionResult CDaemonParams::f_ProcessCommand(CDaemon* _pDaemon, bool& _bHandled)
+	EActionResult CDaemonParams::f_ProcessCommand(CDaemon *_pDaemon, bool &_bHandled)
 	{
 		if (mp_fProcessCommand.f_IsEmpty())
 			return EActionResult_Failure;
@@ -702,19 +693,19 @@ namespace NMib::NDaemon
 		return mp_fProcessCommand(*this, _pDaemon, _bHandled);
 	}
 
-	void CDaemonParams::f_ReportError(NStr::CStr const& _Error) const
+	void CDaemonParams::f_ReportError(NStr::CStr const &_Error) const
 	{
 		if (!mp_fReportError.f_IsEmpty())
 			mp_fReportError(_Error);
 	}
 
-	void CDaemonParams::f_ReportInformation(NStr::CStr const& _Heading, NStr::CStr const& _Information) const
+	void CDaemonParams::f_ReportInformation(NStr::CStr const &_Heading, NStr::CStr const &_Information) const
 	{
 		if (!mp_fReportInformation.f_IsEmpty())
 			mp_fReportInformation(_Heading, _Information);
 	}
 
-	EReportError CDaemonParams::f_ReportErrorYesNo(NStr::CStr const& _Error, EReportError _Default) const
+	EReportError CDaemonParams::f_ReportErrorYesNo(NStr::CStr const &_Error, EReportError _Default) const
 	{
 		if (!mp_fReportErrorYesNo.f_IsEmpty())
 			return mp_fReportErrorYesNo(_Error, _Default);
@@ -722,7 +713,7 @@ namespace NMib::NDaemon
 		return EReportError_No;
 	}
 
-	CDaemonParams const& CDaemon::f_GetDaemonParams() const
+	CDaemonParams const &CDaemon::f_GetDaemonParams() const
 	{
 		return mp_Params;
 	}
@@ -790,9 +781,7 @@ namespace NMib::NDaemon
 					CommandResult = bExists ? EActionResult_Success : EActionResult_Failure;
 			}
 			break;
-		case EDaemonAction_Custom:
-			DMibNeverGetHere;
-			break;
+		case EDaemonAction_Custom: DMibNeverGetHere; break;
 		}
 
 		return CommandResult;

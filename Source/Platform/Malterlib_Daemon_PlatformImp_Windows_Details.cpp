@@ -8,7 +8,7 @@ namespace NMib::NDaemon
 	NThread::CMutual CDaemon::CDetails::msp_ServiceControlLock;
 	SERVICE_STATUS CDaemon::CDetails::msp_ServiceStatus;
 	SERVICE_STATUS_HANDLE CDaemon::CDetails::msp_ServiceStatusHandle;
-	CDaemon::CDetails* CDaemon::CDetails::msp_pThis = nullptr;
+	CDaemon::CDetails *CDaemon::CDetails::msp_pThis = nullptr;
 	bool CDaemon::CDetails::msp_bIsShutdown = false;
 	CDaemon::CDetails::CTaskIconCleaner CDaemon::CDetails::msp_TaskIcon;
 
@@ -54,7 +54,6 @@ namespace NMib::NDaemon
 		return CommandLine;
 	}
 
-
 	void CDaemon::CDetails::fp_DaemonResume()
 	{
 		if (mp_pImp)
@@ -91,11 +90,11 @@ namespace NMib::NDaemon
 			if (mp_pStopThread->f_GetState() == NThread::EThreadState_Stopped)
 			{
 				DMibLock(msp_ServiceControlLock);
-				msp_ServiceStatus.dwCurrentState  = SERVICE_STOPPED;
+				msp_ServiceStatus.dwCurrentState = SERVICE_STOPPED;
 
 				DMibDTrace("Daemon stopped: {}" DMibNewLine, msp_ServiceStatus.dwCheckPoint);
 
-				if (!SetServiceStatus (msp_ServiceStatusHandle, &msp_ServiceStatus))
+				if (!SetServiceStatus(msp_ServiceStatusHandle, &msp_ServiceStatus))
 				{
 					[[maybe_unused]] HRESULT status = GetLastError();
 					DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", status);
@@ -105,12 +104,12 @@ namespace NMib::NDaemon
 			else
 			{
 				DMibLock(msp_ServiceControlLock);
-				msp_ServiceStatus.dwCurrentState  = SERVICE_STOP_PENDING;
+				msp_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;
 				++msp_ServiceStatus.dwCheckPoint;
-				msp_ServiceStatus.dwWaitHint      += 1500;
+				msp_ServiceStatus.dwWaitHint += 1500;
 				DMibDTrace("Daemon stop pending: {}" DMibNewLine, msp_ServiceStatus.dwCheckPoint);
 
-				if (!SetServiceStatus (msp_ServiceStatusHandle, &msp_ServiceStatus))
+				if (!SetServiceStatus(msp_ServiceStatusHandle, &msp_ServiceStatus))
 				{
 					[[maybe_unused]] HRESULT status = GetLastError();
 					DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", status);

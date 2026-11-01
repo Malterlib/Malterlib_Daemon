@@ -98,7 +98,7 @@ namespace NMib::NDaemon
 				m_NotifyIconData.hIcon = _hIcon;
 				m_NotifyIconData.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
 				m_NotifyIconData.uID = 0x0101;
-				m_NotifyIconData.uCallbackMessage = WM_USER+20;
+				m_NotifyIconData.uCallbackMessage = WM_USER + 20;
 				m_NotifyIconData.dwState = 0;
 				m_NotifyIconData.dwStateMask = 0;
 				NStr::fg_StrCopy(m_NotifyIconData.szTip, "Double click to quit " + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName());
@@ -112,11 +112,9 @@ namespace NMib::NDaemon
 	{
 		MSG Message;
 
-		int32 Ret = GetMessage( &Message, nullptr, 0, 0 );
+		int32 Ret = GetMessage(&Message, nullptr, 0, 0);
 		if (Ret == -1 || Ret == 0 || Message.message == WM_QUIT)
-		{
 			return true;
-		}
 
 		TranslateMessage(&Message);
 		DispatchMessage(&Message);

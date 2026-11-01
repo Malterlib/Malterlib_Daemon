@@ -36,7 +36,6 @@ namespace NMib::NDaemon
 		: CDaemonSystemInterfaceShared(_pOwner, ESupportedFeature_LocalUser | ESupportedFeature_AllUsers)
 		, mp_bSupportsUserFlag(false)
 	{
-
 		// Get Upstart version
 		if (NFile::CFile::fs_FileExists(NStr::CStr(DInitctlExecutable)))
 		{
@@ -64,9 +63,7 @@ namespace NMib::NDaemon
 				}
 			}
 			else
-			{
 				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to execute {}: {}") << NStr::CStr(DInitctlExecutable) << Error);
-			}
 		}
 	}
 
@@ -97,9 +94,7 @@ namespace NMib::NDaemon
 				return NStr::CStr("/usr/share/upstart/sessions");
 		}
 		else if (Mode != EDaemonMode_Global)
-		{
 			return NStr::CStr::CFormat("{}/.init/") << NSys::NFile::fg_GetUserHomeDirectory();
-		}
 
 		return NStr::CStr("/etc/init");
 	}
@@ -137,9 +132,7 @@ namespace NMib::NDaemon
 			{
 				NStr::CStr ExpectedExec = fs_GetExecutableCommand(_Params);
 				if (ExpectedExec.f_CmpNoCase(Value) == 0)
-				{
 					return true;
-				}
 				else
 				{
 					mp_pOwner->f_ReportError(NStr::CStr::CFormat("Daemon name is already in use: {}") << LaunchFilePath);
@@ -181,9 +174,7 @@ namespace NMib::NDaemon
 
 			// Check for already running daemon
 			NStr::CStr Command = NStr::CStr::CFormat("status {}{}") << fp_GetInitctlOptions(_Params) << _Params.f_GetDaemonName();
-			if (NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DInitctlExecutable, Command, Result, Error, ExitCode)
-				&& !ExitCode
-				&& Result.f_FindNoCase("start/running") != -1)
+			if (NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DInitctlExecutable, Command, Result, Error, ExitCode) && !ExitCode && Result.f_FindNoCase("start/running") != -1)
 			{
 				mp_pOwner->f_ReportInformation("Start daemon", NStr::CStr::CFormat("Daemon {} already running") << _Params.f_GetDaemonName());
 				return EActionResult_Success;
@@ -195,10 +186,13 @@ namespace NMib::NDaemon
 		uint32 ExitCode = 0;
 
 		NStr::CStr Command = NStr::CStr::CFormat("start {}{}") << fp_GetInitctlOptions(_Params) << _Params.f_GetDaemonName();
-		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DInitctlExecutable, Command, Result, Error, ExitCode)
+		if
+		(
+			!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DInitctlExecutable, Command, Result, Error, ExitCode)
 			|| ExitCode
 			|| !Error.f_IsEmpty()
-			|| Result.f_FindNoCase("stop/waiting") >= 0)
+			|| Result.f_FindNoCase("stop/waiting") >= 0
+		)
 		{
 			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Error starting daemon {}\nCommand {} returned with code {}: {}") << _Params.f_GetDaemonName() << Command << ExitCode << Error);
 			return EActionResult_Failure;
@@ -225,7 +219,11 @@ namespace NMib::NDaemon
 			NStr::CStr Command = NStr::CStr::CFormat("status {}{}") << fp_GetInitctlOptions(_Params) << _Params.f_GetDaemonName();
 			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DInitctlExecutable, Command, Result, Error, ExitCode))
 			{
-				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Error checking status on daemon {}\nCommand {} returned with code {}: {}") << _Params.f_GetDaemonName() << Command << ExitCode << Error);
+				mp_pOwner->f_ReportError
+					(
+						NStr::CStr::CFormat("Error checking status on daemon {}\nCommand {} returned with code {}: {}") << _Params.f_GetDaemonName() << Command << ExitCode << Error
+					)
+				;
 				return EActionResult_Failure;
 			}
 
@@ -241,9 +239,7 @@ namespace NMib::NDaemon
 		uint32 ExitCode = 0;
 
 		NStr::CStr Command = NStr::CStr::CFormat("stop {}{}") << fp_GetInitctlOptions(_Params) << _Params.f_GetDaemonName();
-		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DInitctlExecutable, Command, Result, Error, ExitCode)
-			|| ExitCode
-			|| !Error.f_IsEmpty())
+		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DInitctlExecutable, Command, Result, Error, ExitCode) || ExitCode || !Error.f_IsEmpty())
 		{
 			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Error stopping daemon {}\nCommand {} returned with code {0}: {}") << _Params.f_GetDaemonName() << Command << ExitCode << Error);
 			return EActionResult_Failure;
@@ -266,9 +262,7 @@ namespace NMib::NDaemon
 		uint32 ExitCode = 0;
 
 		NStr::CStr Command = NStr::CStr::CFormat("restart {}{}") << fp_GetInitctlOptions(_Params) << _Params.f_GetDaemonName();
-		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DInitctlExecutable, Command, Result, Error, ExitCode)
-			|| ExitCode
-			|| !Error.f_IsEmpty())
+		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DInitctlExecutable, Command, Result, Error, ExitCode) || ExitCode || !Error.f_IsEmpty())
 		{
 			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Error restarting daemon {}\nCommand {} returned with code {0}: {}") << _Params.f_GetDaemonName() << Command << ExitCode << Error);
 			return EActionResult_Failure;

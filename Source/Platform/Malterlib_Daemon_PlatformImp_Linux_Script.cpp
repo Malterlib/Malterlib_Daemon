@@ -21,7 +21,7 @@ namespace NMib::NDaemon
 
 	NStr::CStr CScript::fp_GetScriptDirectory(EDaemonMode _Mode) const
 	{
-			return mp_ScriptDirectory;
+		return mp_ScriptDirectory;
 	}
 
 	NStr::CStr CScript::fp_GetScriptPath(CDaemonParams const &_Params) const
@@ -62,9 +62,7 @@ namespace NMib::NDaemon
 			{
 				NStr::CStr ExpectedExec = NMib::NStr::fg_StrEscapeBashDoubleQuotes(_Params.f_GetExecutablePath());
 				if (ExpectedExec.f_CmpNoCase(Value) == 0)
-				{
 					return true;
-				}
 				else
 				{
 					mp_pOwner->f_ReportError(NStr::CStr::CFormat("Daemon name is already in use: {} and '{}' != '{}'") << ScriptFilePath << Value << ExpectedExec);
@@ -76,7 +74,6 @@ namespace NMib::NDaemon
 		mp_pOwner->f_ReportError(NStr::CStr::CFormat("Unable to find executable in {}") << ScriptFilePath);
 		return false;
 	}
-
 
 	bool CScript::fs_IsSupported()
 	{
@@ -99,7 +96,7 @@ namespace NMib::NDaemon
 			else if (NFile::CFile::fs_FileExists(NStr::CStr(DUpdateRcD)))
 				mp_ScriptRegistrationMethod = EScriptRegistrationMethod_UpdateRcD;
 		}
-		catch (NFile::CExceptionFile const & _Exception)
+		catch (NFile::CExceptionFile const &_Exception)
 		{
 			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Unable to check for script support: {}") << _Exception.f_GetErrorStr());
 		}
@@ -108,17 +105,10 @@ namespace NMib::NDaemon
 
 		switch (mp_ScriptRegistrationMethod)
 		{
-		case EScriptRegistrationMethod_ChkConfig:
-			DMibLog(DebugVerbose1, "Using {} for script management.", NStr::CStr(DChkConfig));
-			break;
-		case EScriptRegistrationMethod_UpdateRcD:
-			DMibLog(DebugVerbose1, "Using {} for script management.", NStr::CStr(DUpdateRcD));
-			break;
-		default:
-			DMibLog(DebugVerbose1, "No script management tool found.", 0);
-			break;
+		case EScriptRegistrationMethod_ChkConfig: DMibLog(DebugVerbose1, "Using {} for script management.", NStr::CStr(DChkConfig)); break;
+		case EScriptRegistrationMethod_UpdateRcD: DMibLog(DebugVerbose1, "Using {} for script management.", NStr::CStr(DUpdateRcD)); break;
+		default: DMibLog(DebugVerbose1, "No script management tool found.", 0); break;
 		}
-
 	}
 
 	CScript::~CScript()
@@ -163,8 +153,7 @@ namespace NMib::NDaemon
 		NStr::CStr Error;
 		uint32 ExitCode = 0;
 
-		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(ScriptFilePath, "start", Result, Error, ExitCode)
-			|| ExitCode)
+		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(ScriptFilePath, "start", Result, Error, ExitCode) || ExitCode)
 		{
 			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Error starting daemon {}\nReturned with code {}: {}") << ScriptFilePath << ExitCode << Error);
 			return EActionResult_Failure;
@@ -196,8 +185,7 @@ namespace NMib::NDaemon
 		NStr::CStr Error;
 		uint32 ExitCode = 0;
 
-		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(ScriptFilePath, "stop", Result, Error, ExitCode)
-			|| ExitCode)
+		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(ScriptFilePath, "stop", Result, Error, ExitCode) || ExitCode)
 		{
 			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Error stopping daemon {}\nReturned with code {}: {}") << ScriptFilePath << ExitCode << Error);
 			return EActionResult_Failure;
@@ -230,8 +218,7 @@ namespace NMib::NDaemon
 		NStr::CStr Error;
 		uint32 ExitCode = 0;
 
-		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(ScriptFilePath, "restart", Result, Error, ExitCode)
-			|| ExitCode)
+		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(ScriptFilePath, "restart", Result, Error, ExitCode) || ExitCode)
 		{
 			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Error restarting daemon {}\nReturned with code {}: {}") << ScriptFilePath << ExitCode << Error);
 			return EActionResult_Failure;
@@ -244,11 +231,10 @@ namespace NMib::NDaemon
 	{
 		NStr::CStr Script;
 
-
 		Script += "#!/bin/bash\n#\n";
 
-		Script +=	"# chkconfig: " DMibStringize(DInitRunLevels) " " DMibStringize(DInitStartPrio) " " DMibStringize(DInitStopPrio) "\n";
-		Script +=	NStr::CStr::CFormat("# description: {}\n") << _Params.f_GetDaemonDescription();
+		Script += "# chkconfig: " DMibStringize(DInitRunLevels) " " DMibStringize(DInitStartPrio) " " DMibStringize(DInitStopPrio) "\n";
+		Script += NStr::CStr::CFormat("# description: {}\n") << _Params.f_GetDaemonDescription();
 
 		Script += "# Author: " DMibStringize(DProductContact) "\n\n";
 
@@ -267,16 +253,17 @@ namespace NMib::NDaemon
 			NStr::fg_AddStrSep(DaemonizeUserParams, NMib::NStr::fg_StrEscapeBashSingleQuotes(_Params.f_GetRunAsGroup()), " ");
 		}
 		if (!DaemonizeUserParams.f_IsEmpty())
-		{
 			DaemonizeUserParams = "( " + DaemonizeUserParams + " )";
-		}
-
 
 		Script += "PATH=/sbin:/usr/sbin:/bin:/usr/bin\n";
 		Script += NStr::CStr::CFormat("DESC={}\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(_Params.f_GetDaemonDisplayName());
 		Script += NStr::CStr::CFormat("DAEMON={}\n") << NMib::NStr::fg_StrEscapeBashDoubleQuotes(_Params.f_GetExecutablePath());
 		Script += NStr::CStr::CFormat("NAME={}\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(_Params.f_GetDaemonName());
-		Script += NStr::CStr::CFormat("DAEMON_ARGS=( '-Service' {} '-Daemonize' {} )\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(_Params.f_GetDaemonName()) << NMib::NStr::fg_StrEscapeBashSingleQuotes(PidFilePath);
+		Script
+			+= NStr::CStr::CFormat("DAEMON_ARGS=( '-Service' {} '-Daemonize' {} )\n")
+			<< NMib::NStr::fg_StrEscapeBashSingleQuotes(_Params.f_GetDaemonName())
+			<< NMib::NStr::fg_StrEscapeBashSingleQuotes(PidFilePath)
+		;
 		Script += NStr::CStr::CFormat("DAEMON_USER_ARGS={}\n") << DaemonizeUserParams;
 		Script += NStr::CStr::CFormat("SCRIPTNAME={}\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(fp_GetScriptPath(_Params));
 		Script += NStr::CStr::CFormat("PIDFILE={}\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(PidFilePath);
@@ -285,43 +272,43 @@ namespace NMib::NDaemon
 		Script += NStr::CStr::CFormat("DAEMON_USER={}\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(_Params.f_GetRunAsUser());
 		Script += NStr::CStr::CFormat("DAEMON_GROUP={}\n") << NMib::NStr::fg_StrEscapeBashSingleQuotes(_Params.f_GetRunAsGroup());
 
-		Script +=	"\n";
+		Script += "\n";
 
-		Script +=	"# Exit if the package is not installed\n"
-					"[ -x \"$DAEMON\" ] || exit 0\n\n";
-
-
-		Script +=	"# Load the VERBOSE setting and other rcS variables\n"
-					"[ -x \"/lib/init/vars.sh\" ] && . /lib/init/vars.sh\n\n";
-
-
-		Script +=	"# Define LSB log_* functions.\n"
-					"if [ -x \"/lib/lsb/init-functions\" ] ; then\n"
-					"	. /lib/lsb/init-functions\n"
-					"else\n"
-					"	log_success_msg()\n"
-					"	{\n"
-					"		echo \"$@\"\n"
-					"	}\n"
-					"	log_failure_msg()\n"
-					"	{\n"
-					"		echo \"$@\"\n"
-					"	}\n"
-					"fi\n"
-					"\n"
+		Script += "# Exit if the package is not installed\n"
+			"[ -x \"$DAEMON\" ] || exit 0\n\n"
 		;
-/*
-# Return
-#   0 if daemon has been started
-#   1 if daemon was already running
-#   2 if daemon could not be started
-*/
-		Script +=	"do_start()\n"
-					"\{\n"
-					// io_uring rings are charged against RLIMIT_MEMLOCK, whose default ceiling of a few megabytes
-					// makes the io loops fall back to epoll. Only the hard limit is lifted, as the process raises its
-					// own soft limit to the hard limit at startup
-					"	ulimit -H -l unlimited 2>/dev/null\n"
+
+		Script += "# Load the VERBOSE setting and other rcS variables\n"
+			"[ -x \"/lib/init/vars.sh\" ] && . /lib/init/vars.sh\n\n"
+		;
+
+		Script += "# Define LSB log_* functions.\n"
+			"if [ -x \"/lib/lsb/init-functions\" ] ; then\n"
+			"	. /lib/lsb/init-functions\n"
+			"else\n"
+			"	log_success_msg()\n"
+			"	{\n"
+			"		echo \"$@\"\n"
+			"	}\n"
+			"	log_failure_msg()\n"
+			"	{\n"
+			"		echo \"$@\"\n"
+			"	}\n"
+			"fi\n"
+			"\n"
+		;
+		/*
+		# Return
+		#   0 if daemon has been started
+		#   1 if daemon was already running
+		#   2 if daemon could not be started
+		*/
+		Script += "do_start()\n"
+			"\{\n"
+			// io_uring rings are charged against RLIMIT_MEMLOCK, whose default ceiling of a few megabytes
+			// makes the io loops fall back to epoll. Only the hard limit is lifted, as the process raises its
+			// own soft limit to the hard limit at startup
+			"	ulimit -H -l unlimited 2>/dev/null\n"
 		;
 
 		auto PriorityGrant = NSys::fg_Process_GetLinuxPriorityGrant(_Params.f_GetExecutionPriority());
@@ -333,80 +320,78 @@ namespace NMib::NDaemon
 		if (PriorityGrant.m_StartNice)
 			Script += NStr::CStr::CFormat("nice -n {} ") << PriorityGrant.m_StartNice;
 
-		Script +=	"\"$DAEMON\" \"${DAEMON_ARGS[@]:0}\" -DoStart \"${DAEMON_USER_ARGS[@]:0}\"\n"
-					"	return $?\n"
-					"}\n\n"
+		Script += "\"$DAEMON\" \"${DAEMON_ARGS[@]:0}\" -DoStart \"${DAEMON_USER_ARGS[@]:0}\"\n"
+			"	return $?\n"
+			"}\n\n"
 		;
 
-		Script +=	"do_status()\n"
-					"\{\n"
-					"	\"$DAEMON\" \"${DAEMON_ARGS[@]:0}\" -DoStatus\n"
-					"	return $?\n"
-					"}\n\n"
+		Script += "do_status()\n"
+			"\{\n"
+			"	\"$DAEMON\" \"${DAEMON_ARGS[@]:0}\" -DoStatus\n"
+			"	return $?\n"
+			"}\n\n"
 		;
 
-/*
-# Return
-#   0 if daemon has been stopped
-#	1 if daemon was already stopped
-#   2 if daemon could not be stopped
-#   other if a failure occurred
-*/
-		Script +=	"do_stop()\n"
-					"{\n"
-					"	\"$DAEMON\" \"${DAEMON_ARGS[@]:0}\" -DoStop $STOPTIMEOUT\n"
-					"}\n\n"
+		/*
+		# Return
+		#   0 if daemon has been stopped
+		#	1 if daemon was already stopped
+		#   2 if daemon could not be stopped
+		#   other if a failure occurred
+		*/
+		Script += "do_stop()\n"
+			"{\n"
+			"	\"$DAEMON\" \"${DAEMON_ARGS[@]:0}\" -DoStop $STOPTIMEOUT\n"
+			"}\n\n"
 		;
 
-
-		Script +=	"case \"$1\" in\n"
-					"	start)\n"
-					"		[ \"$VERBOSE\" != no ] && echo \"Starting $DESC\"\n"
-					"		do_start\n"
-					"		case \"$?\" in\n"
-					"			0) [ \"$VERBOSE\" != no ] && log_success_msg \"$DESC started\" ;;\n"
-					"			1) [ \"$VERBOSE\" != no ] && log_success_msg \"$DESC already running\" ;;\n"
-					"			2) [ \"$VERBOSE\" != no ] && log_failure_msg \"$DESC failed to start\" && exit 1 || exit 1 ;;\n"
-					"		esac\n"
-					"		;;\n"
-					"	stop)\n"
-					"		[ \"$VERBOSE\" != no ] && echo \"Stopping $DESC\"\n"
-					"		do_stop\n"
-					"		case \"$?\" in\n"
-					"			0) [ \"$VERBOSE\" != no ] && log_success_msg \"$DESC stopped\" ;;\n"
-					"			1) [ \"$VERBOSE\" != no ] && log_success_msg \"$DESC already stopped\" ;;\n"
-					"			2) [ \"$VERBOSE\" != no ] && log_failure_msg \"$DESC failed to stop\" && exit 1 || exit 1 ;;\n"
-					"		esac\n"
-					"		;;\n"
-					"	status)\n"
-					"		do_status && exit 0 || exit $?\n"
-					"		;;\n"
-					"	restart|force-reload)\n"
-					"		[ \"$VERBOSE\" != no ] && echo \"Restarting $DESC\"\n"
-					"		do_stop\n"
-					"		case \"$?\" in\n"
-					"			0|1)\n"
-					"				do_start\n"
-					"				case \"$?\" in\n"
-					"					0) log_success_msg \"$DESC restarted\";;\n"
-					"					1) log_failure_msg \"$DESC failed to restart. Old process still running\";; # Old process is still running\n"
-					"					*) log_failure_msg \"$DESC failed to start after stop. \";; # Failed to start\n"
-					"				esac\n"
-					"				;;\n"
-					"			*)\n"
-					"				# Failed to stop\n"
-					"				log_failure_msg \"$DESC failed to stop\"\n"
-					"				;;\n"
-					"		esac\n"
-					"		;; \n"
-					"	*)\n"
-					"		echo \"Usage: $SCRIPTNAME {start|stop|status|restart|force-reload}\" >&2\n"
-					"		exit 3\n"
-					"		;;\n"
-					"esac\n\n"
-					":\n"
+		Script += "case \"$1\" in\n"
+			"	start)\n"
+			"		[ \"$VERBOSE\" != no ] && echo \"Starting $DESC\"\n"
+			"		do_start\n"
+			"		case \"$?\" in\n"
+			"			0) [ \"$VERBOSE\" != no ] && log_success_msg \"$DESC started\" ;;\n"
+			"			1) [ \"$VERBOSE\" != no ] && log_success_msg \"$DESC already running\" ;;\n"
+			"			2) [ \"$VERBOSE\" != no ] && log_failure_msg \"$DESC failed to start\" && exit 1 || exit 1 ;;\n"
+			"		esac\n"
+			"		;;\n"
+			"	stop)\n"
+			"		[ \"$VERBOSE\" != no ] && echo \"Stopping $DESC\"\n"
+			"		do_stop\n"
+			"		case \"$?\" in\n"
+			"			0) [ \"$VERBOSE\" != no ] && log_success_msg \"$DESC stopped\" ;;\n"
+			"			1) [ \"$VERBOSE\" != no ] && log_success_msg \"$DESC already stopped\" ;;\n"
+			"			2) [ \"$VERBOSE\" != no ] && log_failure_msg \"$DESC failed to stop\" && exit 1 || exit 1 ;;\n"
+			"		esac\n"
+			"		;;\n"
+			"	status)\n"
+			"		do_status && exit 0 || exit $?\n"
+			"		;;\n"
+			"	restart|force-reload)\n"
+			"		[ \"$VERBOSE\" != no ] && echo \"Restarting $DESC\"\n"
+			"		do_stop\n"
+			"		case \"$?\" in\n"
+			"			0|1)\n"
+			"				do_start\n"
+			"				case \"$?\" in\n"
+			"					0) log_success_msg \"$DESC restarted\";;\n"
+			"					1) log_failure_msg \"$DESC failed to restart. Old process still running\";; # Old process is still running\n"
+			"					*) log_failure_msg \"$DESC failed to start after stop. \";; # Failed to start\n"
+			"				esac\n"
+			"				;;\n"
+			"			*)\n"
+			"				# Failed to stop\n"
+			"				log_failure_msg \"$DESC failed to stop\"\n"
+			"				;;\n"
+			"		esac\n"
+			"		;; \n"
+			"	*)\n"
+			"		echo \"Usage: $SCRIPTNAME {start|stop|status|restart|force-reload}\" >&2\n"
+			"		exit 3\n"
+			"		;;\n"
+			"esac\n\n"
+			":\n"
 		;
-
 
 		return Script;
 	}
@@ -419,21 +404,23 @@ namespace NMib::NDaemon
 
 		if (mp_ScriptRegistrationMethod == EScriptRegistrationMethod_ChkConfig)
 		{
-			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DChkConfig, NStr::CStr::CFormat("--add {}") << fs_GetScriptFilename(_Params), Result, Error, ExitCode)
-				|| ExitCode)
+			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DChkConfig, NStr::CStr::CFormat("--add {}") << fs_GetScriptFilename(_Params), Result, Error, ExitCode) || ExitCode)
 			{
-				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to add {} to runlevels {}: {}") << fs_GetScriptFilename(_Params)  << DInitRunLevels << Error);
+				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to add {} to runlevels {}: {}") << fs_GetScriptFilename(_Params) << DInitRunLevels << Error);
 				return EActionResult_Failure;
 			}
 			else
-				mp_pOwner->f_ReportInformation("Add Daemon", NStr::CStr::CFormat("Successfully added {} to runlevels {}") << fs_GetScriptFilename(_Params)  << DInitRunLevels);
+				mp_pOwner->f_ReportInformation("Add Daemon", NStr::CStr::CFormat("Successfully added {} to runlevels {}") << fs_GetScriptFilename(_Params) << DInitRunLevels);
 		}
 		else if (mp_ScriptRegistrationMethod == EScriptRegistrationMethod_UpdateRcD)
 		{
-			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DUpdateRcD, NStr::CStr::CFormat("{} defaults {}") << fs_GetScriptFilename(_Params) << DInitStartPrio, Result, Error, ExitCode)
-				|| ExitCode)
+			if
+			(
+				!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DUpdateRcD, NStr::CStr::CFormat("{} defaults {}") << fs_GetScriptFilename(_Params) << DInitStartPrio, Result, Error, ExitCode)
+				|| ExitCode
+			)
 			{
-				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to add {} to default runlevels: {}") << fs_GetScriptFilename(_Params)  << Error);
+				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to add {} to default runlevels: {}") << fs_GetScriptFilename(_Params) << Error);
 				return EActionResult_Failure;
 			}
 			else
@@ -451,19 +438,17 @@ namespace NMib::NDaemon
 
 		if (mp_ScriptRegistrationMethod == EScriptRegistrationMethod_ChkConfig)
 		{
-			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DChkConfig, NStr::CStr::CFormat("--del {}") << fs_GetScriptFilename(_Params), Result, Error, ExitCode)
-				|| ExitCode)
+			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DChkConfig, NStr::CStr::CFormat("--del {}") << fs_GetScriptFilename(_Params), Result, Error, ExitCode) || ExitCode)
 			{
 				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to remove {} from runlevels {}: {}") << fs_GetScriptFilename(_Params) << DInitRunLevels << Error);
 				return EActionResult_Failure;
 			}
 			else
-				mp_pOwner->f_ReportInformation("Remove Daemon", NStr::CStr::CFormat("Successfully removed {} from runlevels {}") << fs_GetScriptFilename(_Params)  << DInitRunLevels);
+				mp_pOwner->f_ReportInformation("Remove Daemon", NStr::CStr::CFormat("Successfully removed {} from runlevels {}") << fs_GetScriptFilename(_Params) << DInitRunLevels);
 		}
 		else if (mp_ScriptRegistrationMethod == EScriptRegistrationMethod_UpdateRcD)
 		{
-			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DUpdateRcD, NStr::CStr::CFormat("-f {} remove") << fs_GetScriptFilename(_Params), Result, Error, ExitCode)
-				|| ExitCode)
+			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DUpdateRcD, NStr::CStr::CFormat("-f {} remove") << fs_GetScriptFilename(_Params), Result, Error, ExitCode) || ExitCode)
 			{
 				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to remove {} from default runlevels: {}") << fs_GetScriptFilename(_Params) << Error);
 				return EActionResult_Failure;
@@ -543,7 +528,7 @@ namespace NMib::NDaemon
 				return EActionResult_Failure;
 		}
 		else
-				mp_pOwner->f_ReportInformation("Add Daemon", NStr::CStr::CFormat("Please add {} to any desired runlevel init scripts manually.") << ScriptFilePath);
+			mp_pOwner->f_ReportInformation("Add Daemon", NStr::CStr::CFormat("Please add {} to any desired runlevel init scripts manually.") << ScriptFilePath);
 
 		return EActionResult_Success;
 	}

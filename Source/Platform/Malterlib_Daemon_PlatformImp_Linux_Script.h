@@ -11,14 +11,13 @@ namespace NMib::NDaemon
 	class CScript : public CDaemonSystemInterfaceShared
 	{
 	private:
-
 		NStr::CStr mp_ScriptDirectory;
 
 		enum EScriptRegistrationMethod
 		{
-			EScriptRegistrationMethod_None = 0,
-			EScriptRegistrationMethod_ChkConfig,
-			EScriptRegistrationMethod_UpdateRcD
+			EScriptRegistrationMethod_None = 0
+			, EScriptRegistrationMethod_ChkConfig
+			, EScriptRegistrationMethod_UpdateRcD
 		};
 
 		EScriptRegistrationMethod mp_ScriptRegistrationMethod;

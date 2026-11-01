@@ -72,8 +72,18 @@ namespace NMib::NDaemon
 					SE_SID UserSID;
 					uint32 ReferencedDomainNameSize = 8192;
 					uint32 SidSize = sizeof(UserSID);
-					if (!LookupAccountNameW(nullptr, UserWindows.f_GetStr(), &UserSID.Sid, &SidSize, ReferencedDomainName.f_GetStr(8192+1), &ReferencedDomainNameSize, &AccountType))
-						DMibError((NMib::NStr::CFStr256::CFormat("Windows returned an error from LookupAccountNameW(Add login as service privilege): {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr()).f_GetStr());
+					if (!LookupAccountNameW(nullptr, UserWindows.f_GetStr(), &UserSID.Sid, &SidSize, ReferencedDomainName.f_GetStr(8192 + 1), &ReferencedDomainNameSize, &AccountType))
+					{
+						DMibError
+							(
+								(
+									NMib::NStr::CFStr256::CFormat("Windows returned an error from LookupAccountNameW(Add login as service privilege): {}")
+									<< NMib::NPlatform::fg_Win32_GetLastErrorStr()
+								)
+								.f_GetStr()
+							)
+						;
+					}
 
 					LSA_OBJECT_ATTRIBUTES Attributes;
 					NMemory::fg_MemClear(Attributes);
@@ -82,7 +92,17 @@ namespace NMib::NDaemon
 
 					NTSTATUS Status = LsaOpenPolicy(nullptr, &Attributes, POLICY_CREATE_ACCOUNT | POLICY_LOOKUP_NAMES, &PolicyHandle);
 					if (Status)
-						DMibError((NMib::NStr::CFStr256::CFormat("Windows returned an error from LsaOpenPolicy(Add login as service privilege): {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(Status)).f_GetStr());
+					{
+						DMibError
+							(
+								(
+									NMib::NStr::CFStr256::CFormat("Windows returned an error from LsaOpenPolicy(Add login as service privilege): {}")
+									<< NMib::NPlatform::fg_Win32_GetLastErrorStr(Status)
+								)
+								.f_GetStr()
+							)
+						;
+					}
 
 					auto Cleanup = g_OnScopeExit / [&]
 						{
@@ -98,7 +118,17 @@ namespace NMib::NDaemon
 
 					Status = LsaAddAccountRights(PolicyHandle, &UserSID.Sid, &PrivilegeString, 1);
 					if (Status)
-						DMibError((NMib::NStr::CFStr256::CFormat("Windows returned an error from LsaAddAccountRights(Add login as service privilege): {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(Status)).f_GetStr());
+					{
+						DMibError
+							(
+								(
+									NMib::NStr::CFStr256::CFormat("Windows returned an error from LsaAddAccountRights(Add login as service privilege): {}")
+									<< NMib::NPlatform::fg_Win32_GetLastErrorStr(Status)
+								)
+								.f_GetStr()
+							)
+						;
+					}
 
 					CleanupUser.f_Clear();
 				}

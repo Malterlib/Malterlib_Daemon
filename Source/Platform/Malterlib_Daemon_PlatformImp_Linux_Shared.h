@@ -13,9 +13,9 @@ namespace NMib::NDaemon
 	protected:
 		enum ESupportedFeature
 		{
-			ESupportedFeature_None = 0
+			ESupportedFeature_None        = 0
 			, ESupportedFeature_LocalUser = DMibBit(0)
-			, ESupportedFeature_AllUsers = DMibBit(1)
+			, ESupportedFeature_AllUsers  = DMibBit(1)
 		};
 
 		CDaemonSystemInterfaceShared(CDaemon *_pOwner, ESupportedFeature _SupportedFeatures);

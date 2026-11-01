@@ -17,8 +17,7 @@ namespace NMib::NDaemon
 	class CDaemon::CDetails
 	{
 	public:
-
-		CDetails(CDaemon* _pOwner);
+		CDetails(CDaemon *_pOwner);
 		~CDetails();
 
 		EActionResult f_Run();
@@ -72,9 +71,9 @@ namespace NMib::NDaemon
 		void fp_UpdateService(SC_HANDLE _Service);
 		bool fp_PrepareUserAndGroup(CDaemonParams const &_Params, NMib::NStr::CWStr &o_RunAsUser, NMib::NStr::CWStrSecure &o_RunAsUserPassword);
 		NStr::CStr fp_GetAddCommandLine() const;
-		static void WINAPI fsp_ServiceStart (DWORD _nArgs, LPWSTR *_pArgs);
+		static void WINAPI fsp_ServiceStart(DWORD _nArgs, LPWSTR *_pArgs);
 		static DWORD WINAPI fsp_ServiceInitialization(DWORD _nArgs, LPWSTR *_pArgs, DWORD *_pSpecificError);
-		static DWORD WINAPI fsp_ServiceCtrlHandler (DWORD _ControlCode, DWORD _EventType, void *_pEventData, void *_pContext);
+		static DWORD WINAPI fsp_ServiceCtrlHandler(DWORD _ControlCode, DWORD _EventType, void *_pEventData, void *_pContext);
 		void fp_DaemonResume();
 		void fp_DaemonPause();
 		void fp_DaemonCreate();
@@ -85,14 +84,14 @@ namespace NMib::NDaemon
 		NStorage::TCUniquePointer<NThread::CThreadObject> mp_pStopThread;
 		NStorage::TCUniquePointer<NThread::CThreadObject> mp_pStopReportThread;
 
-		static NThread::CMutual        msp_ServiceControlLock;
-		static SERVICE_STATUS          msp_ServiceStatus;
-		static SERVICE_STATUS_HANDLE   msp_ServiceStatusHandle;
-		static CDetails*			   msp_pThis;
-		static bool					   msp_bIsShutdown;
-		static CTaskIconCleaner		   msp_TaskIcon;
+		static NThread::CMutual msp_ServiceControlLock;
+		static SERVICE_STATUS msp_ServiceStatus;
+		static SERVICE_STATUS_HANDLE msp_ServiceStatusHandle;
+		static CDetails *msp_pThis;
+		static bool msp_bIsShutdown;
+		static CTaskIconCleaner msp_TaskIcon;
 
-		CDaemon*					   mp_pOwner;
-		NStorage::TCUniquePointer<CDaemonImp>   mp_pImp;
+		CDaemon *mp_pOwner;
+		NStorage::TCUniquePointer<CDaemonImp> mp_pImp;
 	};
 }

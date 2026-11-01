@@ -5,16 +5,14 @@
 
 namespace NMib::NDaemon
 {
-	CDaemon::CDaemon(CDaemonParams const& _Params)
+	CDaemon::CDaemon(CDaemonParams const &_Params)
 		: mp_pD(fg_Construct(this))
 		, mp_Params(_Params)
 	{
-
 	}
 
 	CDaemon::~CDaemon()
 	{
-
 	}
 
 	EDaemonFeature CDaemon::fs_SupportedFeatures()

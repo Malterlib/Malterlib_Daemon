@@ -12,48 +12,61 @@ namespace NMib::NDaemon
 	class CDaemonImp
 	{
 	public:
+		CDaemonImp()
+		{
+		}
 
-		CDaemonImp() {}
-		virtual ~CDaemonImp() {}
+		virtual ~CDaemonImp()
+		{
+		}
 
-		virtual void f_DaemonPause() {}
-		virtual void f_DaemonResume() {}
-		virtual bool f_DaemonValidate(CDaemon* _pDaemon) { return true; }
+		virtual void f_DaemonPause()
+		{
+		}
+
+		virtual void f_DaemonResume()
+		{
+		}
+
+		virtual bool f_DaemonValidate(CDaemon *_pDaemon)
+		{
+			return true;
+		}
 	};
 
 	enum EDaemonAction
 	{
-		EDaemonAction_Custom,
-		EDaemonAction_Add,
-		EDaemonAction_Remove,
-		EDaemonAction_Start,
-		EDaemonAction_Stop,
-		EDaemonAction_Run,
-		EDaemonAction_RunAsProgram,
-		EDaemonAction_RunAsProgramNoDebug,
-		EDaemonAction_Exists,
-		EDaemonAction_Restart,
+		EDaemonAction_Custom
+		, EDaemonAction_Add
+		, EDaemonAction_Remove
+		, EDaemonAction_Start
+		, EDaemonAction_Stop
+		, EDaemonAction_Run
+		, EDaemonAction_RunAsProgram
+		, EDaemonAction_RunAsProgramNoDebug
+		, EDaemonAction_Exists
+		, EDaemonAction_Restart
 	};
 
 	enum EReportError
 	{
-		EReportError_No,
-		EReportError_Yes,
-		EReportError_Cancel,
+		EReportError_No
+		, EReportError_Yes
+		, EReportError_Cancel
 	};
 
 	enum EDaemonMode
 	{
-		EDaemonMode_Global,
-		EDaemonMode_AllUsers,
-		EDaemonMode_LocalUser
+		EDaemonMode_Global
+		, EDaemonMode_AllUsers
+		, EDaemonMode_LocalUser
 	};
 
 	enum EActionResult
 	{
-		EActionResult_Success = 0,
-		EActionResult_Failure = 1,
-		EActionResult_Test = 25		// For unit test
+		EActionResult_Success   = 0
+		, EActionResult_Failure = 1
+		, EActionResult_Test    = 25 // For unit test
 	};
 
 	using CDaemonActionParam = NStorage::TCVariant<void, bool>;
@@ -61,10 +74,10 @@ namespace NMib::NDaemon
 	class CDaemonParams;
 
 	using FImplementationFactory = NFunction::TCFunction<NStorage::TCUniquePointer<CDaemonImp> ()>;
-	using FProcessCommand = NFunction::TCFunction<EActionResult (CDaemonParams&, CDaemon* _pDaemon, bool& _bHandled)>;
-	using FErrorReporter = NFunction::TCFunction<void (NStr::CStr const&)>;
-	using FInformationReporter = NFunction::TCFunction<void (NStr::CStr const&, NStr::CStr const&)>;
-	using FErrorReporterYesNo = NFunction::TCFunction<EReportError (NStr::CStr const&, EReportError)>;
+	using FProcessCommand = NFunction::TCFunction<EActionResult (CDaemonParams &, CDaemon *_pDaemon, bool &_bHandled)>;
+	using FErrorReporter = NFunction::TCFunction<void (NStr::CStr const &)>;
+	using FInformationReporter = NFunction::TCFunction<void (NStr::CStr const &, NStr::CStr const &)>;
+	using FErrorReporterYesNo = NFunction::TCFunction<EReportError (NStr::CStr const &, EReportError)>;
 	using CCommandLineVector = NContainer::TCVector<NMib::NStr::CStr>;
 	using COptionHandlerMap = NContainer::TCMap<NStr::CStr, NFunction::TCFunction<void (CCommandLineVector &)>>;
 
@@ -73,28 +86,28 @@ namespace NMib::NDaemon
 	public:
 		CDaemonParams
 			(
-				NStr::CStr const& _DaemonName
-				, NStr::CStr const& _DisplayName
-				, NStr::CStr const& _DaemonDesc
-				, void* _pNativeHandle
-				, FImplementationFactory const& _ImplementationFactory = fg_Default()
-				, FProcessCommand const& _ProcessCommand = fg_Default()
-				, FErrorReporter const& _ErrorReporter = fg_Default()
-				, FInformationReporter const& _InformationReporter = fg_Default()
-				, FErrorReporterYesNo const& _ErrorReporterYesNo = fg_Default()
+				NStr::CStr const &_DaemonName
+				, NStr::CStr const &_DisplayName
+				, NStr::CStr const &_DaemonDesc
+				, void *_pNativeHandle
+				, FImplementationFactory const &_ImplementationFactory = fg_Default()
+				, FProcessCommand const &_ProcessCommand = fg_Default()
+				, FErrorReporter const &_ErrorReporter = fg_Default()
+				, FInformationReporter const &_InformationReporter = fg_Default()
+				, FErrorReporterYesNo const &_ErrorReporterYesNo = fg_Default()
 			)
 		;
 
 		~CDaemonParams();
 
 		void f_ParseCommandLine(NContainer::TCVector<NMib::NStr::CStr> const &_CommandLine);
-		void* f_GetNativeHandle() const;
+		void *f_GetNativeHandle() const;
 
 		NStr::CStr f_GetCustomActionKey() const;
 		void f_SetAction(EDaemonAction _Action);
 		EDaemonAction f_GetAction() const;
 		void f_SetActionParam(CDaemonActionParam const &_Param);
-		CDaemonActionParam const& f_GetActionParam() const;
+		CDaemonActionParam const &f_GetActionParam() const;
 
 		NStr::CStr f_GetDaemonGroup() const;
 		bool f_GetInteractive() const;
@@ -121,23 +134,23 @@ namespace NMib::NDaemon
 		void f_SetMaxShutdownTime(fp64 const &_Seconds);
 		fp64 f_GetMaxShutdownTime() const;
 
-		NContainer::TCVector<NStr::CStr> const& f_GetDaemonDependencies() const;
+		NContainer::TCVector<NStr::CStr> const &f_GetDaemonDependencies() const;
 		void f_SetDaemonDependencies(NContainer::TCVector<NStr::CStr> _Dependencies);
 
 		NStr::CStr f_GetExecutablePath() const;
 		void f_SetExecutablePath(NStr::CStr const &_Path);
 		NStr::CStr f_GetCommandLine() const;
-		NStr::CStr f_GetLocalizedStr(NStr::CStr const& _Key) const;
+		NStr::CStr f_GetLocalizedStr(NStr::CStr const &_Key) const;
 
 		void f_SetRootDirectory(NStr::CStr const &_RootDirectory);
 		NStr::CStr f_GetRootDirectory() const;
 
 		void f_SetValueForKey(NStr::CStr const &_Key, NStr::CStr const &_Value);
-		NStr::CStr f_GetValueForKey(NStr::CStr const& _Key) const;
-		void f_SetKey(NStr::CStr const& _Key, bool _bKeySet);
-		bool f_IsKeySet(NStr::CStr const& _Key) const;
+		NStr::CStr f_GetValueForKey(NStr::CStr const &_Key) const;
+		void f_SetKey(NStr::CStr const &_Key, bool _bKeySet);
+		bool f_IsKeySet(NStr::CStr const &_Key) const;
 
-		void f_SetAddCommandLine(NStr::CStr const& _CommandLine);
+		void f_SetAddCommandLine(NStr::CStr const &_CommandLine);
 		NStr::CStr f_GetAddCommandLine() const;
 
 		bool f_WriteDaemonNameFile(NMib::NStr::CStr &_Error) const;
@@ -146,14 +159,14 @@ namespace NMib::NDaemon
 		bool f_RemoveDaemonModeFile(NMib::NStr::CStr &_Error) const;
 
 		NStorage::TCUniquePointer<CDaemonImp> f_ImplementationFactory() const;
-		EActionResult f_ProcessCommand(CDaemon* _pDaemon, bool& _bHandled);
+		EActionResult f_ProcessCommand(CDaemon *_pDaemon, bool &_bHandled);
 
-		void f_ReportError(NStr::CStr const& _Error) const;
-		void f_ReportInformation(NStr::CStr const& _Heading, NStr::CStr const& _Information) const;
-		EReportError f_ReportErrorYesNo(NStr::CStr const& _Error, EReportError _Default) const;
+		void f_ReportError(NStr::CStr const &_Error) const;
+		void f_ReportInformation(NStr::CStr const &_Heading, NStr::CStr const &_Information) const;
+		EReportError f_ReportErrorYesNo(NStr::CStr const &_Error, EReportError _Default) const;
 
 		static void fs_ParseOptions(COptionHandlerMap &, CCommandLineVector &_CommandLine);
-		static bool fs_ParseOptionArgument(CCommandLineVector &_CommandLine, NStr::CStr & _Destination);
+		static bool fs_ParseOptionArgument(CCommandLineVector &_CommandLine, NStr::CStr &_Destination);
 
 		bool f_GetAlwaysRunStatusApp() const;
 		void f_SetAlwaysRunStatusApp(bool _bValue);
@@ -202,7 +215,7 @@ namespace NMib::NDaemon
 		NStr::CStr mp_AddCommandLine;
 		NStr::CStr mp_RootDirectory = NFile::CFile::fs_GetProgramDirectory();
 
-		void* mp_pNativeHandle;
+		void *mp_pNativeHandle;
 
 		bool mp_bInteractive;
 		bool mp_bCustomDaemonName;
@@ -220,23 +233,22 @@ namespace NMib::NDaemon
 
 	enum EDaemonFeature
 	{
-		EDaemonFeature_GlobalDaemon = DMibBit(0)
-		, EDaemonFeature_AllUsersDaemon = DMibBit(1)
-		, EDaemonFeature_LocalUserDaemon = DMibBit(2)
+		EDaemonFeature_GlobalDaemon        = DMibBit(0)
+		, EDaemonFeature_AllUsersDaemon    = DMibBit(1)
+		, EDaemonFeature_LocalUserDaemon   = DMibBit(2)
 		, EDaemonFeature_EscapedPathBroken = DMibBit(3)
-		, EDaemonFeature_EscapeCharBroken = DMibBit(4)
+		, EDaemonFeature_EscapeCharBroken  = DMibBit(4)
 	};
 
 	class CDaemon
 	{
 	public:
-
 		class CDetails;
 
-		CDaemon(CDaemonParams const& _Params);
+		CDaemon(CDaemonParams const &_Params);
 		~CDaemon();
 
-		CDaemonParams const& f_GetDaemonParams() const;
+		CDaemonParams const &f_GetDaemonParams() const;
 
 		EActionResult f_ProcessCommand();
 
@@ -255,9 +267,9 @@ namespace NMib::NDaemon
 
 		EActionResult f_Exists(bool &_bExists) const;
 
-		void f_ReportError(NStr::CStr const& _Error);
-		EReportError f_ReportErrorYesNo(NStr::CStr const& _Error, EReportError _Default);
-		void f_ReportInformation(NStr::CStr const& _Heading, NStr::CStr const& _Information);
+		void f_ReportError(NStr::CStr const &_Error);
+		EReportError f_ReportErrorYesNo(NStr::CStr const &_Error, EReportError _Default);
+		void f_ReportInformation(NStr::CStr const &_Heading, NStr::CStr const &_Information);
 
 		static NStr::CStr fs_GetUniquePrefix();
 		static EDaemonFeature fs_SupportedFeatures();
@@ -266,15 +278,13 @@ namespace NMib::NDaemon
 		static bool fs_SupportsAutoRestart();
 
 	protected:
-
 		CDaemonParams mp_Params;
 		NStorage::TCUniquePointer<CDetails> mp_pD;
-
 	};
 
 	aint fg_RunDaemon(NStr::CStr const &_DaemonIdentifier, NStr::CStr const &_Name, NStr::CStr const &_SupportEmail, FImplementationFactory const &_fImpFactory);
 }
 
 #ifndef DMibPNoShortCuts
-		using namespace NMib::NDaemon;
+using namespace NMib::NDaemon;
 #endif

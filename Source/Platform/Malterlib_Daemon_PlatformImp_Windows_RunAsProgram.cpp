@@ -124,5 +124,4 @@ namespace NMib::NDaemon
 
 		return EActionResult_Success;
 	}
-
 }
