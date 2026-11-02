@@ -537,9 +537,9 @@ namespace NMib::NDaemon
 		return mp_DaemonDependencies;
 	}
 
-	void CDaemonParams::f_SetDaemonDependencies(NContainer::TCVector<NStr::CStr> _Dependencies)
+	void CDaemonParams::f_SetDaemonDependencies(NContainer::TCVector<NStr::CStr> const &_Dependencies)
 	{
-		mp_DaemonDependencies = fg_Move(_Dependencies);
+		mp_DaemonDependencies = _Dependencies;
 	}
 
 	NStr::CStr CDaemonParams::f_GetExecutablePath() const
