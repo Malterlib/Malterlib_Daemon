@@ -8,7 +8,7 @@
 
 namespace NMib::NDaemon
 {
-	class CDaemonSystemInterfaceShared : public CDaemonSystemInterface
+	struct CDaemonSystemInterfaceShared : public CDaemonSystemInterface
 	{
 	protected:
 		enum ESupportedFeature

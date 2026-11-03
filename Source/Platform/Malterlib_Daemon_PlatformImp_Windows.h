@@ -14,9 +14,8 @@
 
 namespace NMib::NDaemon
 {
-	class CDaemon::CDetails
+	struct CDaemon::CDetails
 	{
-	public:
 		CDetails(CDaemon *_pOwner);
 		~CDetails();
 

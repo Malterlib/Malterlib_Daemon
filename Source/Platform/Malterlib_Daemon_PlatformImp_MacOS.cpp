@@ -32,39 +32,8 @@ namespace NMib::NDaemon
 #endif
 	}
 
-	class CDaemon::CDetails
+	struct CDaemon::CDetails
 	{
-		bool fp_CheckParamsSupported() const
-		{
-			auto &Params = mp_pOwner->mp_Params;
-			bool bRet = true;
-			if (!Params.f_GetDaemonGroup().f_IsEmpty())
-			{
-				mp_pOwner->f_ReportError("Daemon groups are not supported on this platform");
-				bRet = false;
-			}
-			if (Params.f_GetInteractive())
-			{
-				mp_pOwner->f_ReportError("Interactive services are not supported on this platform");
-				bRet = false;
-			}
-
-			if (!Params.f_GetDaemonDependencies().f_IsEmpty())
-			{
-				mp_pOwner->f_ReportError("Daemon dependencies are not supported on this platform");
-				bRet = false;
-			}
-
-			if (Params.f_GetDaemonMode() == EDaemonMode_LocalUser && !(fs_SessionSupportedFeatures() & EDaemonFeature_LocalUserDaemon))
-			{
-				mp_pOwner->f_ReportError("Local user services (-LocalUser) need the session that holds the graphical login");
-				bRet = false;
-			}
-
-			return bRet;
-		}
-
-	public:
 		CDetails(CDaemon *_pOwner)
 			: mp_pOwner(_pOwner)
 		{
@@ -847,6 +816,37 @@ namespace NMib::NDaemon
 		NThread::CEvent mp_InterruptedEvent;
 		CDaemon *mp_pOwner;
 		NStorage::TCUniquePointer<CDaemonImp> mp_pImp;
+
+	private:
+		bool fp_CheckParamsSupported() const
+		{
+			auto &Params = mp_pOwner->mp_Params;
+			bool bRet = true;
+			if (!Params.f_GetDaemonGroup().f_IsEmpty())
+			{
+				mp_pOwner->f_ReportError("Daemon groups are not supported on this platform");
+				bRet = false;
+			}
+			if (Params.f_GetInteractive())
+			{
+				mp_pOwner->f_ReportError("Interactive services are not supported on this platform");
+				bRet = false;
+			}
+
+			if (!Params.f_GetDaemonDependencies().f_IsEmpty())
+			{
+				mp_pOwner->f_ReportError("Daemon dependencies are not supported on this platform");
+				bRet = false;
+			}
+
+			if (Params.f_GetDaemonMode() == EDaemonMode_LocalUser && !(fs_SessionSupportedFeatures() & EDaemonFeature_LocalUserDaemon))
+			{
+				mp_pOwner->f_ReportError("Local user services (-LocalUser) need the session that holds the graphical login");
+				bRet = false;
+			}
+
+			return bRet;
+		}
 	};
 
 	CDaemon::CDetails *CDaemon::CDetails::msp_pThis = nullptr;

@@ -6,10 +6,26 @@
 
 namespace NMib::NDaemon
 {
-	class CDaemon;
+	struct CDaemon;
 
-	class CGentoo : public CDaemonSystemInterfaceShared
+	struct CGentoo : public CDaemonSystemInterfaceShared
 	{
+		CGentoo(CDaemon *);
+
+		static bool fs_IsSupported();
+
+		virtual EActionResult f_Start(CDaemonParams const &_Params) override;
+		virtual EActionResult f_Stop(CDaemonParams const &_Params, bool _bWait = false) override;
+		virtual EActionResult f_Restart(CDaemonParams const &_Params, bool _bWait = false) override;
+
+		virtual EActionResult f_Add(CDaemonParams const &_Params, bool _bCheckForExisting = false) override;
+		virtual EActionResult f_Remove(CDaemonParams const &_Params) override;
+
+		virtual EActionResult f_Exists(CDaemonParams const &_Params, bool &_bExists) const override;
+
+		virtual bool f_SupportsAutoRestart() const override;
+
+	private:
 		// These values are taken from /lib64/rc/runscript.sh
 		enum EGentooDaemonStatus
 		{
@@ -31,21 +47,5 @@ namespace NMib::NDaemon
 		bool fp_GetStatusAdded(NStr::CStr const &_DaemonName);
 
 		NStr::CStr mp_ScriptDirectory;
-
-	public:
-		CGentoo(CDaemon *);
-
-		static bool fs_IsSupported();
-
-		virtual EActionResult f_Start(CDaemonParams const &_Params) override;
-		virtual EActionResult f_Stop(CDaemonParams const &_Params, bool _bWait = false) override;
-		virtual EActionResult f_Restart(CDaemonParams const &_Params, bool _bWait = false) override;
-
-		virtual EActionResult f_Add(CDaemonParams const &_Params, bool _bCheckForExisting = false) override;
-		virtual EActionResult f_Remove(CDaemonParams const &_Params) override;
-
-		virtual EActionResult f_Exists(CDaemonParams const &_Params, bool &_bExists) const override;
-
-		virtual bool f_SupportsAutoRestart() const override;
 	};
 }

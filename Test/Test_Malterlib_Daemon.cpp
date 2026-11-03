@@ -18,9 +18,8 @@ namespace
 		, EExitResult_NotLaunched
 	};
 
-	class CDaemon_Tests : public CTest
+	struct CDaemon_Tests : public CTest
 	{
-	public:
 		NMib::NStr::CStr m_DaemonName;
 
 		CDaemon_Tests()

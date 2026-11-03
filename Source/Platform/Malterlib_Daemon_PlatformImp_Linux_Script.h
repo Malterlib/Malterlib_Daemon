@@ -6,10 +6,26 @@
 
 namespace NMib::NDaemon
 {
-	class CDaemon;
+	struct CDaemon;
 
-	class CScript : public CDaemonSystemInterfaceShared
+	struct CScript : public CDaemonSystemInterfaceShared
 	{
+		CScript(CDaemon *);
+		~CScript();
+
+		static bool fs_IsSupported();
+
+		virtual EActionResult f_Start(CDaemonParams const &_Params) override;
+		virtual EActionResult f_Stop(CDaemonParams const &_Params, bool _bWait = false) override;
+		virtual EActionResult f_Restart(CDaemonParams const &_Params, bool _bWait = false) override;
+
+		virtual EActionResult f_Add(CDaemonParams const &_Params, bool _bCheckForExisting = false) override;
+		virtual EActionResult f_Remove(CDaemonParams const &_Params) override;
+
+		virtual EActionResult f_Exists(CDaemonParams const &_Params, bool &_bExists) const override;
+
+		virtual bool f_SupportsAutoRestart() const override;
+
 	private:
 		NStr::CStr mp_ScriptDirectory;
 
@@ -28,22 +44,5 @@ namespace NMib::NDaemon
 		NStr::CStr fp_CreateScriptFromParams(CDaemonParams const &_Params) const;
 		EActionResult fp_AddToRunlevels(CDaemonParams const &_Params) const;
 		EActionResult fp_RemoveFromRunlevels(CDaemonParams const &_Params) const;
-
-	public:
-		CScript(CDaemon *);
-		~CScript();
-
-		static bool fs_IsSupported();
-
-		virtual EActionResult f_Start(CDaemonParams const &_Params) override;
-		virtual EActionResult f_Stop(CDaemonParams const &_Params, bool _bWait = false) override;
-		virtual EActionResult f_Restart(CDaemonParams const &_Params, bool _bWait = false) override;
-
-		virtual EActionResult f_Add(CDaemonParams const &_Params, bool _bCheckForExisting = false) override;
-		virtual EActionResult f_Remove(CDaemonParams const &_Params) override;
-
-		virtual EActionResult f_Exists(CDaemonParams const &_Params, bool &_bExists) const override;
-
-		virtual bool f_SupportsAutoRestart() const override;
 	};
 }

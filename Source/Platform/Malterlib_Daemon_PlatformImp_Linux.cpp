@@ -21,9 +21,8 @@ extern "C"
 
 namespace NMib::NDaemon
 {
-	class CDaemon::CDetails
+	struct CDaemon::CDetails
 	{
-	public:
 		CDetails(CDaemon *_pOwner)
 			: mp_pOwner(_pOwner)
 			, mp_InterruptedReason(EDaemonInterrupt_None)

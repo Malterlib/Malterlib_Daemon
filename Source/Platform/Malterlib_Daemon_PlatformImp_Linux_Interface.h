@@ -6,9 +6,8 @@
 
 namespace NMib::NDaemon
 {
-	class CDaemonSystemInterface
+	struct CDaemonSystemInterface
 	{
-	public:
 		virtual ~CDaemonSystemInterface()
 		{
 		};

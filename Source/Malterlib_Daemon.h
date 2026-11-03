@@ -7,11 +7,10 @@
 
 namespace NMib::NDaemon
 {
-	class CDaemon;
+	struct CDaemon;
 
-	class CDaemonImp
+	struct CDaemonImp
 	{
-	public:
 		CDaemonImp()
 		{
 		}
@@ -71,7 +70,7 @@ namespace NMib::NDaemon
 
 	using CDaemonActionParam = NStorage::TCVariant<void, bool>;
 
-	class CDaemonParams;
+	struct CDaemonParams;
 
 	using FImplementationFactory = NFunction::TCFunction<NStorage::TCUniquePointer<CDaemonImp> ()>;
 	using FProcessCommand = NFunction::TCFunction<EActionResult (CDaemonParams &, CDaemon *_pDaemon, bool &_bHandled)>;
@@ -81,9 +80,8 @@ namespace NMib::NDaemon
 	using CCommandLineVector = NContainer::TCVector<NMib::NStr::CStr>;
 	using COptionHandlerMap = NContainer::TCMap<NStr::CStr, NFunction::TCFunction<void (CCommandLineVector &)>>;
 
-	class CDaemonParams
+	struct CDaemonParams
 	{
-	public:
 		CDaemonParams
 			(
 				NStr::CStr const &_DaemonName
@@ -240,10 +238,9 @@ namespace NMib::NDaemon
 		, EDaemonFeature_EscapeCharBroken  = DMibBit(4)
 	};
 
-	class CDaemon
+	struct CDaemon
 	{
-	public:
-		class CDetails;
+		struct CDetails;
 
 		CDaemon(CDaemonParams const &_Params);
 		~CDaemon();

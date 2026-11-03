@@ -6,24 +6,10 @@
 
 namespace NMib::NDaemon
 {
-	class CDaemon;
+	struct CDaemon;
 
-	class CSystemd : public CDaemonSystemInterfaceShared
+	struct CSystemd : public CDaemonSystemInterfaceShared
 	{
-	private:
-		NStr::CStr fp_GetUnitConfigDirectory(CDaemonParams const &_Params) const;
-		bool fp_IsUnitConfigThisExecutable(CDaemon *pOwner, CDaemonParams const &_Params) const;
-		EActionResult fp_SetUnitEnable(CDaemonParams const &_Params, bool _bEnable) const;
-		EActionResult fp_IsUnitEnabled(CDaemonParams const &_Params, bool &_bIsEnabled) const;
-		void fp_RemoveWantsSymlinks(CDaemonParams const &_Params) const;
-		static NStr::CStr fsp_FindExecutable(NStr::CStr const &_Executable);
-
-		NContainer::TCVector<NStr::CStr> mp_SystemdSystemUnitDirectories;
-		NContainer::TCVector<NStr::CStr> mp_SystemdUserUnitDirectories;
-		NStr::CStr mp_SystemCtlExecutable;
-		NStr::CStr mp_PkgConfigExecutable;
-
-	public:
 		CSystemd(CDaemon *);
 		~CSystemd();
 
@@ -39,5 +25,18 @@ namespace NMib::NDaemon
 		virtual EActionResult f_Exists(CDaemonParams const &_Params, bool &_bExists) const override;
 
 		virtual bool f_SupportsAutoRestart() const override;
+
+	private:
+		NStr::CStr fp_GetUnitConfigDirectory(CDaemonParams const &_Params) const;
+		bool fp_IsUnitConfigThisExecutable(CDaemon *pOwner, CDaemonParams const &_Params) const;
+		EActionResult fp_SetUnitEnable(CDaemonParams const &_Params, bool _bEnable) const;
+		EActionResult fp_IsUnitEnabled(CDaemonParams const &_Params, bool &_bIsEnabled) const;
+		void fp_RemoveWantsSymlinks(CDaemonParams const &_Params) const;
+		static NStr::CStr fsp_FindExecutable(NStr::CStr const &_Executable);
+
+		NContainer::TCVector<NStr::CStr> mp_SystemdSystemUnitDirectories;
+		NContainer::TCVector<NStr::CStr> mp_SystemdUserUnitDirectories;
+		NStr::CStr mp_SystemCtlExecutable;
+		NStr::CStr mp_PkgConfigExecutable;
 	};
 }

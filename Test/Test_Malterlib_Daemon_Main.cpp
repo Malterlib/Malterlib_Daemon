@@ -26,9 +26,8 @@ NDaemon::EReportError fg_ReportErrorYesNo(CStr const &_Title, CStr const &_Messa
 
 int fg_DaemonMain(void *_pNativeHandle)
 {
-	class CDaemonImplementation : public NDaemon::CDaemonImp
+	struct CDaemonImplementation : public NDaemon::CDaemonImp
 	{
-	public:
 		CDaemonImplementation()
 		{
 			CStr File = NFile::CFile::fs_GetProgramDirectory() + "/Running";
