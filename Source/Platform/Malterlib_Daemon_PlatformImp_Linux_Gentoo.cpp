@@ -10,7 +10,7 @@
 
 namespace NMib::NDaemon
 {
-	static NStr::CStr fs_GetStartStopDaemonParams(CDaemonParams const &_Params)
+	static NStr::CStr fsg_GetStartStopDaemonParams(CDaemonParams const &_Params)
 	{
 		NStr::CStr Result;
 
@@ -30,7 +30,7 @@ namespace NMib::NDaemon
 		return Result;
 	}
 
-	static NStr::CStr fs_GetScriptFilename(CDaemonParams const &_Params)
+	static NStr::CStr fsg_GetScriptFilename(CDaemonParams const &_Params)
 	{
 		return _Params.f_GetDaemonName();
 	}
@@ -43,7 +43,7 @@ namespace NMib::NDaemon
 	NStr::CStr CGentoo::fp_GetScriptPath(CDaemonParams const &_Params) const
 	{
 		NStr::CStr ScriptFileDirectory = fp_GetScriptDirectory(_Params.f_GetDaemonMode());
-		return NStr::CStr::CFormat("{}/{}") << ScriptFileDirectory << fs_GetScriptFilename(_Params);
+		return NStr::CStr::CFormat("{}/{}") << ScriptFileDirectory << fsg_GetScriptFilename(_Params);
 	}
 
 	bool CGentoo::fp_IsScriptThisExecutable(CDaemonParams const &_Params) const
@@ -320,7 +320,7 @@ namespace NMib::NDaemon
 				"	eend $?\n"
 				"}\n\n"
 			)
-			<< fs_GetStartStopDaemonParams(_Params)
+			<< fsg_GetStartStopDaemonParams(_Params)
 		;
 
 		/*
@@ -351,8 +351,8 @@ namespace NMib::NDaemon
 			return EActionResult_Failure;
 
 		NStr::CStr ScriptFileDirectory = fp_GetScriptDirectory(_Params.f_GetDaemonMode());
-		NStr::CStr ScriptFilePath = NStr::CStr::CFormat("{}/{}") << ScriptFileDirectory << fs_GetScriptFilename(_Params);
-		NStr::CStr DaemonName = fs_GetScriptFilename(_Params);
+		NStr::CStr ScriptFilePath = NStr::CStr::CFormat("{}/{}") << ScriptFileDirectory << fsg_GetScriptFilename(_Params);
+		NStr::CStr DaemonName = fsg_GetScriptFilename(_Params);
 
 		if (ScriptFileDirectory.f_IsEmpty())
 		{
@@ -429,7 +429,7 @@ namespace NMib::NDaemon
 		if (f_Stop(_Params, false) == EActionResult_Failure)
 			return EActionResult_Failure;
 
-		NStr::CStr DaemonName = fs_GetScriptFilename(_Params);
+		NStr::CStr DaemonName = fsg_GetScriptFilename(_Params);
 		NStr::CStr ScriptFilePath = fp_GetScriptPath(_Params);
 
 		// Remove daemon from runlevel

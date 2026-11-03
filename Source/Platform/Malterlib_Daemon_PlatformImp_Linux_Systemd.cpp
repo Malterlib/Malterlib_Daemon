@@ -46,7 +46,7 @@ namespace NMib::NDaemon
 {
 	// _bEnableDisable: true for enable/disable operations where --global is valid
 	//                  false for start/stop/restart/show where --global is NOT valid
-	static NStr::CStr fs_GetSystemctlOptions(CDaemonParams const &_Params, bool _bEnableDisable = false)
+	static NStr::CStr fsg_GetSystemctlOptions(CDaemonParams const &_Params, bool _bEnableDisable = false)
 	{
 		NStr::CStr Options;
 		EDaemonMode Mode = _Params.f_GetDaemonMode();
@@ -68,12 +68,12 @@ namespace NMib::NDaemon
 		return Options;
 	}
 
-	static NStr::CStr fs_GetUnitConfigFilename(CDaemonParams const &_Params)
+	static NStr::CStr fsg_GetUnitConfigFilename(CDaemonParams const &_Params)
 	{
 		return _Params.f_GetDaemonName() + ".service";
 	}
 
-	static NStr::CStr fs_EscapePath(NStr::CStr const &_Path)
+	static NStr::CStr fsg_EscapePath(NStr::CStr const &_Path)
 	{
 		using namespace NStr;
 		CStr Return;
@@ -87,10 +87,10 @@ namespace NMib::NDaemon
 		return Return;
 	}
 
-	static NStr::CStr fs_GetExecutableCommand(CDaemonParams const &_Params)
+	static NStr::CStr fsg_GetExecutableCommand(CDaemonParams const &_Params)
 	{
 		NStr::CStr ExecutablePath = _Params.f_GetExecutablePath();
-		NStr::CStr EscapedExecutablePath = fs_EscapePath(ExecutablePath);
+		NStr::CStr EscapedExecutablePath = fsg_EscapePath(ExecutablePath);
 
 		if (EscapedExecutablePath != ExecutablePath)
 			return NStr::CStr::CFormat("/usr/bin/env {} -Service") << EscapedExecutablePath;
@@ -105,7 +105,7 @@ namespace NMib::NDaemon
 		if (Mode == EDaemonMode_LocalUser)
 			return NStr::CStr::CFormat("{}/.config/systemd/user") << NSys::NFile::fg_GetUserHomeDirectory();
 
-		auto UnitFileName = fs_GetUnitConfigFilename(_Params);
+		auto UnitFileName = fsg_GetUnitConfigFilename(_Params);
 
 		if (Mode == EDaemonMode_AllUsers)
 		{
@@ -132,7 +132,7 @@ namespace NMib::NDaemon
 	bool CSystemd::fp_IsUnitConfigThisExecutable(CDaemon *pOwner, CDaemonParams const &_Params) const
 	{
 		NStr::CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params);
-		NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetUnitConfigFilename(_Params);
+		NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fsg_GetUnitConfigFilename(_Params);
 		NStr::CStr Contents;
 
 		try
@@ -160,7 +160,7 @@ namespace NMib::NDaemon
 			(NStr::CStr::CParse("ExecStart={}") >> Value).f_Parse(Line, nParsed);
 			if (nParsed == 1)
 			{
-				NStr::CStr ExpectedExec = fs_GetExecutableCommand(_Params);
+				NStr::CStr ExpectedExec = fsg_GetExecutableCommand(_Params);
 				if (ExpectedExec.f_CmpNoCase(Value) == 0)
 					return true;
 				else
@@ -175,7 +175,7 @@ namespace NMib::NDaemon
 		return false;
 	}
 
-	static NStr::CStr fs_CreateSystemdConfFromParams(CDaemonParams const &_Params)
+	static NStr::CStr fsg_CreateSystemdConfFromParams(CDaemonParams const &_Params)
 	{
 		NStr::CStr Conf;
 
@@ -189,7 +189,7 @@ namespace NMib::NDaemon
 			Conf += NStr::CStr::CFormat("After=local-fs.target network.target\n") << 0;
 		Conf += "\n";
 
-		Conf += NStr::CStr::CFormat("[Service]\nExecStart={}\n") << fs_GetExecutableCommand(_Params);
+		Conf += NStr::CStr::CFormat("[Service]\nExecStart={}\n") << fsg_GetExecutableCommand(_Params);
 		Conf += "KillMode=mixed\n";
 		Conf += NStr::CStr::CFormat("TimeoutStopSec={}\n") << _Params.f_GetMaxShutdownTime().f_ToInt();
 		Conf += NStr::CStr::CFormat("WorkingDirectory={}\n") << NFile::CFile::fs_GetPath(_Params.f_GetExecutablePath());
@@ -237,7 +237,7 @@ namespace NMib::NDaemon
 				return EActionResult_Success;
 		}
 
-		NStr::CStr Command = NStr::CStr::CFormat("{}{} {}") << fs_GetSystemctlOptions(_Params, true) << (_bEnable ? "enable" : "disable") << _Params.f_GetDaemonName();
+		NStr::CStr Command = NStr::CStr::CFormat("{}{} {}") << fsg_GetSystemctlOptions(_Params, true) << (_bEnable ? "enable" : "disable") << _Params.f_GetDaemonName();
 		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode) || ExitCode)
 			return EActionResult_Failure;
 
@@ -252,7 +252,7 @@ namespace NMib::NDaemon
 
 		_bIsEnabled = false;
 
-		NStr::CStr Command = NStr::CStr::CFormat(" is-enabled {}") << fs_GetUnitConfigFilename(_Params);
+		NStr::CStr Command = NStr::CStr::CFormat(" is-enabled {}") << fsg_GetUnitConfigFilename(_Params);
 		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode))
 		{
 			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Unable to check is-enabled {}: {}") << Command << Error);
@@ -361,7 +361,7 @@ namespace NMib::NDaemon
 			return EActionResult_Failure;
 
 		CStr UnitFileDirectory = fp_GetUnitConfigDirectory(_Params);
-		CStr UnitFilePath = "{}/{}"_f << UnitFileDirectory << fs_GetUnitConfigFilename(_Params);
+		CStr UnitFilePath = "{}/{}"_f << UnitFileDirectory << fsg_GetUnitConfigFilename(_Params);
 
 		try
 		{
@@ -385,7 +385,7 @@ namespace NMib::NDaemon
 			CStr Error;
 			uint32 ExitCode = 0;
 
-			CStr Command = "{}show {} --property=MainPID"_f << fs_GetSystemctlOptions(_Params) << _Params.f_GetDaemonName();
+			CStr Command = "{}show {} --property=MainPID"_f << fsg_GetSystemctlOptions(_Params) << _Params.f_GetDaemonName();
 
 			if (NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode))
 			{
@@ -404,7 +404,7 @@ namespace NMib::NDaemon
 		CStr Error;
 		uint32 ExitCode = 0;
 
-		CStr Command = "{}start {}"_f << fs_GetSystemctlOptions(_Params) << _Params.f_GetDaemonName();
+		CStr Command = "{}start {}"_f << fsg_GetSystemctlOptions(_Params) << _Params.f_GetDaemonName();
 		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode) || ExitCode)
 		{
 			mp_pOwner->f_ReportError("Error starting daemon {}\nCommand {} returned with code {}: {}"_f << _Params.f_GetDaemonName() << Command << ExitCode << Error);
@@ -435,7 +435,7 @@ namespace NMib::NDaemon
 		if (!bDaemonExists)
 		{
 			CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params);
-			CStr LaunchFilePath = "{}/{}"_f << LaunchFileDirectory << fs_GetUnitConfigFilename(_Params);
+			CStr LaunchFilePath = "{}/{}"_f << LaunchFileDirectory << fsg_GetUnitConfigFilename(_Params);
 
 			mp_pOwner->f_ReportInformation("Stop Daemon", "Daemon is not installed at '{}' so it has not been stopped"_f << LaunchFilePath);
 			return EActionResult_Success;
@@ -446,7 +446,7 @@ namespace NMib::NDaemon
 			CStr Error;
 			uint32 ExitCode = 0;
 
-			CStr Command = "{}show {} --property=MainPID"_f << fs_GetSystemctlOptions(_Params) << _Params.f_GetDaemonName();
+			CStr Command = "{}show {} --property=MainPID"_f << fsg_GetSystemctlOptions(_Params) << _Params.f_GetDaemonName();
 			NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode);
 
 			CStr MainPID;
@@ -462,7 +462,7 @@ namespace NMib::NDaemon
 		CStr Error;
 		uint32 ExitCode = 0;
 
-		CStr Command = "{}stop {}"_f << fs_GetSystemctlOptions(_Params) << _Params.f_GetDaemonName();
+		CStr Command = "{}stop {}"_f << fsg_GetSystemctlOptions(_Params) << _Params.f_GetDaemonName();
 		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode) || ExitCode)
 		{
 			mp_pOwner->f_ReportError("Error stopping daemon {}\nCommand {} returned with code {}: {}"_f << _Params.f_GetDaemonName() << Command << ExitCode << Error);
@@ -493,7 +493,7 @@ namespace NMib::NDaemon
 		if (!bDaemonExists)
 		{
 			CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params);
-			CStr LaunchFilePath = "{}/{}"_f << LaunchFileDirectory << fs_GetUnitConfigFilename(_Params);
+			CStr LaunchFilePath = "{}/{}"_f << LaunchFileDirectory << fsg_GetUnitConfigFilename(_Params);
 
 			mp_pOwner->f_ReportInformation("Restart Daemon", "Daemon is not installed at '{}' so it has not been restarted"_f << LaunchFilePath);
 			return EActionResult_Success;
@@ -503,7 +503,7 @@ namespace NMib::NDaemon
 		CStr Error;
 		uint32 ExitCode = 0;
 
-		CStr Command = "{}restart {}"_f << fs_GetSystemctlOptions(_Params) << _Params.f_GetDaemonName();
+		CStr Command = "{}restart {}"_f << fsg_GetSystemctlOptions(_Params) << _Params.f_GetDaemonName();
 		if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(mp_SystemCtlExecutable, Command, Result, Error, ExitCode) || ExitCode)
 		{
 			mp_pOwner->f_ReportError("Error restarting daemon {}\nCommand {} returned with code {}: {}"_f << _Params.f_GetDaemonName() << Command << ExitCode << Error);
@@ -523,7 +523,7 @@ namespace NMib::NDaemon
 			return EActionResult_Failure;
 
 		NStr::CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params);
-		NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetUnitConfigFilename(_Params);
+		NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fsg_GetUnitConfigFilename(_Params);
 
 		if (LaunchFileDirectory.f_IsEmpty())
 		{
@@ -566,7 +566,7 @@ namespace NMib::NDaemon
 			}
 		}
 
-		NStr::CStr Data = fs_CreateSystemdConfFromParams(_Params);
+		NStr::CStr Data = fsg_CreateSystemdConfFromParams(_Params);
 
 		try
 		{
@@ -601,7 +601,7 @@ namespace NMib::NDaemon
 			return EActionResult_Failure;
 
 		NStr::CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params);
-		NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetUnitConfigFilename(_Params);
+		NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fsg_GetUnitConfigFilename(_Params);
 
 		bool bDaemonExists;
 		if (f_Exists(_Params, bDaemonExists) == EActionResult_Failure)
@@ -648,7 +648,7 @@ namespace NMib::NDaemon
 
 	void CSystemd::fp_RemoveWantsSymlinks(CDaemonParams const &_Params) const
 	{
-		NStr::CStr UnitFileName = fs_GetUnitConfigFilename(_Params);
+		NStr::CStr UnitFileName = fsg_GetUnitConfigFilename(_Params);
 		auto Mode = _Params.f_GetDaemonMode();
 
 		NContainer::TCVector<NStr::CStr> Directories;
@@ -699,7 +699,7 @@ namespace NMib::NDaemon
 
 		_bExists = false;
 		NStr::CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params);
-		NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetUnitConfigFilename(_Params);
+		NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fsg_GetUnitConfigFilename(_Params);
 
 		try
 		{

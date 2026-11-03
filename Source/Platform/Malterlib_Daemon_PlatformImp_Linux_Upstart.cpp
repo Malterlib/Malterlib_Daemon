@@ -8,12 +8,12 @@
 
 namespace NMib::NDaemon
 {
-	static NStr::CStr fs_GetConfFilename(CDaemonParams const &_Params)
+	static NStr::CStr fsg_GetConfFilename(CDaemonParams const &_Params)
 	{
 		return _Params.f_GetDaemonName() + ".conf";
 	}
 
-	static NStr::CStr fs_GetExecutableCommand(CDaemonParams const &_Params)
+	static NStr::CStr fsg_GetExecutableCommand(CDaemonParams const &_Params)
 	{
 		NStr::CStr ExecCommand = NMib::NStr::fg_StrEscapeBashDoubleQuotes(_Params.f_GetExecutablePath());
 		ExecCommand += " -Service ";
@@ -102,7 +102,7 @@ namespace NMib::NDaemon
 	bool CUpstart::fp_IsConfThisExecutable(CDaemonParams const &_Params) const
 	{
 		NStr::CStr LaunchFileDirectory = fp_GetConfDirectory(_Params);
-		NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetConfFilename(_Params);
+		NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fsg_GetConfFilename(_Params);
 		NStr::CStr Contents;
 
 		try
@@ -130,7 +130,7 @@ namespace NMib::NDaemon
 			(NStr::CStr::CParse("exec {}") >> Value).f_Parse(Line, nParsed);
 			if (nParsed == 1)
 			{
-				NStr::CStr ExpectedExec = fs_GetExecutableCommand(_Params);
+				NStr::CStr ExpectedExec = fsg_GetExecutableCommand(_Params);
 				if (ExpectedExec.f_CmpNoCase(Value) == 0)
 					return true;
 				else
@@ -151,7 +151,7 @@ namespace NMib::NDaemon
 			return EActionResult_Failure;
 
 		NStr::CStr ConfFileDirectory = fp_GetConfDirectory(_Params);
-		NStr::CStr ConfFilePath = NStr::CStr::CFormat("{}/{}") << ConfFileDirectory << fs_GetConfFilename(_Params);
+		NStr::CStr ConfFilePath = NStr::CStr::CFormat("{}/{}") << ConfFileDirectory << fsg_GetConfFilename(_Params);
 
 		try
 		{
@@ -272,7 +272,7 @@ namespace NMib::NDaemon
 		return EActionResult_Success;
 	}
 
-	static NStr::CStr fs_CreateUpstartConfFromParams(CDaemonParams const &_Params)
+	static NStr::CStr fsg_CreateUpstartConfFromParams(CDaemonParams const &_Params)
 	{
 		NStr::CStr Conf;
 
@@ -283,7 +283,7 @@ namespace NMib::NDaemon
 		Conf += "\n";
 
 		Conf += NStr::CStr::CFormat("chdir {}\n") << NMib::NStr::fg_StrEscapeBashDoubleQuotes(NFile::CFile::fs_GetPath(_Params.f_GetExecutablePath()));
-		Conf += NStr::CStr::CFormat("exec {}\n") << fs_GetExecutableCommand(_Params);
+		Conf += NStr::CStr::CFormat("exec {}\n") << fsg_GetExecutableCommand(_Params);
 
 		Conf += NStr::CStr::CFormat("kill timeout {}\n") << _Params.f_GetMaxShutdownTime().f_ToInt();
 
@@ -310,7 +310,7 @@ namespace NMib::NDaemon
 			return EActionResult_Failure;
 
 		NStr::CStr ConfFileDirectory = fp_GetConfDirectory(_Params);
-		NStr::CStr ConfFilePath = NStr::CStr::CFormat("{}/{}") << ConfFileDirectory << fs_GetConfFilename(_Params);
+		NStr::CStr ConfFilePath = NStr::CStr::CFormat("{}/{}") << ConfFileDirectory << fsg_GetConfFilename(_Params);
 
 		if (_bCheckForExisting)
 		{
@@ -336,7 +336,7 @@ namespace NMib::NDaemon
 			}
 		}
 
-		NStr::CStr Data = fs_CreateUpstartConfFromParams(_Params);
+		NStr::CStr Data = fsg_CreateUpstartConfFromParams(_Params);
 
 		try
 		{
@@ -371,7 +371,7 @@ namespace NMib::NDaemon
 			return EActionResult_Failure;
 
 		NStr::CStr ConfFileDirectory = fp_GetConfDirectory(_Params);
-		NStr::CStr ConfFilePath = NStr::CStr::CFormat("{}/{}") << ConfFileDirectory << fs_GetConfFilename(_Params);
+		NStr::CStr ConfFilePath = NStr::CStr::CFormat("{}/{}") << ConfFileDirectory << fsg_GetConfFilename(_Params);
 
 		try
 		{
@@ -416,7 +416,7 @@ namespace NMib::NDaemon
 
 		_bExists = false;
 		NStr::CStr ConfFileDirectory = fp_GetConfDirectory(_Params);
-		NStr::CStr ConfFilePath = NStr::CStr::CFormat("{}/{}") << ConfFileDirectory << fs_GetConfFilename(_Params);
+		NStr::CStr ConfFilePath = NStr::CStr::CFormat("{}/{}") << ConfFileDirectory << fsg_GetConfFilename(_Params);
 
 		try
 		{

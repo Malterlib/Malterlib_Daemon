@@ -140,7 +140,7 @@ namespace NMib::NDaemon
 			return ExitCode;
 		}
 
-		static int fg_GetHighestSecondColumnValue(NStr::CStr &_Data)
+		static int fs_GetHighestSecondColumnValue(NStr::CStr &_Data)
 		{
 			int Value = 0;
 			while (!_Data.f_IsEmpty())
@@ -479,7 +479,7 @@ namespace NMib::NDaemon
 			return f_Start();
 		}
 
-		void fg_SetDictionaryValue(CFMutableDictionaryRef &_Dict, NStr::CStr const &_Key, int _Value)
+		void f_SetDictionaryValue(CFMutableDictionaryRef &_Dict, NStr::CStr const &_Key, int _Value)
 		{
 			CFStringRef KeyStringRef = CFStringCreateWithCString(NULL, _Key.f_GetStr(), kCFStringEncodingUTF8);
 			CFNumberRef ValueIntegerRef = CFNumberCreate(NULL, kCFNumberIntType, &_Value);
@@ -488,7 +488,7 @@ namespace NMib::NDaemon
 			CFRelease(ValueIntegerRef);
 		}
 
-		void fg_SetDictionaryValue(CFMutableDictionaryRef &_Dict, NStr::CStr const &_Key, NStr::CStr const &_Value)
+		void f_SetDictionaryValue(CFMutableDictionaryRef &_Dict, NStr::CStr const &_Key, NStr::CStr const &_Value)
 		{
 			CFStringRef KeyStringRef = CFStringCreateWithCString(NULL, _Key.f_GetStr(), kCFStringEncodingUTF8);
 			CFStringRef ValueStringRef = CFStringCreateWithCString(NULL, _Value.f_GetStr(), kCFStringEncodingUTF8);
@@ -497,7 +497,7 @@ namespace NMib::NDaemon
 			CFRelease(ValueStringRef);
 		}
 
-		void fg_SetDictionaryValue(CFMutableDictionaryRef &_Dict, NStr::CStr const &_Key, NContainer::TCVector<NStr::CStr> const &_Values)
+		void f_SetDictionaryValue(CFMutableDictionaryRef &_Dict, NStr::CStr const &_Key, NContainer::TCVector<NStr::CStr> const &_Values)
 		{
 			CFStringRef KeyStringRef = CFStringCreateWithCString(NULL, _Key.f_GetStr(), kCFStringEncodingUTF8);
 
@@ -515,22 +515,22 @@ namespace NMib::NDaemon
 			CFRelease(ArrayRef);
 		}
 
-		CFDictionaryRef fg_CreateDictionaryFromParams(CDaemonParams const &_Params, bool _bDisabled = false)
+		CFDictionaryRef f_CreateDictionaryFromParams(CDaemonParams const &_Params, bool _bDisabled = false)
 		{
 			CFMutableDictionaryRef Dict = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 
-			fg_SetDictionaryValue(Dict, "Label", NStr::CStr::CFormat(CDaemon::fs_GetUniquePrefix() + ".{}") << _Params.f_GetDaemonName());
+			f_SetDictionaryValue(Dict, "Label", NStr::CStr::CFormat(CDaemon::fs_GetUniquePrefix() + ".{}") << _Params.f_GetDaemonName());
 			NContainer::TCVector<NStr::CStr> ProgramArguments;
 			// We write executable as arguments as Launchd seems to be broken in this regard, it has to have executable as argument or none will be sent
 			ProgramArguments.f_Insert(_Params.f_GetExecutablePath());
 			ProgramArguments.f_Insert("-Service");
 			if (_Params.f_GetDisableWriteDaemon())
 				ProgramArguments.f_Insert(_Params.f_GetDaemonName());
-			fg_SetDictionaryValue(Dict, "ProgramArguments", ProgramArguments);
+			f_SetDictionaryValue(Dict, "ProgramArguments", ProgramArguments);
 			CFDictionarySetValue(Dict, CFSTR("KeepAlive"), kCFBooleanTrue);
 			CFDictionarySetValue(Dict, CFSTR("RunAtLoad"), kCFBooleanTrue);
-			// fg_SetDictionaryValue(Dict, "ExitTimeOut", 0);	// Disable timeout, this seems to have broken on Yosemite
-			fg_SetDictionaryValue(Dict, "ExitTimeOut", _Params.f_GetMaxShutdownTime().f_ToInt());
+			// f_SetDictionaryValue(Dict, "ExitTimeOut", 0);	// Disable timeout, this seems to have broken on Yosemite
+			f_SetDictionaryValue(Dict, "ExitTimeOut", _Params.f_GetMaxShutdownTime().f_ToInt());
 
 			int RelativePriority;
 			NStr::CStr ProcessType;
@@ -545,13 +545,13 @@ namespace NMib::NDaemon
 			}
 
 			if (ProcessType)
-				fg_SetDictionaryValue(Dict, "ProcessType", ProcessType);
+				f_SetDictionaryValue(Dict, "ProcessType", ProcessType);
 
 			if (!_Params.f_GetRunAsUser().f_IsEmpty())
-				fg_SetDictionaryValue(Dict, "UserName", _Params.f_GetRunAsUser());
+				f_SetDictionaryValue(Dict, "UserName", _Params.f_GetRunAsUser());
 
 			if (!_Params.f_GetRunAsGroup().f_IsEmpty())
-				fg_SetDictionaryValue(Dict, "GroupName", _Params.f_GetRunAsGroup());
+				f_SetDictionaryValue(Dict, "GroupName", _Params.f_GetRunAsGroup());
 
 			if (_bDisabled)
 				CFDictionarySetValue(Dict, CFSTR("Disabled"), kCFBooleanTrue);
@@ -633,7 +633,7 @@ namespace NMib::NDaemon
 				return EActionResult_Failure;
 			}
 
-			CFPropertyListRef PropertyList = fg_CreateDictionaryFromParams(mp_pOwner->mp_Params);
+			CFPropertyListRef PropertyList = f_CreateDictionaryFromParams(mp_pOwner->mp_Params);
 			DMibDeprecatedSuppressStart
 			CFDataRef XmlData = CFPropertyListCreateXMLData(NULL, PropertyList);
 			DMibDeprecatedSuppressStop
@@ -687,7 +687,7 @@ namespace NMib::NDaemon
 
 					if (NFile::CFile::fs_FileExists(LaunchFilePath, NFile::EFileAttrib_File))
 					{
-						CFPropertyListRef PropertyList = fg_CreateDictionaryFromParams(mp_pOwner->mp_Params, true);
+						CFPropertyListRef PropertyList = f_CreateDictionaryFromParams(mp_pOwner->mp_Params, true);
 						DMibDeprecatedSuppressStart
 						CFDataRef XmlData = CFPropertyListCreateXMLData(NULL, PropertyList);
 						DMibDeprecatedSuppressStop

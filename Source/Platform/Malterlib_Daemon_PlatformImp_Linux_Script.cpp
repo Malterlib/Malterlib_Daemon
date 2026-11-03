@@ -14,7 +14,7 @@
 
 namespace NMib::NDaemon
 {
-	static NStr::CStr fs_GetScriptFilename(CDaemonParams const &_Params)
+	static NStr::CStr fsg_GetScriptFilename(CDaemonParams const &_Params)
 	{
 		return _Params.f_GetDaemonName();
 	}
@@ -27,7 +27,7 @@ namespace NMib::NDaemon
 	NStr::CStr CScript::fp_GetScriptPath(CDaemonParams const &_Params) const
 	{
 		NStr::CStr ScriptFileDirectory = fp_GetScriptDirectory(_Params.f_GetDaemonMode());
-		return NStr::CStr::CFormat("{}/{}") << ScriptFileDirectory << fs_GetScriptFilename(_Params);
+		return NStr::CStr::CFormat("{}/{}") << ScriptFileDirectory << fsg_GetScriptFilename(_Params);
 	}
 
 	bool CScript::fp_IsScriptThisExecutable(CDaemonParams const &_Params) const
@@ -404,27 +404,34 @@ namespace NMib::NDaemon
 
 		if (mp_ScriptRegistrationMethod == EScriptRegistrationMethod_ChkConfig)
 		{
-			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DChkConfig, NStr::CStr::CFormat("--add {}") << fs_GetScriptFilename(_Params), Result, Error, ExitCode) || ExitCode)
+			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DChkConfig, NStr::CStr::CFormat("--add {}") << fsg_GetScriptFilename(_Params), Result, Error, ExitCode) || ExitCode)
 			{
-				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to add {} to runlevels {}: {}") << fs_GetScriptFilename(_Params) << DInitRunLevels << Error);
+				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to add {} to runlevels {}: {}") << fsg_GetScriptFilename(_Params) << DInitRunLevels << Error);
 				return EActionResult_Failure;
 			}
 			else
-				mp_pOwner->f_ReportInformation("Add Daemon", NStr::CStr::CFormat("Successfully added {} to runlevels {}") << fs_GetScriptFilename(_Params) << DInitRunLevels);
+				mp_pOwner->f_ReportInformation("Add Daemon", NStr::CStr::CFormat("Successfully added {} to runlevels {}") << fsg_GetScriptFilename(_Params) << DInitRunLevels);
 		}
 		else if (mp_ScriptRegistrationMethod == EScriptRegistrationMethod_UpdateRcD)
 		{
 			if
 			(
-				!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DUpdateRcD, NStr::CStr::CFormat("{} defaults {}") << fs_GetScriptFilename(_Params) << DInitStartPrio, Result, Error, ExitCode)
+				!NMib::NProcess::CProcessLaunch::fs_LaunchBlock
+				(
+					DUpdateRcD
+					, NStr::CStr::CFormat("{} defaults {}") << fsg_GetScriptFilename(_Params) << DInitStartPrio
+					, Result
+					, Error
+					, ExitCode
+				)
 				|| ExitCode
 			)
 			{
-				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to add {} to default runlevels: {}") << fs_GetScriptFilename(_Params) << Error);
+				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to add {} to default runlevels: {}") << fsg_GetScriptFilename(_Params) << Error);
 				return EActionResult_Failure;
 			}
 			else
-				mp_pOwner->f_ReportInformation("Add Daemon", NStr::CStr::CFormat("Successfully added {} to default runlevels") << fs_GetScriptFilename(_Params));
+				mp_pOwner->f_ReportInformation("Add Daemon", NStr::CStr::CFormat("Successfully added {} to default runlevels") << fsg_GetScriptFilename(_Params));
 		}
 
 		return EActionResult_Success;
@@ -438,23 +445,23 @@ namespace NMib::NDaemon
 
 		if (mp_ScriptRegistrationMethod == EScriptRegistrationMethod_ChkConfig)
 		{
-			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DChkConfig, NStr::CStr::CFormat("--del {}") << fs_GetScriptFilename(_Params), Result, Error, ExitCode) || ExitCode)
+			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DChkConfig, NStr::CStr::CFormat("--del {}") << fsg_GetScriptFilename(_Params), Result, Error, ExitCode) || ExitCode)
 			{
-				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to remove {} from runlevels {}: {}") << fs_GetScriptFilename(_Params) << DInitRunLevels << Error);
+				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to remove {} from runlevels {}: {}") << fsg_GetScriptFilename(_Params) << DInitRunLevels << Error);
 				return EActionResult_Failure;
 			}
 			else
-				mp_pOwner->f_ReportInformation("Remove Daemon", NStr::CStr::CFormat("Successfully removed {} from runlevels {}") << fs_GetScriptFilename(_Params) << DInitRunLevels);
+				mp_pOwner->f_ReportInformation("Remove Daemon", NStr::CStr::CFormat("Successfully removed {} from runlevels {}") << fsg_GetScriptFilename(_Params) << DInitRunLevels);
 		}
 		else if (mp_ScriptRegistrationMethod == EScriptRegistrationMethod_UpdateRcD)
 		{
-			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DUpdateRcD, NStr::CStr::CFormat("-f {} remove") << fs_GetScriptFilename(_Params), Result, Error, ExitCode) || ExitCode)
+			if (!NMib::NProcess::CProcessLaunch::fs_LaunchBlock(DUpdateRcD, NStr::CStr::CFormat("-f {} remove") << fsg_GetScriptFilename(_Params), Result, Error, ExitCode) || ExitCode)
 			{
-				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to remove {} from default runlevels: {}") << fs_GetScriptFilename(_Params) << Error);
+				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to remove {} from default runlevels: {}") << fsg_GetScriptFilename(_Params) << Error);
 				return EActionResult_Failure;
 			}
 			else
-				mp_pOwner->f_ReportInformation("Remove Daemon", NStr::CStr::CFormat("Successfully removed {} from default runlevels") << fs_GetScriptFilename(_Params));
+				mp_pOwner->f_ReportInformation("Remove Daemon", NStr::CStr::CFormat("Successfully removed {} from default runlevels") << fsg_GetScriptFilename(_Params));
 		}
 
 		return EActionResult_Success;
@@ -466,7 +473,7 @@ namespace NMib::NDaemon
 			return EActionResult_Failure;
 
 		NStr::CStr ScriptFileDirectory = fp_GetScriptDirectory(_Params.f_GetDaemonMode());
-		NStr::CStr ScriptFilePath = NStr::CStr::CFormat("{}/{}") << ScriptFileDirectory << fs_GetScriptFilename(_Params);
+		NStr::CStr ScriptFilePath = NStr::CStr::CFormat("{}/{}") << ScriptFileDirectory << fsg_GetScriptFilename(_Params);
 
 		if (ScriptFileDirectory.f_IsEmpty())
 		{

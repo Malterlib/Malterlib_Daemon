@@ -73,15 +73,6 @@ namespace NMib::NDaemon
 			return mp_pDaemonIntegration->f_SupportsAutoRestart();
 		}
 
-		bool fp_CheckDaemonIntegration() const
-		{
-			if (mp_pDaemonIntegration)
-				return true;
-
-			mp_pOwner->f_ReportError("No supported daemon system detected.");
-			return false;
-		}
-
 		bool f_PrepareUserAndGroup(CDaemonParams const &_Params)
 		{
 			NStr::CStr StdOut, StdErr;
@@ -286,164 +277,6 @@ namespace NMib::NDaemon
 			default: msp_pThis->mp_InterruptedReason.f_FetchOr(EDaemonInterrupt_Exit); break;
 			}
 			msp_pThis->mp_InterruptedEvent.f_Signal();
-		}
-
-		int fp_DoStart(NStr::CStr const &_PidFilePath)
-		{
-			umint PidOfProcess = 0;
-			try
-			{
-				if (NFile::CFile::fs_FileExists(_PidFilePath))
-				{
-					NStr::CStr PidContents = NFile::CFile::fs_ReadStringFromFile(NStr::CStr(_PidFilePath));
-					PidOfProcess = PidContents.f_ToInt(umint(0));
-				}
-			}
-			catch (NFile::CExceptionFile const &_Exception)
-			{
-				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to read pid file {}: {}") << _PidFilePath << _Exception.f_GetErrorStr());
-				return 2;
-			}
-
-			if (PidOfProcess)
-			{
-				if (NMib::NProcess::NPlatform::fg_Process_IsRunning(PidOfProcess))
-					return 1; // Already running
-			}
-
-			return 0;
-		}
-
-		int fp_DoStop(NStr::CStr const &_PidFilePath)
-		{
-			umint PidOfProcess = 0;
-			try
-			{
-				if (NFile::CFile::fs_FileExists(_PidFilePath))
-				{
-					NStr::CStr PidContents = NFile::CFile::fs_ReadStringFromFile(NStr::CStr(_PidFilePath));
-					PidOfProcess = PidContents.f_ToInt(umint(0));
-				}
-			}
-			catch (NFile::CExceptionFile const &_Exception)
-			{
-				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to read pid file {}: {}") << _PidFilePath << _Exception.f_GetErrorStr());
-				return 2;
-			}
-
-			auto fl_DeletePidFile = [&]
-				{
-					try
-					{
-						if (NFile::CFile::fs_FileExists(_PidFilePath))
-							NFile::CFile::fs_DeleteFile(_PidFilePath);
-					}
-					catch (NFile::CExceptionFile const &)
-					{
-					}
-				}
-			;
-
-			if (PidOfProcess)
-			{
-				if (!NMib::NProcess::NPlatform::fg_Process_IsRunning(PidOfProcess))
-				{
-					fl_DeletePidFile();
-					return 1; // Already stopped
-				}
-			}
-			else
-				return 1; // Already stopped
-
-			fp64 Timeout = mp_pOwner->mp_Params.f_GetValueForKey("-DoStop").f_ToFloat(fp64(1200.0));
-
-			NTime::CStopwatch Stopwatch;
-			Stopwatch.f_Start();
-			if (kill(PidOfProcess, SIGTERM))
-			{
-				int ErrNo = errno;
-				if (!NMib::NProcess::NPlatform::fg_Process_IsRunning(PidOfProcess))
-				{
-					fl_DeletePidFile();
-					return 0;
-				}
-				mp_pOwner->f_ReportError(NMib::NPlatform::fg_FormatErrno(NMib::NStr::CStr::CFormat("kill({}, SIGTERM) when stopping daemon") << PidOfProcess, ErrNo));
-				return 2;
-			}
-
-			bool bTriedKill = false;
-			while (true)
-			{
-				if (Stopwatch.f_GetTime() > Timeout && !bTriedKill)
-				{
-					bTriedKill = true;
-					if (kill(PidOfProcess, SIGKILL))
-					{
-						int ErrNo = errno;
-						if (!NMib::NProcess::NPlatform::fg_Process_IsRunning(PidOfProcess))
-						{
-							fl_DeletePidFile();
-							return 0;
-						}
-						mp_pOwner->f_ReportError(NMib::NPlatform::fg_FormatErrno(NMib::NStr::CStr::CFormat("kill({}, SIGTERM) when stopping daemon") << PidOfProcess, ErrNo));
-						return 2;
-					}
-				}
-				if (!NMib::NProcess::NPlatform::fg_Process_IsRunning(PidOfProcess))
-				{
-					fl_DeletePidFile();
-					return 0;
-				}
-				NSys::fg_Thread_Sleep(0.1);
-			}
-
-			return 2;
-		}
-
-		int fp_DoStatus(NStr::CStr const &_PidFilePath)
-		{
-			umint PidOfProcess = 0;
-			try
-			{
-				if (NFile::CFile::fs_FileExists(_PidFilePath))
-				{
-					NStr::CStr PidContents = NFile::CFile::fs_ReadStringFromFile(NStr::CStr(_PidFilePath));
-					PidOfProcess = PidContents.f_ToInt(umint(0));
-				}
-			}
-			catch (NFile::CExceptionFile const &_Exception)
-			{
-				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to read pid file {}: {}") << _PidFilePath << _Exception.f_GetErrorStr());
-				return 4;
-			}
-
-			if (PidOfProcess)
-			{
-				if (NMib::NProcess::NPlatform::fg_Process_IsRunning(PidOfProcess))
-				{
-					mp_pOwner->f_ReportInformation("Daemon Status", NStr::CStr::CFormat("{} ({}) is running...") << mp_pOwner->mp_Params.f_GetExecutablePath() << PidOfProcess);
-					return 0;
-				}
-				mp_pOwner->f_ReportInformation("Daemon Status", NStr::CStr::CFormat("{} is stopped (pid file still exists)") << mp_pOwner->mp_Params.f_GetExecutablePath());
-				return 1;
-			}
-
-			mp_pOwner->f_ReportInformation("Daemon Status", NStr::CStr::CFormat("{} is stopped") << mp_pOwner->mp_Params.f_GetExecutablePath());
-
-			return 3;
-
-			return 0;
-#if 0
-			0	program is running or service is OK
-			1	program is dead and / var/run pid file exists
-			2	program is dead and / var/lock lock file exists
-			3	program is not running
-			4	program or service status is unknown
-			5 - 99	reserved for future LSB use
-			100 - 149	reserved for distribution use
-			150 - 199	reserved for application use
-			200 - 254	reserved
-#endif
 		}
 
 		EActionResult f_Run()
@@ -724,6 +557,173 @@ namespace NMib::NDaemon
 		}
 
 	private:
+		bool fp_CheckDaemonIntegration() const
+		{
+			if (mp_pDaemonIntegration)
+				return true;
+
+			mp_pOwner->f_ReportError("No supported daemon system detected.");
+			return false;
+		}
+
+		int fp_DoStart(NStr::CStr const &_PidFilePath)
+		{
+			umint PidOfProcess = 0;
+			try
+			{
+				if (NFile::CFile::fs_FileExists(_PidFilePath))
+				{
+					NStr::CStr PidContents = NFile::CFile::fs_ReadStringFromFile(NStr::CStr(_PidFilePath));
+					PidOfProcess = PidContents.f_ToInt(umint(0));
+				}
+			}
+			catch (NFile::CExceptionFile const &_Exception)
+			{
+				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to read pid file {}: {}") << _PidFilePath << _Exception.f_GetErrorStr());
+				return 2;
+			}
+
+			if (PidOfProcess)
+			{
+				if (NMib::NProcess::NPlatform::fg_Process_IsRunning(PidOfProcess))
+					return 1; // Already running
+			}
+
+			return 0;
+		}
+
+		int fp_DoStop(NStr::CStr const &_PidFilePath)
+		{
+			umint PidOfProcess = 0;
+			try
+			{
+				if (NFile::CFile::fs_FileExists(_PidFilePath))
+				{
+					NStr::CStr PidContents = NFile::CFile::fs_ReadStringFromFile(NStr::CStr(_PidFilePath));
+					PidOfProcess = PidContents.f_ToInt(umint(0));
+				}
+			}
+			catch (NFile::CExceptionFile const &_Exception)
+			{
+				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to read pid file {}: {}") << _PidFilePath << _Exception.f_GetErrorStr());
+				return 2;
+			}
+
+			auto fl_DeletePidFile = [&]
+				{
+					try
+					{
+						if (NFile::CFile::fs_FileExists(_PidFilePath))
+							NFile::CFile::fs_DeleteFile(_PidFilePath);
+					}
+					catch (NFile::CExceptionFile const &)
+					{
+					}
+				}
+			;
+
+			if (PidOfProcess)
+			{
+				if (!NMib::NProcess::NPlatform::fg_Process_IsRunning(PidOfProcess))
+				{
+					fl_DeletePidFile();
+					return 1; // Already stopped
+				}
+			}
+			else
+				return 1; // Already stopped
+
+			fp64 Timeout = mp_pOwner->mp_Params.f_GetValueForKey("-DoStop").f_ToFloat(fp64(1200.0));
+
+			NTime::CStopwatch Stopwatch;
+			Stopwatch.f_Start();
+			if (kill(PidOfProcess, SIGTERM))
+			{
+				int ErrNo = errno;
+				if (!NMib::NProcess::NPlatform::fg_Process_IsRunning(PidOfProcess))
+				{
+					fl_DeletePidFile();
+					return 0;
+				}
+				mp_pOwner->f_ReportError(NMib::NPlatform::fg_FormatErrno(NMib::NStr::CStr::CFormat("kill({}, SIGTERM) when stopping daemon") << PidOfProcess, ErrNo));
+				return 2;
+			}
+
+			bool bTriedKill = false;
+			while (true)
+			{
+				if (Stopwatch.f_GetTime() > Timeout && !bTriedKill)
+				{
+					bTriedKill = true;
+					if (kill(PidOfProcess, SIGKILL))
+					{
+						int ErrNo = errno;
+						if (!NMib::NProcess::NPlatform::fg_Process_IsRunning(PidOfProcess))
+						{
+							fl_DeletePidFile();
+							return 0;
+						}
+						mp_pOwner->f_ReportError(NMib::NPlatform::fg_FormatErrno(NMib::NStr::CStr::CFormat("kill({}, SIGTERM) when stopping daemon") << PidOfProcess, ErrNo));
+						return 2;
+					}
+				}
+				if (!NMib::NProcess::NPlatform::fg_Process_IsRunning(PidOfProcess))
+				{
+					fl_DeletePidFile();
+					return 0;
+				}
+				NSys::fg_Thread_Sleep(0.1);
+			}
+
+			return 2;
+		}
+
+		int fp_DoStatus(NStr::CStr const &_PidFilePath)
+		{
+			umint PidOfProcess = 0;
+			try
+			{
+				if (NFile::CFile::fs_FileExists(_PidFilePath))
+				{
+					NStr::CStr PidContents = NFile::CFile::fs_ReadStringFromFile(NStr::CStr(_PidFilePath));
+					PidOfProcess = PidContents.f_ToInt(umint(0));
+				}
+			}
+			catch (NFile::CExceptionFile const &_Exception)
+			{
+				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to read pid file {}: {}") << _PidFilePath << _Exception.f_GetErrorStr());
+				return 4;
+			}
+
+			if (PidOfProcess)
+			{
+				if (NMib::NProcess::NPlatform::fg_Process_IsRunning(PidOfProcess))
+				{
+					mp_pOwner->f_ReportInformation("Daemon Status", NStr::CStr::CFormat("{} ({}) is running...") << mp_pOwner->mp_Params.f_GetExecutablePath() << PidOfProcess);
+					return 0;
+				}
+				mp_pOwner->f_ReportInformation("Daemon Status", NStr::CStr::CFormat("{} is stopped (pid file still exists)") << mp_pOwner->mp_Params.f_GetExecutablePath());
+				return 1;
+			}
+
+			mp_pOwner->f_ReportInformation("Daemon Status", NStr::CStr::CFormat("{} is stopped") << mp_pOwner->mp_Params.f_GetExecutablePath());
+
+			return 3;
+
+			return 0;
+#if 0
+			0	program is running or service is OK
+			1	program is dead and / var/run pid file exists
+			2	program is dead and / var/lock lock file exists
+			3	program is not running
+			4	program or service status is unknown
+			5 - 99	reserved for future LSB use
+			100 - 149	reserved for distribution use
+			150 - 199	reserved for application use
+			200 - 254	reserved
+#endif
+		}
+
 		EActionResult fp_RunDaemon()
 		{
 			auto pSigterm = NPlatform::fg_SetSignalHandler(SIGTERM, fs_SigHandler);
