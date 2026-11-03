@@ -45,13 +45,13 @@ namespace NMib::NDaemon
 			CTaskIconCleaner();
 			~CTaskIconCleaner();
 
-			static LRESULT CALLBACK fs_ReportWindowProc(HWND _Window, UINT _Message, WPARAM _WParam, LPARAM _LParam);
+			static LRESULT CALLBACK fs_ReportWindowProc(HWND _pWindow, UINT _Message, WPARAM _WParam, LPARAM _LParam);
 
-			void f_Init(HICON _Icon);
+			void f_Init(HICON _pIcon);
 			bool f_Update();
 
 			NOTIFYICONDATA m_NotifyIconData;
-			HWND m_ReportWindow;
+			HWND m_pReportWindow;
 			bool m_bInit = false;
 			bool m_bAbortDebug = false;
 		};
@@ -67,7 +67,7 @@ namespace NMib::NDaemon
 		EActionResult fp_UserDaemonAdd(bool _bCheckForExisting);
 		EActionResult fp_UserDaemonRemove();
 
-		void fp_UpdateService(SC_HANDLE _Service);
+		void fp_UpdateService(SC_HANDLE _pService);
 		bool fp_PrepareUserAndGroup(CDaemonParams const &_Params, NMib::NStr::CWStr &o_RunAsUser, NMib::NStr::CWStrSecure &o_RunAsUserPassword);
 		NStr::CStr fp_GetAddCommandLine() const;
 		static void WINAPI fsp_ServiceStart(DWORD _nArgs, LPWSTR *_pArgs);
@@ -85,7 +85,7 @@ namespace NMib::NDaemon
 
 		static NThread::CMutual msp_ServiceControlLock;
 		static SERVICE_STATUS msp_ServiceStatus;
-		static SERVICE_STATUS_HANDLE msp_ServiceStatusHandle;
+		static SERVICE_STATUS_HANDLE msp_pServiceStatusHandle;
 		static CDetails *msp_pThis;
 		static bool msp_bIsShutdown;
 		static CTaskIconCleaner msp_TaskIcon;

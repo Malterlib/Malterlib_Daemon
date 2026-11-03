@@ -259,13 +259,13 @@ namespace NMib::NDaemon
 
 			mp_InterruptedEvent.f_ResetSignaled();
 
-			auto pSigterm = NPlatform::fg_SetSignalHandler(SIGTERM, fs_SigTermHandler);
-			auto pSigint = NPlatform::fg_SetSignalHandler(SIGINT, fs_SigTermHandler);
+			auto fSigterm = NPlatform::fg_SetSignalHandler(SIGTERM, fs_SigTermHandler);
+			auto fSigint = NPlatform::fg_SetSignalHandler(SIGINT, fs_SigTermHandler);
 
 			auto Cleanup = g_OnScopeExit / [&]
 				{
-					NPlatform::fg_SetSignalHandler(SIGTERM, pSigterm);
-					NPlatform::fg_SetSignalHandler(SIGINT, pSigint);
+					NPlatform::fg_SetSignalHandler(SIGTERM, fSigterm);
+					NPlatform::fg_SetSignalHandler(SIGINT, fSigint);
 				}
 			;
 
@@ -301,13 +301,13 @@ namespace NMib::NDaemon
 			if (!_bDebug && !mp_pOwner->mp_Params.f_GetAlwaysRunStatusApp())
 				return f_Run();
 
-			auto pSigterm = NPlatform::fg_SetSignalHandler(SIGTERM, fs_CancelDaemonStatusHandler);
-			auto pSigint = NPlatform::fg_SetSignalHandler(SIGINT, fs_CancelDaemonStatusHandler);
+			auto fSigterm = NPlatform::fg_SetSignalHandler(SIGTERM, fs_CancelDaemonStatusHandler);
+			auto fSigint = NPlatform::fg_SetSignalHandler(SIGINT, fs_CancelDaemonStatusHandler);
 
 			auto Cleanup = g_OnScopeExit / [&]
 				{
-					NPlatform::fg_SetSignalHandler(SIGTERM, pSigterm);
-					NPlatform::fg_SetSignalHandler(SIGINT, pSigint);
+					NPlatform::fg_SetSignalHandler(SIGTERM, fSigterm);
+					NPlatform::fg_SetSignalHandler(SIGINT, fSigint);
 				}
 			;
 
@@ -479,58 +479,58 @@ namespace NMib::NDaemon
 			return f_Start();
 		}
 
-		void f_SetDictionaryValue(CFMutableDictionaryRef &_Dict, NStr::CStr const &_Key, int _Value)
+		void f_SetDictionaryValue(CFMutableDictionaryRef &_pDict, NStr::CStr const &_Key, int _Value)
 		{
-			CFStringRef KeyStringRef = CFStringCreateWithCString(NULL, _Key.f_GetStr(), kCFStringEncodingUTF8);
-			CFNumberRef ValueIntegerRef = CFNumberCreate(NULL, kCFNumberIntType, &_Value);
-			CFDictionarySetValue(_Dict, KeyStringRef, ValueIntegerRef);
-			CFRelease(KeyStringRef);
-			CFRelease(ValueIntegerRef);
+			CFStringRef pKeyStringRef = CFStringCreateWithCString(NULL, _Key.f_GetStr(), kCFStringEncodingUTF8);
+			CFNumberRef pValueIntegerRef = CFNumberCreate(NULL, kCFNumberIntType, &_Value);
+			CFDictionarySetValue(_pDict, pKeyStringRef, pValueIntegerRef);
+			CFRelease(pKeyStringRef);
+			CFRelease(pValueIntegerRef);
 		}
 
-		void f_SetDictionaryValue(CFMutableDictionaryRef &_Dict, NStr::CStr const &_Key, NStr::CStr const &_Value)
+		void f_SetDictionaryValue(CFMutableDictionaryRef &_pDict, NStr::CStr const &_Key, NStr::CStr const &_Value)
 		{
-			CFStringRef KeyStringRef = CFStringCreateWithCString(NULL, _Key.f_GetStr(), kCFStringEncodingUTF8);
-			CFStringRef ValueStringRef = CFStringCreateWithCString(NULL, _Value.f_GetStr(), kCFStringEncodingUTF8);
-			CFDictionarySetValue(_Dict, KeyStringRef, ValueStringRef);
-			CFRelease(KeyStringRef);
-			CFRelease(ValueStringRef);
+			CFStringRef pKeyStringRef = CFStringCreateWithCString(NULL, _Key.f_GetStr(), kCFStringEncodingUTF8);
+			CFStringRef pValueStringRef = CFStringCreateWithCString(NULL, _Value.f_GetStr(), kCFStringEncodingUTF8);
+			CFDictionarySetValue(_pDict, pKeyStringRef, pValueStringRef);
+			CFRelease(pKeyStringRef);
+			CFRelease(pValueStringRef);
 		}
 
-		void f_SetDictionaryValue(CFMutableDictionaryRef &_Dict, NStr::CStr const &_Key, NContainer::TCVector<NStr::CStr> const &_Values)
+		void f_SetDictionaryValue(CFMutableDictionaryRef &_pDict, NStr::CStr const &_Key, NContainer::TCVector<NStr::CStr> const &_Values)
 		{
-			CFStringRef KeyStringRef = CFStringCreateWithCString(NULL, _Key.f_GetStr(), kCFStringEncodingUTF8);
+			CFStringRef pKeyStringRef = CFStringCreateWithCString(NULL, _Key.f_GetStr(), kCFStringEncodingUTF8);
 
-			CFMutableArrayRef ArrayRef = CFArrayCreateMutable(NULL, _Values.f_GetLen(), &kCFTypeArrayCallBacks);
+			CFMutableArrayRef pArrayRef = CFArrayCreateMutable(NULL, _Values.f_GetLen(), &kCFTypeArrayCallBacks);
 
 			for (NStr::CStr const &Value : _Values)
 			{
-				CFStringRef ValueStringRef = CFStringCreateWithCString(NULL, Value.f_GetStr(), kCFStringEncodingUTF8);
-				CFArrayAppendValue(ArrayRef, ValueStringRef);
-				CFRelease(ValueStringRef);
+				CFStringRef pValueStringRef = CFStringCreateWithCString(NULL, Value.f_GetStr(), kCFStringEncodingUTF8);
+				CFArrayAppendValue(pArrayRef, pValueStringRef);
+				CFRelease(pValueStringRef);
 			}
 
-			CFDictionarySetValue(_Dict, KeyStringRef, ArrayRef);
-			CFRelease(KeyStringRef);
-			CFRelease(ArrayRef);
+			CFDictionarySetValue(_pDict, pKeyStringRef, pArrayRef);
+			CFRelease(pKeyStringRef);
+			CFRelease(pArrayRef);
 		}
 
 		CFDictionaryRef f_CreateDictionaryFromParams(CDaemonParams const &_Params, bool _bDisabled = false)
 		{
-			CFMutableDictionaryRef Dict = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+			CFMutableDictionaryRef pDict = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 
-			f_SetDictionaryValue(Dict, "Label", NStr::CStr::CFormat(CDaemon::fs_GetUniquePrefix() + ".{}") << _Params.f_GetDaemonName());
+			f_SetDictionaryValue(pDict, "Label", NStr::CStr::CFormat(CDaemon::fs_GetUniquePrefix() + ".{}") << _Params.f_GetDaemonName());
 			NContainer::TCVector<NStr::CStr> ProgramArguments;
 			// We write executable as arguments as Launchd seems to be broken in this regard, it has to have executable as argument or none will be sent
 			ProgramArguments.f_Insert(_Params.f_GetExecutablePath());
 			ProgramArguments.f_Insert("-Service");
 			if (_Params.f_GetDisableWriteDaemon())
 				ProgramArguments.f_Insert(_Params.f_GetDaemonName());
-			f_SetDictionaryValue(Dict, "ProgramArguments", ProgramArguments);
-			CFDictionarySetValue(Dict, CFSTR("KeepAlive"), kCFBooleanTrue);
-			CFDictionarySetValue(Dict, CFSTR("RunAtLoad"), kCFBooleanTrue);
-			// f_SetDictionaryValue(Dict, "ExitTimeOut", 0);	// Disable timeout, this seems to have broken on Yosemite
-			f_SetDictionaryValue(Dict, "ExitTimeOut", _Params.f_GetMaxShutdownTime().f_ToInt());
+			f_SetDictionaryValue(pDict, "ProgramArguments", ProgramArguments);
+			CFDictionarySetValue(pDict, CFSTR("KeepAlive"), kCFBooleanTrue);
+			CFDictionarySetValue(pDict, CFSTR("RunAtLoad"), kCFBooleanTrue);
+			// f_SetDictionaryValue(pDict, "ExitTimeOut", 0);	// Disable timeout, this seems to have broken on Yosemite
+			f_SetDictionaryValue(pDict, "ExitTimeOut", _Params.f_GetMaxShutdownTime().f_ToInt());
 
 			int RelativePriority;
 			NStr::CStr ProcessType;
@@ -545,18 +545,18 @@ namespace NMib::NDaemon
 			}
 
 			if (ProcessType)
-				f_SetDictionaryValue(Dict, "ProcessType", ProcessType);
+				f_SetDictionaryValue(pDict, "ProcessType", ProcessType);
 
 			if (!_Params.f_GetRunAsUser().f_IsEmpty())
-				f_SetDictionaryValue(Dict, "UserName", _Params.f_GetRunAsUser());
+				f_SetDictionaryValue(pDict, "UserName", _Params.f_GetRunAsUser());
 
 			if (!_Params.f_GetRunAsGroup().f_IsEmpty())
-				f_SetDictionaryValue(Dict, "GroupName", _Params.f_GetRunAsGroup());
+				f_SetDictionaryValue(pDict, "GroupName", _Params.f_GetRunAsGroup());
 
 			if (_bDisabled)
-				CFDictionarySetValue(Dict, CFSTR("Disabled"), kCFBooleanTrue);
+				CFDictionarySetValue(pDict, CFSTR("Disabled"), kCFBooleanTrue);
 
-			return Dict;
+			return pDict;
 		}
 
 		EActionResult f_Add(bool _bCheckForExisting)
@@ -575,15 +575,15 @@ namespace NMib::NDaemon
 						EActionResult DaemonNameInUse = EActionResult_Failure;
 
 						NContainer::CByteVector LaunchFileContents = NFile::CFile::fs_ReadFile(LaunchFilePath);
-						CFDataRef XmlData = CFDataCreate(NULL, LaunchFileContents.f_GetArray(), LaunchFileContents.f_GetLen());
+						CFDataRef pXmlData = CFDataCreate(NULL, LaunchFileContents.f_GetArray(), LaunchFileContents.f_GetLen());
 						DMibDeprecatedSuppressStart
-						CFPropertyListRef PropertyList = CFPropertyListCreateFromXMLData(NULL, XmlData, kCFPropertyListImmutable, NULL);
+						CFPropertyListRef pPropertyList = CFPropertyListCreateFromXMLData(NULL, pXmlData, kCFPropertyListImmutable, NULL);
 						DMibDeprecatedSuppressStop
-						CFRelease(XmlData);
+						CFRelease(pXmlData);
 
-						if (PropertyList)
+						if (pPropertyList)
 						{
-							CFArrayRef pArguments = (CFArrayRef)CFDictionaryGetValue((CFDictionaryRef)PropertyList, CFSTR("ProgramArguments"));
+							CFArrayRef pArguments = (CFArrayRef)CFDictionaryGetValue((CFDictionaryRef)pPropertyList, CFSTR("ProgramArguments"));
 							if (pArguments)
 							{
 								CFStringRef pExec = (CFStringRef)CFArrayGetValueAtIndex(pArguments, 0);
@@ -604,7 +604,7 @@ namespace NMib::NDaemon
 							else
 								f_ReportError(NStr::CStr::CFormat("Invalid daemon file: {}") << LaunchFilePath);
 
-							CFRelease(PropertyList);
+							CFRelease(pPropertyList);
 						}
 						else
 							f_ReportError(NStr::CStr::CFormat("Invalid daemon file: {}") << LaunchFilePath);
@@ -633,15 +633,15 @@ namespace NMib::NDaemon
 				return EActionResult_Failure;
 			}
 
-			CFPropertyListRef PropertyList = f_CreateDictionaryFromParams(mp_pOwner->mp_Params);
+			CFPropertyListRef pPropertyList = f_CreateDictionaryFromParams(mp_pOwner->mp_Params);
 			DMibDeprecatedSuppressStart
-			CFDataRef XmlData = CFPropertyListCreateXMLData(NULL, PropertyList);
+			CFDataRef pXmlData = CFPropertyListCreateXMLData(NULL, pPropertyList);
 			DMibDeprecatedSuppressStop
 			NContainer::CByteVector Data;
-			Data.f_Insert((uint8 const *)CFDataGetBytePtr(XmlData), CFDataGetLength(XmlData));
+			Data.f_Insert((uint8 const *)CFDataGetBytePtr(pXmlData), CFDataGetLength(pXmlData));
 
-			CFRelease(PropertyList);
-			CFRelease(XmlData);
+			CFRelease(pPropertyList);
+			CFRelease(pXmlData);
 
 			if ((!mp_pOwner->mp_Params.f_GetRunAsUser().f_IsEmpty() || !mp_pOwner->mp_Params.f_GetRunAsGroup().f_IsEmpty()) && !f_PrepareUserAndGroup(mp_pOwner->mp_Params))
 				return EActionResult_Failure;
@@ -687,15 +687,15 @@ namespace NMib::NDaemon
 
 					if (NFile::CFile::fs_FileExists(LaunchFilePath, NFile::EFileAttrib_File))
 					{
-						CFPropertyListRef PropertyList = f_CreateDictionaryFromParams(mp_pOwner->mp_Params, true);
+						CFPropertyListRef pPropertyList = f_CreateDictionaryFromParams(mp_pOwner->mp_Params, true);
 						DMibDeprecatedSuppressStart
-						CFDataRef XmlData = CFPropertyListCreateXMLData(NULL, PropertyList);
+						CFDataRef pXmlData = CFPropertyListCreateXMLData(NULL, pPropertyList);
 						DMibDeprecatedSuppressStop
 						NContainer::CByteVector Data;
-						Data.f_Insert((uint8 const *)CFDataGetBytePtr(XmlData), CFDataGetLength(XmlData));
+						Data.f_Insert((uint8 const *)CFDataGetBytePtr(pXmlData), CFDataGetLength(pXmlData));
 
-						CFRelease(PropertyList);
-						CFRelease(XmlData);
+						CFRelease(pPropertyList);
+						CFRelease(pXmlData);
 
 						NFile::CFile PlistFile(LaunchFilePath, NFile::EFileOpen_Write);
 						PlistFile.f_Write(Data.f_GetArray(), Data.f_GetLen());

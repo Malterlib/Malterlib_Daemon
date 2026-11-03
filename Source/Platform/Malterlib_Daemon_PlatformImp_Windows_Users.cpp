@@ -88,9 +88,9 @@ namespace NMib::NDaemon
 					LSA_OBJECT_ATTRIBUTES Attributes;
 					NMemory::fg_MemClear(Attributes);
 
-					LSA_HANDLE PolicyHandle;
+					LSA_HANDLE pPolicyHandle;
 
-					NTSTATUS Status = LsaOpenPolicy(nullptr, &Attributes, POLICY_CREATE_ACCOUNT | POLICY_LOOKUP_NAMES, &PolicyHandle);
+					NTSTATUS Status = LsaOpenPolicy(nullptr, &Attributes, POLICY_CREATE_ACCOUNT | POLICY_LOOKUP_NAMES, &pPolicyHandle);
 					if (Status)
 					{
 						DMibError
@@ -106,7 +106,7 @@ namespace NMib::NDaemon
 
 					auto Cleanup = g_OnScopeExit / [&]
 						{
-							LsaClose(PolicyHandle);
+							LsaClose(pPolicyHandle);
 						}
 					;
 
@@ -116,7 +116,7 @@ namespace NMib::NDaemon
 					PrivilegeString.Length = NMib::NStr::fg_StrLen(PrivilegeString.Buffer) * sizeof(ch16);
 					PrivilegeString.MaximumLength = (PrivilegeString.Length + 1) * sizeof(ch16);
 
-					Status = LsaAddAccountRights(PolicyHandle, &UserSID.Sid, &PrivilegeString, 1);
+					Status = LsaAddAccountRights(pPolicyHandle, &UserSID.Sid, &PrivilegeString, 1);
 					if (Status)
 					{
 						DMibError

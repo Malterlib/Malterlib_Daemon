@@ -153,16 +153,16 @@ namespace NMib::NDaemon
 			CStr DaemonPidPath = RootDirectory / (NFile::CFile::fs_GetFileNoExt(NFile::CFile::fs_GetProgramPath()) + ".ServicePID");
 			umint PID = NFile::CFile::fs_ReadStringFromFile(DaemonPidPath, true).f_ToInt(0);
 
-			HANDLE Process = nullptr;
+			HANDLE pProcess = nullptr;
 			if (PID && _bWait)
-				Process = OpenProcess(SYNCHRONIZE, false, PID);
+				pProcess = OpenProcess(SYNCHRONIZE, false, PID);
 
 			auto Cleanup = fg_OnScopeExit
 				(
 					[&]
 					{
-						if (Process)
-							CloseHandle(Process);
+						if (pProcess)
+							CloseHandle(pProcess);
 					}
 				)
 			;
@@ -170,10 +170,10 @@ namespace NMib::NDaemon
 			CStr DaemonStateFile = RootDirectory / (NFile::CFile::fs_GetFileNoExt(NFile::CFile::fs_GetProgramPath()) + ".ServiceState");
 			NFile::CFile::fs_WriteStringToFile(DaemonStateFile, "Stop", false);
 
-			if (Process)
+			if (pProcess)
 			{
 				NTime::CStopwatch Stopwatch{true};
-				auto WaitResult = WaitForSingleObject(Process, 240000);
+				auto WaitResult = WaitForSingleObject(pProcess, 240000);
 				if (WaitResult == WAIT_TIMEOUT)
 					DMibError("Timed out waiting for process to exit");
 			}

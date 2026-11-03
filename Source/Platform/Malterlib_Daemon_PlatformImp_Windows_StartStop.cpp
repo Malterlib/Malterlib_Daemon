@@ -13,9 +13,9 @@ namespace NMib::NDaemon
 		if (fp_GetDaemonParams().f_GetDaemonMode() != EDaemonMode_Global)
 			return fp_UserDaemonStart();
 
-		SC_HANDLE ServiceManager = fp_OpenSCManager();
+		SC_HANDLE pServiceManager = fp_OpenSCManager();
 
-		if (!ServiceManager)
+		if (!pServiceManager)
 		{
 			f_ReportError(NStr::CStr::CFormat("Unable to open service manager: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 			return EActionResult_Failure;
@@ -25,26 +25,26 @@ namespace NMib::NDaemon
 			(
 				[&]
 				{
-					CloseServiceHandle(ServiceManager);
+					CloseServiceHandle(pServiceManager);
 				}
 			)
 		;
 
-		SC_HANDLE Service = OpenServiceW(ServiceManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName()), SERVICE_START | SERVICE_QUERY_STATUS);
+		SC_HANDLE pService = OpenServiceW(pServiceManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName()), SERVICE_START | SERVICE_QUERY_STATUS);
 
-		if (Service)
+		if (pService)
 		{
 			auto CleanupService = fg_OnScopeExit
 				(
 					[&]
 					{
-						CloseServiceHandle(Service);
+						CloseServiceHandle(pService);
 					}
 				)
 			;
 			SERVICE_STATUS Status;
 
-			if (!QueryServiceStatus(Service, &Status))
+			if (!QueryServiceStatus(pService, &Status))
 			{
 				f_ReportError(NStr::CStr::CFormat("Unable to query service manager: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 				return EActionResult_Failure;
@@ -53,7 +53,7 @@ namespace NMib::NDaemon
 			if (Status.dwCurrentState == SERVICE_RUNNING || Status.dwCurrentState == SERVICE_START_PENDING)
 				return EActionResult_Success;
 
-			if (!StartService(Service, 0, nullptr))
+			if (!StartService(pService, 0, nullptr))
 			{
 				f_ReportError(NStr::CStr::CFormat("Unable to start daemon: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 				return EActionResult_Failure;
@@ -61,7 +61,7 @@ namespace NMib::NDaemon
 
 			while (1)
 			{
-				if (!QueryServiceStatus(Service, &Status))
+				if (!QueryServiceStatus(pService, &Status))
 					break;
 
 				if (Status.dwCurrentState != SERVICE_START_PENDING)
@@ -96,8 +96,8 @@ namespace NMib::NDaemon
 			return EActionResult_Success;
 		}
 
-		SC_HANDLE ServiceManager = fp_OpenSCManager();
-		if (!ServiceManager)
+		SC_HANDLE pServiceManager = fp_OpenSCManager();
+		if (!pServiceManager)
 		{
 			f_ReportError(NStr::CStr::CFormat("Unable to open service manager: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 			return EActionResult_Failure;
@@ -107,27 +107,27 @@ namespace NMib::NDaemon
 			(
 				[&]
 				{
-					CloseServiceHandle(ServiceManager);
+					CloseServiceHandle(pServiceManager);
 				}
 			)
 		;
 
-		SC_HANDLE Service = OpenServiceW(ServiceManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName()), SERVICE_STOP | SERVICE_QUERY_STATUS);
+		SC_HANDLE pService = OpenServiceW(pServiceManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName()), SERVICE_STOP | SERVICE_QUERY_STATUS);
 
-		if (Service)
+		if (pService)
 		{
 			auto CleanupService = fg_OnScopeExit
 				(
 					[&]
 					{
-						CloseServiceHandle(Service);
+						CloseServiceHandle(pService);
 					}
 				)
 			;
 
 			SERVICE_STATUS Status;
 
-			if (!QueryServiceStatus(Service, &Status))
+			if (!QueryServiceStatus(pService, &Status))
 			{
 				f_ReportError(NStr::CStr::CFormat("Unable to query service manager: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 				return EActionResult_Failure;
@@ -138,7 +138,7 @@ namespace NMib::NDaemon
 				uint32 Control = SERVICE_CONTROL_STOP;
 				SERVICE_STATUS Status;
 
-				if (!ControlService(Service, Control, &Status))
+				if (!ControlService(pService, Control, &Status))
 				{
 					uint32 Error = GetLastError();
 
@@ -159,25 +159,25 @@ namespace NMib::NDaemon
 
 			DWORD SizeNeeded = 0;
 
-			QueryServiceStatusEx(Service, SC_STATUS_PROCESS_INFO, (LPBYTE) &ProcessStatus, sizeof(ProcessStatus), &SizeNeeded);
+			QueryServiceStatusEx(pService, SC_STATUS_PROCESS_INFO, (LPBYTE) &ProcessStatus, sizeof(ProcessStatus), &SizeNeeded);
 
-			HANDLE Process = nullptr;
+			HANDLE pProcess = nullptr;
 			if (ProcessStatus.dwProcessId)
-				Process = OpenProcess(SYNCHRONIZE, false, ProcessStatus.dwProcessId);
+				pProcess = OpenProcess(SYNCHRONIZE, false, ProcessStatus.dwProcessId);
 
 			auto Cleanup = fg_OnScopeExit
 				(
 					[&]
 					{
-						if (Process)
-							CloseHandle(Process);
+						if (pProcess)
+							CloseHandle(pProcess);
 					}
 				)
 			;
 
 			while (1)
 			{
-				if (!QueryServiceStatus(Service, &Status))
+				if (!QueryServiceStatus(pService, &Status))
 					break;
 
 				if (Status.dwCurrentState == SERVICE_STOPPED)
@@ -185,8 +185,8 @@ namespace NMib::NDaemon
 				Sleep(10);
 			}
 
-			if (Process)
-				WaitForSingleObject(Process, 240000);
+			if (pProcess)
+				WaitForSingleObject(pProcess, 240000);
 		}
 		else
 		{

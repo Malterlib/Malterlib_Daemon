@@ -88,11 +88,11 @@ namespace NMib::NDaemon
 				, NStr::CStr const &_DisplayName
 				, NStr::CStr const &_DaemonDesc
 				, void *_pNativeHandle
-				, FImplementationFactory const &_ImplementationFactory = fg_Default()
-				, FProcessCommand const &_ProcessCommand = fg_Default()
-				, FErrorReporter const &_ErrorReporter = fg_Default()
-				, FInformationReporter const &_InformationReporter = fg_Default()
-				, FErrorReporterYesNo const &_ErrorReporterYesNo = fg_Default()
+				, FImplementationFactory const &_fImplementationFactory = fg_Default()
+				, FProcessCommand const &_fProcessCommand = fg_Default()
+				, FErrorReporter const &_fErrorReporter = fg_Default()
+				, FInformationReporter const &_fInformationReporter = fg_Default()
+				, FErrorReporterYesNo const &_fErrorReporterYesNo = fg_Default()
 			)
 		;
 

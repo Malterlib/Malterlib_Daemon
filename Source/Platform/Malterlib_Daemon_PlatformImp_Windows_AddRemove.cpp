@@ -13,8 +13,8 @@ namespace NMib::NDaemon
 		if (fp_GetDaemonParams().f_GetDaemonMode() != EDaemonMode_Global)
 			return fp_UserDaemonAdd(_bCheckForExisting);
 
-		SC_HANDLE ServiceManager = fp_OpenSCManager();
-		if (!ServiceManager)
+		SC_HANDLE pServiceManager = fp_OpenSCManager();
+		if (!pServiceManager)
 		{
 			f_ReportError(NStr::CStr::CFormat("Unable to open service manager: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 			return EActionResult_Failure;
@@ -24,7 +24,7 @@ namespace NMib::NDaemon
 			(
 				[&]
 				{
-					CloseServiceHandle(ServiceManager);
+					CloseServiceHandle(pServiceManager);
 				}
 			)
 		;
@@ -43,29 +43,29 @@ namespace NMib::NDaemon
 
 		if (_bCheckForExisting)
 		{
-			SC_HANDLE Service = OpenServiceW(ServiceManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName()), SERVICE_ALL_ACCESS);
+			SC_HANDLE pService = OpenServiceW(pServiceManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName()), SERVICE_ALL_ACCESS);
 
-			if (Service)
+			if (pService)
 			{
 				auto CleanupService = fg_OnScopeExit
 					(
 						[&]
 						{
-							CloseServiceHandle(Service);
+							CloseServiceHandle(pService);
 						}
 					)
 				;
 
 				QUERY_SERVICE_CONFIG *pQueryConfig;
 				uint32 NeededSize = 0;
-				QueryServiceConfig(Service, nullptr, 0, &NeededSize);
+				QueryServiceConfig(pService, nullptr, 0, &NeededSize);
 
 				{
 					NContainer::CByteVector Vector;
 					Vector.f_SetLen(NeededSize);
 					pQueryConfig = (QUERY_SERVICE_CONFIG *)Vector.f_GetArray();
 
-					if (QueryServiceConfig(Service, pQueryConfig, NeededSize, &NeededSize))
+					if (QueryServiceConfig(pService, pQueryConfig, NeededSize, &NeededSize))
 					{
 						NContainer::TCVector<NStr::CStr> const &Dependencies = mp_pOwner->f_GetDaemonParams().f_GetDaemonDependencies();
 						NContainer::TCVector<ch16> Deps;
@@ -85,7 +85,7 @@ namespace NMib::NDaemon
 							(
 								!ChangeServiceConfigW
 								(
-									Service
+									pService
 									, SERVICE_NO_CHANGE
 									, SERVICE_NO_CHANGE
 									, SERVICE_NO_CHANGE
@@ -105,7 +105,7 @@ namespace NMib::NDaemon
 					}
 				}
 
-				fp_UpdateService(Service);
+				fp_UpdateService(pService);
 
 				NStr::CStr Error;
 				if (!fp_GetDaemonParams().f_GetDisableWriteDaemon() && !fp_GetDaemonParams().f_WriteDaemonModeFile(Error))
@@ -127,11 +127,11 @@ namespace NMib::NDaemon
 		}
 
 		{
-			SC_HANDLE Service = OpenServiceW(ServiceManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName()), DELETE);
+			SC_HANDLE pService = OpenServiceW(pServiceManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName()), DELETE);
 
-			if (Service)
+			if (pService)
 			{
-				if (!DeleteService(Service))
+				if (!DeleteService(pService))
 				{
 					f_ReportError(NStr::CStr::CFormat("Unable to delete daemon: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 					return EActionResult_Failure;
@@ -153,9 +153,9 @@ namespace NMib::NDaemon
 		}
 
 		NStr::CWStr ServiceGroup = NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonGroup());
-		SC_HANDLE Service = CreateServiceW
+		SC_HANDLE pService = CreateServiceW
 			(
-				ServiceManager // SCManager database
+				pServiceManager // SCManager database
 				, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName()) // name of daemon
 				, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonDisplayName()) // daemon name to display
 				, SERVICE_ALL_ACCESS // desired access
@@ -171,7 +171,7 @@ namespace NMib::NDaemon
 			)
 		;
 
-		if (Service == nullptr)
+		if (pService == nullptr)
 		{
 			f_ReportError(NStr::CStr::CFormat("Error returned when creating daemon {}\r\n{}") << fp_GetAddCommandLine() << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 			return EActionResult_Failure;
@@ -183,7 +183,7 @@ namespace NMib::NDaemon
 			(
 				[&]
 				{
-					CloseServiceHandle(Service);
+					CloseServiceHandle(pService);
 				}
 			)
 		;
@@ -192,7 +192,7 @@ namespace NMib::NDaemon
 		if (!fp_GetDaemonParams().f_GetDisableWriteDaemon() && !fp_GetDaemonParams().f_WriteDaemonModeFile(Error))
 			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to write daemon mode file: {}") << Error);
 
-		fp_UpdateService(Service);
+		fp_UpdateService(pService);
 		return EActionResult_Success;
 	}
 
@@ -217,8 +217,8 @@ namespace NMib::NDaemon
 		if (f_Stop(true) == EActionResult_Failure)
 			return EActionResult_Failure;
 
-		SC_HANDLE ServiceManager = fp_OpenSCManager();
-		if (!ServiceManager)
+		SC_HANDLE pServiceManager = fp_OpenSCManager();
+		if (!pServiceManager)
 		{
 			f_ReportError(NStr::CStr::CFormat("Unable to open service manager: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 			return EActionResult_Failure;
@@ -228,23 +228,23 @@ namespace NMib::NDaemon
 			(
 				[&]
 				{
-					CloseServiceHandle(ServiceManager);
+					CloseServiceHandle(pServiceManager);
 				}
 			)
 		;
 
-		SC_HANDLE Service = OpenServiceW(ServiceManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName()), DELETE);
-		if (Service)
+		SC_HANDLE pService = OpenServiceW(pServiceManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName()), DELETE);
+		if (pService)
 		{
 			auto CleanupService = fg_OnScopeExit
 				(
 					[&]
 					{
-						CloseServiceHandle(Service);
+						CloseServiceHandle(pService);
 					}
 				)
 			;
-			if (!DeleteService(Service))
+			if (!DeleteService(pService))
 			{
 				f_ReportError(NStr::CStr::CFormat("Unable to delete daemon: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 				return EActionResult_Failure;
@@ -254,12 +254,12 @@ namespace NMib::NDaemon
 		return EActionResult_Success;
 	}
 
-	void CDaemon::CDetails::fp_UpdateService(SC_HANDLE _Service)
+	void CDaemon::CDetails::fp_UpdateService(SC_HANDLE _pService)
 	{
 		SERVICE_DESCRIPTIONW Description;
 		NStr::CWStr Temp = NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonDescription());
 		Description.lpDescription = (ch16 *)Temp.f_GetStr();
-		ChangeServiceConfig2W(_Service, SERVICE_CONFIG_DESCRIPTION, &Description);
+		ChangeServiceConfig2W(_pService, SERVICE_CONFIG_DESCRIPTION, &Description);
 
 		SERVICE_FAILURE_ACTIONSW RestartActions;
 
@@ -277,24 +277,24 @@ namespace NMib::NDaemon
 		Actions[2].Type = SC_ACTION_RESTART;
 		RestartActions.lpsaActions = Actions;
 
-		if (!ChangeServiceConfig2W(_Service, SERVICE_CONFIG_FAILURE_ACTIONS, &RestartActions))
+		if (!ChangeServiceConfig2W(_pService, SERVICE_CONFIG_FAILURE_ACTIONS, &RestartActions))
 			f_ReportError(NStr::CStr::CFormat("Failed to change service config: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 
 		SERVICE_FAILURE_ACTIONS_FLAG FailureActionFlags = {0};
 		FailureActionFlags.fFailureActionsOnNonCrashFailures = true;
-		if (!ChangeServiceConfig2W(_Service, SERVICE_CONFIG_FAILURE_ACTIONS_FLAG, &FailureActionFlags))
+		if (!ChangeServiceConfig2W(_pService, SERVICE_CONFIG_FAILURE_ACTIONS_FLAG, &FailureActionFlags))
 			f_ReportError(NStr::CStr::CFormat("Failed to change service config: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 
 		if (NMib::NPlatform::fg_IsVista())
 		{
 			SERVICE_PRESHUTDOWN_INFO PreShutDown;
 			PreShutDown.dwPreshutdownTimeout = (fp_GetDaemonParams().f_GetMaxShutdownTime() * 1000.0).f_ToInt();
-			ChangeServiceConfig2W(_Service, SERVICE_CONFIG_PRESHUTDOWN_INFO, &PreShutDown);
+			ChangeServiceConfig2W(_pService, SERVICE_CONFIG_PRESHUTDOWN_INFO, &PreShutDown);
 		}
 
 		SERVICE_SID_INFO ServiceSidInfo = {0};
 		ServiceSidInfo.dwServiceSidType = SERVICE_SID_TYPE_UNRESTRICTED;
-		if (!ChangeServiceConfig2W(_Service, SERVICE_CONFIG_SERVICE_SID_INFO, &ServiceSidInfo))
+		if (!ChangeServiceConfig2W(_pService, SERVICE_CONFIG_SERVICE_SID_INFO, &ServiceSidInfo))
 			f_ReportError(NStr::CStr::CFormat("Failed to set service SID type: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 	}
 
@@ -307,8 +307,8 @@ namespace NMib::NDaemon
 			return fp_UserDaemonExists(_bExists);
 
 		_bExists = false;
-		SC_HANDLE ServiceManager = fp_OpenSCManager();
-		if (!ServiceManager)
+		SC_HANDLE pServiceManager = fp_OpenSCManager();
+		if (!pServiceManager)
 		{
 			f_ReportError(NStr::CStr::CFormat("Unable to open service manager: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr(0));
 			return EActionResult_Failure;
@@ -317,20 +317,20 @@ namespace NMib::NDaemon
 			(
 				[&]
 				{
-					CloseServiceHandle(ServiceManager);
+					CloseServiceHandle(pServiceManager);
 				}
 			)
 		;
 
-		SC_HANDLE Service = OpenServiceW(ServiceManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName()), SERVICE_QUERY_CONFIG | SERVICE_CHANGE_CONFIG);
+		SC_HANDLE pService = OpenServiceW(pServiceManager, NStr::NPlatform::fg_StrToWindows(mp_pOwner->f_GetDaemonParams().f_GetDaemonName()), SERVICE_QUERY_CONFIG | SERVICE_CHANGE_CONFIG);
 
-		if (Service)
+		if (pService)
 		{
 			auto CleanupService = fg_OnScopeExit
 				(
 					[&]
 					{
-						CloseServiceHandle(Service);
+						CloseServiceHandle(pService);
 					}
 				)
 			;

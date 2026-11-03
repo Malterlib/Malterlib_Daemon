@@ -83,8 +83,8 @@ int fg_DaemonMain(void *_pNativeHandle)
 			, _pNativeHandle
 			, [&]() -> NStorage::TCUniquePointer<NDaemon::CDaemonImp>
 			{
-				NStorage::TCUniquePointer<NDaemon::CDaemonImp> ServerDaemon = fg_Construct<CDaemonImplementation>();
-				return ServerDaemon;
+				NStorage::TCUniquePointer<NDaemon::CDaemonImp> pServerDaemon = fg_Construct<CDaemonImplementation>();
+				return pServerDaemon;
 			}
 			, [&](NDaemon::CDaemonParams &_Params, NDaemon::CDaemon *_pDaemon, bool &_bHandled) -> NDaemon::EActionResult
 			{
@@ -166,7 +166,7 @@ int WINAPI wWinMain(IN HINSTANCE _pInstance, IN HINSTANCE _pPrevInstance, IN wch
 	return fg_DaemonMain((void *)_pInstance);
 }
 #else
-int main(int _nArguments, char *_pArguments[])
+int main(int _nArguments, char *_Arguments[])
 {
 	return fg_DaemonMain(nullptr);
 }

@@ -10,7 +10,7 @@ namespace NMib::NDaemon
 	void CDaemon::CDetails::fs_AbortDebug()
 	{
 		msp_TaskIcon.m_bAbortDebug = true;
-		PostMessage(msp_TaskIcon.m_ReportWindow, WM_NULL, 0, 0);
+		PostMessage(msp_TaskIcon.m_pReportWindow, WM_NULL, 0, 0);
 	}
 
 	EActionResult CDaemon::CDetails::f_RunAsProgram(bool _bDebug)
@@ -29,10 +29,10 @@ namespace NMib::NDaemon
 
 		if (_bDebug)
 		{
-			HICON Icon = LoadIcon((HINSTANCE)mp_pOwner->f_GetDaemonParams().f_GetNativeHandle(), IDI_APPLICATION);
-			if (!Icon)
-				Icon = LoadIcon(nullptr, IDI_APPLICATION);
-			msp_TaskIcon.f_Init(Icon);
+			HICON pIcon = LoadIcon((HINSTANCE)mp_pOwner->f_GetDaemonParams().f_GetNativeHandle(), IDI_APPLICATION);
+			if (!pIcon)
+				pIcon = LoadIcon(nullptr, IDI_APPLICATION);
+			msp_TaskIcon.f_Init(pIcon);
 		}
 
 		NStorage::TCSharedPointer<NThread::CEvent> pAbortStarted = fg_Construct();

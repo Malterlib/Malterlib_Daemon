@@ -6,7 +6,7 @@
 #include "Malterlib_Daemon.h"
 
 #ifdef DPlatformFamily_Windows
-void *g_DllInstance = 0;
+void *g_pDllInstance = 0;
 #endif
 
 namespace NMib::NDaemon
@@ -34,7 +34,7 @@ namespace NMib::NDaemon
 
 		void *pIconData = nullptr;
 #ifdef DPlatformFamily_Windows
-		pIconData = g_DllInstance;
+		pIconData = g_pDllInstance;
 #elif defined(DPlatformFamily_macOS)
 		NContainer::CByteVector IconData;
 		if (NFile::fg_ReadExeFSFile("ServiceIcon.png", IconData))

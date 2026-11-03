@@ -726,17 +726,17 @@ namespace NMib::NDaemon
 
 		EActionResult fp_RunDaemon()
 		{
-			auto pSigterm = NPlatform::fg_SetSignalHandler(SIGTERM, fs_SigHandler);
-			auto pSigint = NPlatform::fg_SetSignalHandler(SIGINT, fs_SigHandler);
-			auto pSigstp = NPlatform::fg_SetSignalHandler(SIGTSTP, fs_SigHandler);
-			auto pSigcont = NPlatform::fg_SetSignalHandler(SIGCONT, fs_SigHandler);
+			auto fSigterm = NPlatform::fg_SetSignalHandler(SIGTERM, fs_SigHandler);
+			auto fSigint = NPlatform::fg_SetSignalHandler(SIGINT, fs_SigHandler);
+			auto fSigstp = NPlatform::fg_SetSignalHandler(SIGTSTP, fs_SigHandler);
+			auto fSigcont = NPlatform::fg_SetSignalHandler(SIGCONT, fs_SigHandler);
 
 			auto Cleanup = g_OnScopeExit / [&]
 				{
-					NPlatform::fg_SetSignalHandler(SIGTERM, pSigterm);
-					NPlatform::fg_SetSignalHandler(SIGINT, pSigint);
-					NPlatform::fg_SetSignalHandler(SIGTSTP, pSigstp);
-					NPlatform::fg_SetSignalHandler(SIGCONT, pSigcont);
+					NPlatform::fg_SetSignalHandler(SIGTERM, fSigterm);
+					NPlatform::fg_SetSignalHandler(SIGINT, fSigint);
+					NPlatform::fg_SetSignalHandler(SIGTSTP, fSigstp);
+					NPlatform::fg_SetSignalHandler(SIGCONT, fSigcont);
 				}
 			;
 

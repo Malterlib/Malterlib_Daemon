@@ -7,7 +7,7 @@ namespace NMib::NDaemon
 {
 	NThread::CMutual CDaemon::CDetails::msp_ServiceControlLock;
 	SERVICE_STATUS CDaemon::CDetails::msp_ServiceStatus;
-	SERVICE_STATUS_HANDLE CDaemon::CDetails::msp_ServiceStatusHandle;
+	SERVICE_STATUS_HANDLE CDaemon::CDetails::msp_pServiceStatusHandle;
 	CDaemon::CDetails *CDaemon::CDetails::msp_pThis = nullptr;
 	bool CDaemon::CDetails::msp_bIsShutdown = false;
 	CDaemon::CDetails::CTaskIconCleaner CDaemon::CDetails::msp_TaskIcon;
@@ -94,7 +94,7 @@ namespace NMib::NDaemon
 
 				DMibDTrace("Daemon stopped: {}" DMibNewLine, msp_ServiceStatus.dwCheckPoint);
 
-				if (!SetServiceStatus(msp_ServiceStatusHandle, &msp_ServiceStatus))
+				if (!SetServiceStatus(msp_pServiceStatusHandle, &msp_ServiceStatus))
 				{
 					[[maybe_unused]] HRESULT ErrorCode = GetLastError();
 					DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", ErrorCode);
@@ -109,7 +109,7 @@ namespace NMib::NDaemon
 				msp_ServiceStatus.dwWaitHint += 1500;
 				DMibDTrace("Daemon stop pending: {}" DMibNewLine, msp_ServiceStatus.dwCheckPoint);
 
-				if (!SetServiceStatus(msp_ServiceStatusHandle, &msp_ServiceStatus))
+				if (!SetServiceStatus(msp_pServiceStatusHandle, &msp_ServiceStatus))
 				{
 					[[maybe_unused]] HRESULT ErrorCode = GetLastError();
 					DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", ErrorCode);

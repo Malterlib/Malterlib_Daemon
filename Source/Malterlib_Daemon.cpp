@@ -14,20 +14,20 @@ namespace NMib::NDaemon
 			, NStr::CStr const &_DisplayName
 			, NStr::CStr const &_DaemonDesc
 			, void *_pNativeHandle
-			, FImplementationFactory const &_ImplementationFactory
-			, FProcessCommand const &_ProcessCommand
-			, FErrorReporter const &_ErrorReporter
-			, FInformationReporter const &_InformationReporter
-			, FErrorReporterYesNo const &_ErrorReporterYesNo
+			, FImplementationFactory const &_fImplementationFactory
+			, FProcessCommand const &_fProcessCommand
+			, FErrorReporter const &_fErrorReporter
+			, FInformationReporter const &_fInformationReporter
+			, FErrorReporterYesNo const &_fErrorReporterYesNo
 		)
 		: mp_DaemonName(_DaemonName)
 		, mp_DisplayName(_DisplayName)
 		, mp_DaemonDesc(_DaemonDesc)
-		, mp_fImplementationFactory(_ImplementationFactory)
-		, mp_fProcessCommand(_ProcessCommand)
-		, mp_fReportError(_ErrorReporter)
-		, mp_fReportInformation(_InformationReporter)
-		, mp_fReportErrorYesNo(_ErrorReporterYesNo)
+		, mp_fImplementationFactory(_fImplementationFactory)
+		, mp_fProcessCommand(_fProcessCommand)
+		, mp_fReportError(_fErrorReporter)
+		, mp_fReportInformation(_fInformationReporter)
+		, mp_fReportErrorYesNo(_fErrorReporterYesNo)
 		, mp_pNativeHandle(_pNativeHandle)
 		, mp_DaemonMode(EDaemonMode_Global)
 		, mp_bInteractive(false)
