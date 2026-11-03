@@ -10,7 +10,7 @@ namespace NMib::NDaemon
 
 	struct CUpstart : public CDaemonSystemInterfaceShared
 	{
-		CUpstart(CDaemon *);
+		CUpstart(CDaemon *_pOwner);
 		~CUpstart();
 
 		static bool fs_IsSupported();

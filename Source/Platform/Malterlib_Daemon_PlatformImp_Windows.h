@@ -45,9 +45,9 @@ namespace NMib::NDaemon
 			CTaskIconCleaner();
 			~CTaskIconCleaner();
 
-			static LRESULT CALLBACK fs_ReportWindowProc(HWND _hWnd, UINT _Message, WPARAM _WParam, LPARAM _LParam);
+			static LRESULT CALLBACK fs_ReportWindowProc(HWND _Window, UINT _Message, WPARAM _WParam, LPARAM _LParam);
 
-			void f_Init(HICON _hIcon);
+			void f_Init(HICON _Icon);
 			bool f_Update();
 
 			NOTIFYICONDATA m_NotifyIconData;
@@ -77,7 +77,7 @@ namespace NMib::NDaemon
 		void fp_DaemonPause();
 		void fp_DaemonCreate();
 		void fp_DaemonDestroy();
-		aint fp_StopThread(NThread::CThreadObject *);
+		aint fp_StopThread(NThread::CThreadObject *_pThread);
 		aint fp_StopReportThread(NThread::CThreadObject *_pThread);
 
 		NStorage::TCUniquePointer<NThread::CThreadObject> mp_pStopThread;

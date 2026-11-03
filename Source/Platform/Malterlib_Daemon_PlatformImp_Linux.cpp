@@ -253,7 +253,7 @@ namespace NMib::NDaemon
 			return mp_pDaemonIntegration->f_Remove(mp_pOwner->mp_Params);
 		}
 
-		static void fs_SigHandler(int const _sigid)
+		static void fs_SigHandler(int const _Signal)
 		{
 			sigset_t WaitSet;
 			sigset_t OldSet;
@@ -270,7 +270,7 @@ namespace NMib::NDaemon
 				}
 			;
 
-			switch (_sigid)
+			switch (_Signal)
 			{
 			case SIGTSTP: msp_pThis->mp_InterruptedReason.f_FetchOr(EDaemonInterrupt_Pause); break;
 			case SIGCONT: msp_pThis->mp_InterruptedReason.f_FetchOr(EDaemonInterrupt_Resume); break;

@@ -234,7 +234,7 @@ namespace NMib::NDaemon
 			return true;
 		}
 
-		static void fs_SigTermHandler(int const sigid)
+		static void fs_SigTermHandler(int const _Signal)
 		{
 			sigset_t WaitSet;
 			sigset_t OldSet;
@@ -278,7 +278,7 @@ namespace NMib::NDaemon
 			return EActionResult_Success;
 		}
 
-		static void fs_CancelDaemonStatusHandler(int const sigid)
+		static void fs_CancelDaemonStatusHandler(int const _Signal)
 		{
 			sigset_t WaitSet;
 			sigset_t OldSet;

@@ -77,7 +77,7 @@ namespace NMib::NDaemon
 			mp_pImp = nullptr;
 	}
 
-	aint CDaemon::CDetails::fp_StopThread(NThread::CThreadObject *)
+	aint CDaemon::CDetails::fp_StopThread(NThread::CThreadObject *_pThread)
 	{
 		msp_pThis->mp_pImp = nullptr;
 		return 0;

@@ -10,7 +10,7 @@ namespace NMib::NDaemon
 
 	struct CSystemd : public CDaemonSystemInterfaceShared
 	{
-		CSystemd(CDaemon *);
+		CSystemd(CDaemon *_pOwner);
 		~CSystemd();
 
 		static bool fs_IsSupported();
@@ -28,7 +28,7 @@ namespace NMib::NDaemon
 
 	private:
 		NStr::CStr fp_GetUnitConfigDirectory(CDaemonParams const &_Params) const;
-		bool fp_IsUnitConfigThisExecutable(CDaemon *pOwner, CDaemonParams const &_Params) const;
+		bool fp_IsUnitConfigThisExecutable(CDaemon *_pOwner, CDaemonParams const &_Params) const;
 		EActionResult fp_SetUnitEnable(CDaemonParams const &_Params, bool _bEnable) const;
 		EActionResult fp_IsUnitEnabled(CDaemonParams const &_Params, bool &_bIsEnabled) const;
 		void fp_RemoveWantsSymlinks(CDaemonParams const &_Params) const;

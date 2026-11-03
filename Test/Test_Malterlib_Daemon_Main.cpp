@@ -161,12 +161,12 @@ int fg_DaemonMain(void *_pNativeHandle)
 
 #	include <Windows.h>
 
-int WINAPI wWinMain(IN HINSTANCE hInstance, IN HINSTANCE hPrevInstance, IN wchar_t *lpCmdLine, IN int nShowCmd)
+int WINAPI wWinMain(IN HINSTANCE _pInstance, IN HINSTANCE _pPrevInstance, IN wchar_t *_pCommandLine, IN int _ShowCommand)
 {
-	return fg_DaemonMain((void *)hInstance);
+	return fg_DaemonMain((void *)_pInstance);
 }
 #else
-int main(int argc, char *argv[])
+int main(int _nArguments, char *_pArguments[])
 {
 	return fg_DaemonMain(nullptr);
 }

@@ -10,7 +10,7 @@ namespace NMib::NDaemon
 
 	struct CGentoo : public CDaemonSystemInterfaceShared
 	{
-		CGentoo(CDaemon *);
+		CGentoo(CDaemon *_pOwner);
 
 		static bool fs_IsSupported();
 

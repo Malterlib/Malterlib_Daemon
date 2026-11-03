@@ -19,7 +19,7 @@ namespace NMib::NDaemon
 		UnregisterClassA("MalterlibDaemon_ReportWindow", 0);
 	}
 
-	LRESULT CALLBACK CDaemon::CDetails::CTaskIconCleaner::fs_ReportWindowProc(HWND _hWnd, UINT _Message, WPARAM _WParam, LPARAM _LParam)
+	LRESULT CALLBACK CDaemon::CDetails::CTaskIconCleaner::fs_ReportWindowProc(HWND _Window, UINT _Message, WPARAM _WParam, LPARAM _LParam)
 	{
 		if (_Message == WM_ENDSESSION || _Message == WM_QUERYENDSESSION)
 			NPlatform::fg_ReportIsShuttingDown();
@@ -51,7 +51,7 @@ namespace NMib::NDaemon
 
 		if (_Message == WM_USER + 20 && _LParam == WM_RBUTTONUP)
 		{
-			SetForegroundWindow(_hWnd);
+			SetForegroundWindow(_Window);
 			HMENU hMenu = CreatePopupMenu();
 			AppendMenuA(hMenu, MF_STRING, 123, "Pause");
 			AppendMenuA(hMenu, MF_STRING, 124, "Resume");
@@ -60,17 +60,17 @@ namespace NMib::NDaemon
 			AppendMenuA(hMenu, MF_STRING, 127, "Cancel");
 			POINT Pos;
 			GetCursorPos(&Pos);
-			TrackPopupMenu(hMenu, TPM_BOTTOMALIGN | TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_RIGHTBUTTON, Pos.x, Pos.y, 0, _hWnd, nullptr);
-			PostMessage(_hWnd, WM_NULL, 0, 0);
+			TrackPopupMenu(hMenu, TPM_BOTTOMALIGN | TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_RIGHTBUTTON, Pos.x, Pos.y, 0, _Window, nullptr);
+			PostMessage(_Window, WM_NULL, 0, 0);
 			DestroyMenu(hMenu);
 
 			return true;
 		}
 
-		return DefWindowProc(_hWnd, _Message, _WParam, _LParam);
+		return DefWindowProc(_Window, _Message, _WParam, _LParam);
 	}
 
-	void CDaemon::CDetails::CTaskIconCleaner::f_Init(HICON _hIcon)
+	void CDaemon::CDetails::CTaskIconCleaner::f_Init(HICON _Icon)
 	{
 		if (!m_bInit)
 		{
@@ -91,11 +91,11 @@ namespace NMib::NDaemon
 				DMibError((NStr::CStr::CFormat("Windows returned an error from CreateWindowW: {}") << NMib::NPlatform::fg_Win32_GetLastErrorStr()).f_GetStr());
 
 			NMemory::fg_MemClear(m_NotifyIconData);
-			if (_hIcon)
+			if (_Icon)
 			{
 				m_NotifyIconData.cbSize = sizeof(m_NotifyIconData);
 				m_NotifyIconData.hWnd = m_hReportWnd;
-				m_NotifyIconData.hIcon = _hIcon;
+				m_NotifyIconData.hIcon = _Icon;
 				m_NotifyIconData.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
 				m_NotifyIconData.uID = 0x0101;
 				m_NotifyIconData.uCallbackMessage = WM_USER + 20;

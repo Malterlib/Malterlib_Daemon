@@ -73,12 +73,12 @@ namespace NMib::NDaemon
 	struct CDaemonParams;
 
 	using FImplementationFactory = NFunction::TCFunction<NStorage::TCUniquePointer<CDaemonImp> ()>;
-	using FProcessCommand = NFunction::TCFunction<EActionResult (CDaemonParams &, CDaemon *_pDaemon, bool &_bHandled)>;
-	using FErrorReporter = NFunction::TCFunction<void (NStr::CStr const &)>;
-	using FInformationReporter = NFunction::TCFunction<void (NStr::CStr const &, NStr::CStr const &)>;
-	using FErrorReporterYesNo = NFunction::TCFunction<EReportError (NStr::CStr const &, EReportError)>;
+	using FProcessCommand = NFunction::TCFunction<EActionResult (CDaemonParams &_Params, CDaemon *_pDaemon, bool &_bHandled)>;
+	using FErrorReporter = NFunction::TCFunction<void (NStr::CStr const &_Error)>;
+	using FInformationReporter = NFunction::TCFunction<void (NStr::CStr const &_Heading, NStr::CStr const &_Information)>;
+	using FErrorReporterYesNo = NFunction::TCFunction<EReportError (NStr::CStr const &_Error, EReportError _Default)>;
 	using CCommandLineVector = NContainer::TCVector<NMib::NStr::CStr>;
-	using COptionHandlerMap = NContainer::TCMap<NStr::CStr, NFunction::TCFunction<void (CCommandLineVector &)>>;
+	using COptionHandlerMap = NContainer::TCMap<NStr::CStr, NFunction::TCFunction<void (CCommandLineVector &_CommandLine)>>;
 
 	struct CDaemonParams
 	{
@@ -163,7 +163,7 @@ namespace NMib::NDaemon
 		void f_ReportInformation(NStr::CStr const &_Heading, NStr::CStr const &_Information) const;
 		EReportError f_ReportErrorYesNo(NStr::CStr const &_Error, EReportError _Default) const;
 
-		static void fs_ParseOptions(COptionHandlerMap &, CCommandLineVector &_CommandLine);
+		static void fs_ParseOptions(COptionHandlerMap &_OptionHandlers, CCommandLineVector &_CommandLine);
 		static bool fs_ParseOptionArgument(CCommandLineVector &_CommandLine, NStr::CStr &_Destination);
 
 		bool f_GetAlwaysRunStatusApp() const;

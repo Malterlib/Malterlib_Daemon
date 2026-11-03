@@ -10,7 +10,7 @@ namespace NMib::NDaemon
 
 	struct CScript : public CDaemonSystemInterfaceShared
 	{
-		CScript(CDaemon *);
+		CScript(CDaemon *_pOwner);
 		~CScript();
 
 		static bool fs_IsSupported();

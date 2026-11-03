@@ -129,7 +129,7 @@ namespace NMib::NDaemon
 		}
 	}
 
-	bool CSystemd::fp_IsUnitConfigThisExecutable(CDaemon *pOwner, CDaemonParams const &_Params) const
+	bool CSystemd::fp_IsUnitConfigThisExecutable(CDaemon *_pOwner, CDaemonParams const &_Params) const
 	{
 		NStr::CStr LaunchFileDirectory = fp_GetUnitConfigDirectory(_Params);
 		NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fsg_GetUnitConfigFilename(_Params);
@@ -141,7 +141,7 @@ namespace NMib::NDaemon
 		}
 		catch (NFile::CExceptionFile const &_Exception)
 		{
-			pOwner->f_ReportError(NStr::CStr::CFormat("Failed to read existing file: {}") << _Exception.f_GetErrorStr());
+			_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to read existing file: {}") << _Exception.f_GetErrorStr());
 			return false;
 		}
 
@@ -165,13 +165,13 @@ namespace NMib::NDaemon
 					return true;
 				else
 				{
-					pOwner->f_ReportError(NStr::CStr::CFormat("Daemon name is already in use: {}") << LaunchFilePath);
+					_pOwner->f_ReportError(NStr::CStr::CFormat("Daemon name is already in use: {}") << LaunchFilePath);
 					return false;
 				}
 			}
 		}
 
-		pOwner->f_ReportError(NStr::CStr::CFormat("Unable to find executable in {}") << LaunchFilePath);
+		_pOwner->f_ReportError(NStr::CStr::CFormat("Unable to find executable in {}") << LaunchFilePath);
 		return false;
 	}
 
