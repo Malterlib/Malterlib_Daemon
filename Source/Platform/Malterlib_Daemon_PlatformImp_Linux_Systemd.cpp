@@ -5,23 +5,23 @@
 #include <Mib/Process/ProcessLaunch>
 #include <Mib/Process/Platform>
 
-NMib::NStr::CStr gc_SystemctlExecutable = NMib::NStr::gc_Str<"systemctl">;
+constexpr NMib::NStr::CStr gc_SystemctlExecutable = NMib::NStr::gc_Str<"systemctl">;
 
-NMib::NStr::CStr gc_SearchPaths[] =
+constexpr NMib::NStr::CStr gc_SearchPaths[] =
 	{
 		NMib::NStr::gc_Str<"/usr/bin">
 		, NMib::NStr::gc_Str<"/bin">
 	}
 ;
 
-NMib::NStr::CStr gc_SystemDSystemDirectories[] =
+constexpr NMib::NStr::CStr gc_SystemDSystemDirectories[] =
 	{
 		NMib::NStr::gc_Str<"/usr/lib/systemd/system">
 		, NMib::NStr::gc_Str<"/etc/systemd/system">
 	}
 ;
 
-NMib::NStr::CStr gc_SystemDUserDirectories[] =
+constexpr NMib::NStr::CStr gc_SystemDUserDirectories[] =
 	{
 		NMib::NStr::gc_Str<"/usr/lib/systemd/user">
 		, NMib::NStr::gc_Str<"/etc/systemd/user">

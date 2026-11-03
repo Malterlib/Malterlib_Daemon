@@ -58,8 +58,8 @@ namespace NMib::NDaemon
 
 	void WINAPI CDaemon::CDetails::fsp_ServiceStart(DWORD _nArgs, LPWSTR *_pArgs)
 	{
-		DWORD status;
-		DWORD specificError;
+		DWORD Status;
+		DWORD SpecificError;
 
 		msp_ServiceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
 		msp_ServiceStatus.dwCurrentState = SERVICE_START_PENDING;
@@ -86,16 +86,16 @@ namespace NMib::NDaemon
 		}
 
 		// Initialization code goes here.
-		status = fsp_ServiceInitialization(_nArgs, _pArgs, &specificError);
+		Status = fsp_ServiceInitialization(_nArgs, _pArgs, &SpecificError);
 
 		// Handle error condition
-		if (status != NO_ERROR)
+		if (Status != NO_ERROR)
 		{
 			msp_ServiceStatus.dwCurrentState = SERVICE_STOPPED;
 			msp_ServiceStatus.dwCheckPoint = 0;
 			msp_ServiceStatus.dwWaitHint = 0;
-			msp_ServiceStatus.dwWin32ExitCode = status;
-			msp_ServiceStatus.dwServiceSpecificExitCode = specificError;
+			msp_ServiceStatus.dwWin32ExitCode = Status;
+			msp_ServiceStatus.dwServiceSpecificExitCode = SpecificError;
 
 			SetServiceStatus(msp_ServiceStatusHandle, &msp_ServiceStatus);
 			return;
@@ -108,8 +108,8 @@ namespace NMib::NDaemon
 
 		if (!SetServiceStatus(msp_ServiceStatusHandle, &msp_ServiceStatus))
 		{
-			status = GetLastError();
-			DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", status);
+			Status = GetLastError();
+			DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", Status);
 		}
 
 		// This is where the service does its work.
@@ -126,7 +126,7 @@ namespace NMib::NDaemon
 
 	DWORD WINAPI CDaemon::CDetails::fsp_ServiceCtrlHandler(DWORD _ControlCode, DWORD _EventType, void *_pEventData, void *_pContext)
 	{
-		[[maybe_unused]] DWORD status;
+		[[maybe_unused]] DWORD ErrorCode;
 
 		DMibLock(msp_ServiceControlLock);
 
@@ -233,8 +233,8 @@ namespace NMib::NDaemon
 		// Send current status.
 		if (!SetServiceStatus(msp_ServiceStatusHandle, &msp_ServiceStatus))
 		{
-			status = GetLastError();
-			DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", (status));
+			ErrorCode = GetLastError();
+			DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", (ErrorCode));
 		}
 		return NO_ERROR;
 	}

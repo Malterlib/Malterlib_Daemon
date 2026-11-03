@@ -10,7 +10,7 @@ namespace NMib::NDaemon
 	void CDaemon::CDetails::fs_AbortDebug()
 	{
 		msp_TaskIcon.m_bAbortDebug = true;
-		PostMessage(msp_TaskIcon.m_hReportWnd, WM_NULL, 0, 0);
+		PostMessage(msp_TaskIcon.m_ReportWindow, WM_NULL, 0, 0);
 	}
 
 	EActionResult CDaemon::CDetails::f_RunAsProgram(bool _bDebug)

@@ -96,8 +96,8 @@ namespace NMib::NDaemon
 
 				if (!SetServiceStatus(msp_ServiceStatusHandle, &msp_ServiceStatus))
 				{
-					[[maybe_unused]] HRESULT status = GetLastError();
-					DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", status);
+					[[maybe_unused]] HRESULT ErrorCode = GetLastError();
+					DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", ErrorCode);
 				}
 				return 0;
 			}
@@ -111,8 +111,8 @@ namespace NMib::NDaemon
 
 				if (!SetServiceStatus(msp_ServiceStatusHandle, &msp_ServiceStatus))
 				{
-					[[maybe_unused]] HRESULT status = GetLastError();
-					DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", status);
+					[[maybe_unused]] HRESULT ErrorCode = GetLastError();
+					DMibDTrace(" [" + msp_pThis->mp_pOwner->f_GetDaemonParams().f_GetDaemonName() + "] SetServiceStatus error {}\n", ErrorCode);
 				}
 			}
 			WaitForSingleObject(mp_pStopThread->f_GetThread(), 1000);

@@ -112,7 +112,7 @@ namespace NMib::NDaemon
 
 		mp_Action = EDaemonAction_Custom;
 		mp_ActionParam = true;
-		mp_lRawArguments = _CommandLine;
+		mp_RawArguments = _CommandLine;
 
 		NContainer::TCVector<NMib::NStr::CStr> Cmd(_CommandLine);
 
@@ -159,8 +159,8 @@ namespace NMib::NDaemon
 			f_ReportError(NStr::CStr::CFormat("Failed to read daemon mode file {}. The error was: {}") << DaemonModePath << _Exception.f_GetErrorStr());
 		}
 
-		NContainer::TCVector<NMib::NStr::CStr> lArgsWithoutExecutable = Cmd;
-		fp_CopyElementsToCommandLine(lArgsWithoutExecutable);
+		NContainer::TCVector<NMib::NStr::CStr> ArgsWithoutExecutable = Cmd;
+		fp_CopyElementsToCommandLine(ArgsWithoutExecutable);
 
 		if (!Cmd.f_IsEmpty())
 		{
@@ -616,7 +616,7 @@ namespace NMib::NDaemon
 
 	bool CDaemonParams::f_IsKeySet(NStr::CStr const &_Key) const
 	{
-		for (auto iArg = mp_lRawArguments.f_GetIterator(); iArg; ++iArg)
+		for (auto iArg = mp_RawArguments.f_GetIterator(); iArg; ++iArg)
 		{
 			if (*iArg == _Key)
 				return true;
@@ -626,22 +626,22 @@ namespace NMib::NDaemon
 
 	void CDaemonParams::f_SetKey(NStr::CStr const &_Key, bool _bKeySet)
 	{
-		for (auto iArg = mp_lRawArguments.f_GetIterator(); iArg; ++iArg)
+		for (auto iArg = mp_RawArguments.f_GetIterator(); iArg; ++iArg)
 		{
 			if (*iArg == _Key)
 			{
 				if (!_bKeySet)
-					mp_lRawArguments.f_Remove(&*iArg - mp_lRawArguments.f_GetArray());
+					mp_RawArguments.f_Remove(&*iArg - mp_RawArguments.f_GetArray());
 				return;
 			}
 		}
 		if (_bKeySet)
-			mp_lRawArguments.f_Insert(_Key);
+			mp_RawArguments.f_Insert(_Key);
 	}
 
 	void CDaemonParams::f_SetValueForKey(NStr::CStr const &_Key, NStr::CStr const &_Value)
 	{
-		for (auto iArg = mp_lRawArguments.f_GetIterator(); iArg; ++iArg)
+		for (auto iArg = mp_RawArguments.f_GetIterator(); iArg; ++iArg)
 		{
 			if (*iArg == _Key)
 			{
@@ -651,18 +651,18 @@ namespace NMib::NDaemon
 					*iArg = _Value;
 					return;
 				}
-				mp_lRawArguments.f_Insert(_Value);
+				mp_RawArguments.f_Insert(_Value);
 				return;
 			}
 		}
 
-		mp_lRawArguments.f_Insert(_Key);
-		mp_lRawArguments.f_Insert(_Value);
+		mp_RawArguments.f_Insert(_Key);
+		mp_RawArguments.f_Insert(_Value);
 	}
 
 	NStr::CStr CDaemonParams::f_GetValueForKey(NStr::CStr const &_Key) const
 	{
-		for (auto iArg = mp_lRawArguments.f_GetIterator(); iArg; ++iArg)
+		for (auto iArg = mp_RawArguments.f_GetIterator(); iArg; ++iArg)
 		{
 			if (*iArg == _Key)
 			{

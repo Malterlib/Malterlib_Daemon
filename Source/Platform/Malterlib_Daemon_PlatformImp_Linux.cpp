@@ -609,7 +609,7 @@ namespace NMib::NDaemon
 				return 2;
 			}
 
-			auto fl_DeletePidFile = [&]
+			auto fDeletePidFile = [&]
 				{
 					try
 					{
@@ -626,7 +626,7 @@ namespace NMib::NDaemon
 			{
 				if (!NMib::NProcess::NPlatform::fg_Process_IsRunning(PidOfProcess))
 				{
-					fl_DeletePidFile();
+					fDeletePidFile();
 					return 1; // Already stopped
 				}
 			}
@@ -642,7 +642,7 @@ namespace NMib::NDaemon
 				int ErrNo = errno;
 				if (!NMib::NProcess::NPlatform::fg_Process_IsRunning(PidOfProcess))
 				{
-					fl_DeletePidFile();
+					fDeletePidFile();
 					return 0;
 				}
 				mp_pOwner->f_ReportError(NMib::NPlatform::fg_FormatErrno(NMib::NStr::CStr::CFormat("kill({}, SIGTERM) when stopping daemon") << PidOfProcess, ErrNo));
@@ -660,7 +660,7 @@ namespace NMib::NDaemon
 						int ErrNo = errno;
 						if (!NMib::NProcess::NPlatform::fg_Process_IsRunning(PidOfProcess))
 						{
-							fl_DeletePidFile();
+							fDeletePidFile();
 							return 0;
 						}
 						mp_pOwner->f_ReportError(NMib::NPlatform::fg_FormatErrno(NMib::NStr::CStr::CFormat("kill({}, SIGTERM) when stopping daemon") << PidOfProcess, ErrNo));
@@ -669,7 +669,7 @@ namespace NMib::NDaemon
 				}
 				if (!NMib::NProcess::NPlatform::fg_Process_IsRunning(PidOfProcess))
 				{
-					fl_DeletePidFile();
+					fDeletePidFile();
 					return 0;
 				}
 				NSys::fg_Thread_Sleep(0.1);
@@ -814,7 +814,7 @@ namespace NMib::NDaemon
 	CDaemon::CDetails *CDaemon::CDetails::msp_pThis = nullptr;
 
 	CDaemon::CDaemon(CDaemonParams const &_Params)
-		: mp_pD(fg_Construct(this))
+		: mp_pDetails(fg_Construct(this))
 		, mp_Params(_Params)
 	{
 	}
@@ -917,42 +917,42 @@ namespace NMib::NDaemon
 
 	EActionResult CDaemon::f_Start()
 	{
-		return mp_pD->f_Start();
+		return mp_pDetails->f_Start();
 	}
 
 	EActionResult CDaemon::f_Stop(bool _bWait)
 	{
-		return mp_pD->f_Stop(_bWait);
+		return mp_pDetails->f_Stop(_bWait);
 	}
 
 	EActionResult CDaemon::f_Restart(bool _bWait)
 	{
-		return mp_pD->f_Restart(_bWait);
+		return mp_pDetails->f_Restart(_bWait);
 	}
 
 	EActionResult CDaemon::f_Exists(bool &_bExists) const
 	{
-		return mp_pD->f_Exists(_bExists);
+		return mp_pDetails->f_Exists(_bExists);
 	}
 
 	EActionResult CDaemon::f_Add(bool _bCheckForExisting)
 	{
-		return mp_pD->f_Add(_bCheckForExisting);
+		return mp_pDetails->f_Add(_bCheckForExisting);
 	}
 
 	EActionResult CDaemon::f_Remove()
 	{
-		return mp_pD->f_Remove();
+		return mp_pDetails->f_Remove();
 	}
 
 	EActionResult CDaemon::f_Run()
 	{
-		return mp_pD->f_Run();
+		return mp_pDetails->f_Run();
 	}
 
 	EActionResult CDaemon::f_RunAsProgram(bool _bDebug)
 	{
-		return mp_pD->f_Run();
+		return mp_pDetails->f_Run();
 	}
 
 	bool CDaemon::f_IsShutdown() const

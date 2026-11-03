@@ -574,8 +574,8 @@ namespace NMib::NDaemon
 					{
 						EActionResult DaemonNameInUse = EActionResult_Failure;
 
-						NContainer::CByteVector lData = NFile::CFile::fs_ReadFile(LaunchFilePath);
-						CFDataRef XmlData = CFDataCreate(NULL, lData.f_GetArray(), lData.f_GetLen());
+						NContainer::CByteVector LaunchFileContents = NFile::CFile::fs_ReadFile(LaunchFilePath);
+						CFDataRef XmlData = CFDataCreate(NULL, LaunchFileContents.f_GetArray(), LaunchFileContents.f_GetLen());
 						DMibDeprecatedSuppressStart
 						CFPropertyListRef PropertyList = CFPropertyListCreateFromXMLData(NULL, XmlData, kCFPropertyListImmutable, NULL);
 						DMibDeprecatedSuppressStop
@@ -852,7 +852,7 @@ namespace NMib::NDaemon
 	CDaemon::CDetails *CDaemon::CDetails::msp_pThis = nullptr;
 
 	CDaemon::CDaemon(CDaemonParams const &_Params)
-		: mp_pD(fg_Construct(this))
+		: mp_pDetails(fg_Construct(this))
 		, mp_Params(_Params)
 	{
 	}
@@ -881,62 +881,62 @@ namespace NMib::NDaemon
 
 	EActionResult CDaemon::f_Start()
 	{
-		return mp_pD->f_Start();
+		return mp_pDetails->f_Start();
 	}
 
 	EActionResult CDaemon::f_Stop(bool _bWait)
 	{
-		return mp_pD->f_Stop(_bWait);
+		return mp_pDetails->f_Stop(_bWait);
 	}
 
 	EActionResult CDaemon::f_Restart(bool _bWait)
 	{
-		return mp_pD->f_Restart(_bWait);
+		return mp_pDetails->f_Restart(_bWait);
 	}
 
 	EActionResult CDaemon::f_Exists(bool &_bExists) const
 	{
-		return mp_pD->f_Exists(_bExists);
+		return mp_pDetails->f_Exists(_bExists);
 	}
 
 	EActionResult CDaemon::f_Add(bool _bCheckForExisting)
 	{
-		return mp_pD->f_Add(_bCheckForExisting);
+		return mp_pDetails->f_Add(_bCheckForExisting);
 	}
 
 	EActionResult CDaemon::f_Remove()
 	{
-		return mp_pD->f_Remove();
+		return mp_pDetails->f_Remove();
 	}
 
 	EActionResult CDaemon::f_Run()
 	{
-		return mp_pD->f_Run();
+		return mp_pDetails->f_Run();
 	}
 
 	EActionResult CDaemon::f_RunAsProgram(bool _bDebug)
 	{
-		return mp_pD->f_RunAsProgram(_bDebug);
+		return mp_pDetails->f_RunAsProgram(_bDebug);
 	}
 
 	bool CDaemon::f_IsShutdown() const
 	{
-		return mp_pD->f_IsShutdown();
+		return mp_pDetails->f_IsShutdown();
 	}
 
 	void CDaemon::f_ReportError(NStr::CStr const &_Error)
 	{
-		mp_pD->f_ReportError(_Error);
+		mp_pDetails->f_ReportError(_Error);
 	}
 
 	void CDaemon::f_ReportInformation(NStr::CStr const &_Heading, NStr::CStr const &_Information)
 	{
-		mp_pD->f_ReportInformation(_Heading, _Information);
+		mp_pDetails->f_ReportInformation(_Heading, _Information);
 	}
 
 	EReportError CDaemon::f_ReportErrorYesNo(NStr::CStr const &_Error, EReportError _Default)
 	{
-		return mp_pD->f_ReportErrorYesNo(_Error, _Default);
+		return mp_pDetails->f_ReportErrorYesNo(_Error, _Default);
 	}
 
 	void CDaemon::fs_QuitDaemon()

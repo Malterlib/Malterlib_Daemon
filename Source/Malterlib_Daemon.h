@@ -188,7 +188,7 @@ namespace NMib::NDaemon
 
 		NStr::CStr mp_ExecutablePath;
 		NStr::CStr mp_CommandLine;
-		NContainer::TCVector<NMib::NStr::CStr> mp_lRawArguments;
+		NContainer::TCVector<NMib::NStr::CStr> mp_RawArguments;
 
 		NStr::CStr mp_RunAsUser;
 		NStr::CStr mp_RunAsGroup;
@@ -276,7 +276,7 @@ namespace NMib::NDaemon
 
 	protected:
 		CDaemonParams mp_Params;
-		NStorage::TCUniquePointer<CDetails> mp_pD;
+		NStorage::TCUniquePointer<CDetails> mp_pDetails;
 	};
 
 	aint fg_RunDaemon(NStr::CStr const &_DaemonIdentifier, NStr::CStr const &_Name, NStr::CStr const &_SupportEmail, FImplementationFactory const &_fImpFactory);

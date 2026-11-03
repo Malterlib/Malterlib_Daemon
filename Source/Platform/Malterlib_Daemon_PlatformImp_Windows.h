@@ -51,7 +51,7 @@ namespace NMib::NDaemon
 			bool f_Update();
 
 			NOTIFYICONDATA m_NotifyIconData;
-			HWND m_hReportWnd;
+			HWND m_ReportWindow;
 			bool m_bInit = false;
 			bool m_bAbortDebug = false;
 		};

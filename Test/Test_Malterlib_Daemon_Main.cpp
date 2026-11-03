@@ -147,10 +147,10 @@ int fg_DaemonMain(void *_pNativeHandle)
 		)
 	;
 
-	NContainer::TCVector<CStr> lArgs;
-	NSys::fg_Process_GetCommandLineArgs(lArgs);
+	NContainer::TCVector<CStr> Args;
+	NSys::fg_Process_GetCommandLineArgs(Args);
 
-	DaemonParams.f_ParseCommandLine(lArgs);
+	DaemonParams.f_ParseCommandLine(Args);
 
 	NDaemon::CDaemon Daemon(DaemonParams);
 
