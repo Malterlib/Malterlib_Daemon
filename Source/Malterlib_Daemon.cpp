@@ -8,6 +8,27 @@
 
 namespace NMib::NDaemon
 {
+	CDaemonImp::CDaemonImp()
+	{
+	}
+
+	CDaemonImp::~CDaemonImp()
+	{
+	}
+
+	void CDaemonImp::f_DaemonPause()
+	{
+	}
+
+	void CDaemonImp::f_DaemonResume()
+	{
+	}
+
+	bool CDaemonImp::f_DaemonValidate(CDaemon *_pDaemon)
+	{
+		return true;
+	}
+
 	CDaemonParams::CDaemonParams
 		(
 			NStr::CStr const &_DaemonName

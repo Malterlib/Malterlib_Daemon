@@ -8,9 +8,7 @@ namespace NMib::NDaemon
 {
 	struct CDaemonSystemInterface
 	{
-		virtual ~CDaemonSystemInterface()
-		{
-		};
+		virtual ~CDaemonSystemInterface();
 
 		virtual EActionResult f_Start(CDaemonParams const &_Params) = 0;
 		virtual EActionResult f_Stop(CDaemonParams const &_Params, bool _bWait = false) = 0;

@@ -11,26 +11,11 @@ namespace NMib::NDaemon
 
 	struct CDaemonImp
 	{
-		CDaemonImp()
-		{
-		}
-
-		virtual ~CDaemonImp()
-		{
-		}
-
-		virtual void f_DaemonPause()
-		{
-		}
-
-		virtual void f_DaemonResume()
-		{
-		}
-
-		virtual bool f_DaemonValidate(CDaemon *_pDaemon)
-		{
-			return true;
-		}
+		CDaemonImp();
+		virtual ~CDaemonImp();
+		virtual void f_DaemonPause();
+		virtual void f_DaemonResume();
+		virtual bool f_DaemonValidate(CDaemon *_pDaemon);
 	};
 
 	enum EDaemonAction
