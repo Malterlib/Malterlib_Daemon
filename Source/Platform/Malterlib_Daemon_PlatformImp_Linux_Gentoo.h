@@ -38,7 +38,6 @@ namespace NMib::NDaemon
 			, EGentooDaemonStatus_InvalidDaemon = 255
 		};
 
-	private:
 		NStr::CStr fp_GetScriptDirectory(EDaemonMode _Mode) const;
 		NStr::CStr fp_GetScriptPath(CDaemonParams const &_Params) const;
 		bool fp_IsScriptThisExecutable(CDaemonParams const &_Params) const;
