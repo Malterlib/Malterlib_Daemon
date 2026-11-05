@@ -164,6 +164,9 @@ namespace NMib::NDaemon
 		void f_SetRequiresGraphicalSessionInUserMode(bool _bValue);
 
 	protected:
+		NMib::NStr::CStr fp_CleanDaemonName(NMib::NStr::CStr const &_DaemonName);
+		void fp_CopyElementsToCommandLine(CCommandLineVector const &_CommandLine);
+
 		NStr::CStr mp_DaemonName;
 		NStr::CStr mp_DisplayName;
 		NStr::CStr mp_DaemonDesc;
@@ -209,9 +212,6 @@ namespace NMib::NDaemon
 		bool mp_bAlwaysRunStatusApp = false;
 		bool mp_bCanPause = true;
 		bool mp_bRequiresGraphicalSessionInUserMode = true;
-
-		NMib::NStr::CStr fp_CleanDaemonName(NMib::NStr::CStr const &_DaemonName);
-		void fp_CopyElementsToCommandLine(CCommandLineVector const &_CommandLine);
 	};
 
 	enum EDaemonFeature

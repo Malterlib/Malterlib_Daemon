@@ -34,782 +34,41 @@ namespace NMib::NDaemon
 
 	struct CDaemon::CDetails
 	{
-		CDetails(CDaemon *_pOwner)
-			: mp_pOwner(_pOwner)
-		{
-			if (msp_pThis)
-				DMibError("You cannot have two services running in the same process at once");
-			else
-				msp_pThis = this;
-		}
-
-		~CDetails()
-		{
-			msp_pThis = nullptr;
-		}
-
-		static NStr::CStr fs_GetFullDaemonName(CDaemonParams const &_Params)
-		{
-			return NStr::CStr::CFormat(CDaemon::fs_GetUniquePrefix() + ".{}") << _Params.f_GetDaemonName();
-		}
-
-		static NStr::CStr fs_GetPlistFilename(CDaemonParams const &_Params)
-		{
-			return fs_GetFullDaemonName(_Params) + ".plist";
-		}
-
-		static NStr::CStr fs_GetLaunchdMode(EDaemonMode _Mode)
-		{
-			if (_Mode == EDaemonMode_LocalUser)
-				return "Aqua";
-			else if (_Mode == EDaemonMode_AllUsers)
-				return "Aqua";
-			else
-				return "System";
-		}
-
-		static NStr::CStr fs_GetPlistDirectory(EDaemonMode _Mode)
-		{
-			if (_Mode == EDaemonMode_LocalUser)
-				return NStr::CStr::CFormat("{}/Library/LaunchAgents") << NSys::NFile::fg_GetUserHomeDirectory();
-			else if (_Mode == EDaemonMode_AllUsers)
-				return NStr::CStr("/Library/LaunchAgents");
-			else
-				return NStr::CStr("/Library/LaunchDaemons");
-		}
-
-		static NStr::CStr fs_GetPlistPath(CDaemonParams const &_Params)
-		{
-			NStr::CStr LaunchFileDirectory = fs_GetPlistDirectory(_Params.f_GetDaemonMode());
-			return LaunchFileDirectory / fs_GetPlistFilename(_Params);
-		}
-
-		static int fs_SystemCall(NStr::CStr const &_Target, NStr::CStr const &_Parameters, NStr::CStr *_pResult = nullptr, NStr::CStr *_pError = nullptr)
-		{
-			uint32 ExitCode = 66;
-
-			NMib::NProcess::CProcessLaunchParams Params;
-			Params.m_Target = _Target;
-			Params.m_Parameters = _Parameters;
-
-			Params.m_bShowLaunched = false;
-			Params.m_bStdOutPID = true;
-			Params.m_bMergeEnvironment = false;
-			Params.m_Environment["Dummy"];
-
-			Params.m_bMakeEffectiveUserReal = true;
-			Params.m_bMakeEffectiveGroupReal = true;
-
-			Params.m_fOnStateChange = [&](NMib::NProcess::CProcessLaunchStateChangeVariant const &_State, fp64 _TimeSinceStart)
-				{
-					switch (_State.f_GetTypeID())
-					{
-					case NMib::NProcess::EProcessLaunchState_Exited:
-						{
-							NMib::fg_Volatile(ExitCode) = _State.f_Get<NMib::NProcess::EProcessLaunchState_Exited>();
-						}
-						break;
-					case NMib::NProcess::EProcessLaunchState_LaunchFailed:
-						{
-							*_pError += _State.f_Get<NMib::NProcess::EProcessLaunchState_LaunchFailed>();
-							*_pError += "\n";
-						}
-						break;
-					case NMib::NProcess::EProcessLaunchState_Launched: break;
-					}
-				}
-			;
-
-			Params.m_fOnOutput = [&](NMib::NProcess::EProcessLaunchOutputType _OutputType, NMib::NStr::CStr const &_Output)
-				{
-					if (_pResult && _OutputType == NMib::NProcess::EProcessLaunchOutputType_StdOut)
-						*_pResult += _Output;
-					else
-						*_pError += _Output;
-				}
-			;
-
-			{
-				if (_pResult)
-					_pResult->f_Clear();
-				if (_pError)
-					_pError->f_Clear();
-				NMib::NProcess::CProcessLaunch Launcher(Params, NMib::NProcess::EProcessLaunchCloseFlag_BlockOnExit);
-			}
-
-			return ExitCode;
-		}
-
-		static int fs_GetHighestSecondColumnValue(NStr::CStr &_Data)
-		{
-			int Value = 0;
-			while (!_Data.f_IsEmpty())
-			{
-				int NewLinePos = _Data.f_FindReverse("\n");
-				if (NewLinePos == -1)
-					break;
-				_Data = _Data.f_Left(NewLinePos);
-				int SpacePos = _Data.f_FindReverse(" ");
-				NStr::CStr ValueString = _Data.f_Right(_Data.f_GetLen() - SpacePos - 1);
-				int NewValue = ValueString.f_ToInt();
-				if (NewValue > Value)
-					Value = NewValue;
-			}
-			return Value;
-		}
-
-		bool f_PrepareUserAndGroup(CDaemonParams const &_Params)
-		{
-			NStr::CStr StdOut, StdErr;
-			int GID, UID;
-
-			NStr::CStr GroupName = _Params.f_GetRunAsGroup();
-			NStr::CStr UserName = _Params.f_GetRunAsUser();
-
-			// Create group if not exists
-			if (GroupName.f_IsEmpty())
-				GroupName = "daemon";
-
-			if (UserName.f_IsEmpty())
-				UserName = "daemon";
-
-			NStr::CStr ReturnGID;
-
-			try
-			{
-				if (!NSys::fg_UserManagement_GroupExists(GroupName, ReturnGID))
-					NSys::fg_UserManagement_CreateGroup(GroupName, ReturnGID);
-			}
-			catch (NMib::NException::CException &_Exception)
-			{
-				f_ReportError(NStr::CStr::CFormat("Exception when creating group named {} error {}") << GroupName << _Exception.f_GetErrorStr());
-
-				return false;
-			}
-
-			GID = ReturnGID.f_ToInt(-1);
-
-			if (GID == -1)
-			{
-				f_ReportError(NStr::CStr::CFormat("Group {} is invalid") << GroupName);
-				return false;
-			}
-
-			// Create user if not exists
-
-			NStr::CStr ReturnUID;
-
-			try
-			{
-				if (!NSys::fg_UserManagement_UserExists(UserName, ReturnUID))
-					NSys::fg_UserManagement_CreateUser(GroupName, UserName, "", UserName, _Params.f_GetRootDirectory(), ReturnUID, NSys::EUserManagementCreateUserFlag_None);
-			}
-			catch (NMib::NException::CException &_Exception)
-			{
-				f_ReportError(NStr::CStr::CFormat("Unable to create user named {} error {}") << UserName << _Exception.f_GetErrorStr());
-				return false;
-			}
-
-			UID = ReturnUID.f_ToInt(-1);
-
-			if (UID == -1)
-			{
-				f_ReportError(NStr::CStr::CFormat("User {} is invalid") << UserName);
-				return false;
-			}
-
-			try
-			{
-				NFile::CFile::fs_SetOwner(_Params.f_GetRootDirectory(), UserName);
-				NFile::CFile::fs_SetGroup(_Params.f_GetRootDirectory(), GroupName);
-			}
-			catch (NFile::CExceptionFile const &_Exception)
-			{
-				mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to set permissions on daemon directory: {}") << _Exception.f_GetErrorStr());
-				if (NMib::NProcess::NPlatform::fg_Process_GetElevation() == NMib::NProcess::EProcessElevation_IsNotElevated)
-					mp_pOwner->f_ReportError("Perhaps you need to use sudo?");
-				return false;
-			}
-
-			return true;
-		}
-
-		static void fs_SigTermHandler(int const _Signal)
-		{
-			sigset_t WaitSet;
-			sigset_t OldSet;
-			sigemptyset(&WaitSet);
-			sigaddset(&WaitSet, SIGTERM);
-			sigaddset(&WaitSet, SIGINT);
-			pthread_sigmask(SIG_BLOCK, &WaitSet, &OldSet);
-
-			auto Cleanup = g_OnScopeExit / [&]
-				{
-					pthread_sigmask(SIG_SETMASK, &OldSet, nullptr);
-				}
-			;
-
-			msp_pThis->mp_InterruptedEvent.f_SetSignaled();
-		}
-
-		EActionResult f_Run()
-		{
-			if (mp_pOwner->mp_Params.f_GetAlwaysRunStatusApp())
-				return f_RunAsProgram(false);
-
-			mp_InterruptedEvent.f_ResetSignaled();
-
-			auto fSigterm = NPlatform::fg_SetSignalHandler(SIGTERM, fs_SigTermHandler);
-			auto fSigint = NPlatform::fg_SetSignalHandler(SIGINT, fs_SigTermHandler);
-
-			auto Cleanup = g_OnScopeExit / [&]
-				{
-					NPlatform::fg_SetSignalHandler(SIGTERM, fSigterm);
-					NPlatform::fg_SetSignalHandler(SIGINT, fSigint);
-				}
-			;
-
-			fp_DaemonCreate();
-
-			mp_InterruptedEvent.f_Wait();
-
-			fp_DaemonDestroy();
-
-			return EActionResult_Success;
-		}
-
-		static void fs_CancelDaemonStatusHandler(int const _Signal)
-		{
-			sigset_t WaitSet;
-			sigset_t OldSet;
-			sigemptyset(&WaitSet);
-			sigaddset(&WaitSet, SIGTERM);
-			sigaddset(&WaitSet, SIGINT);
-			pthread_sigmask(SIG_BLOCK, &WaitSet, &OldSet);
-
-			auto Cleanup = g_OnScopeExit / [&]
-				{
-					pthread_sigmask(SIG_SETMASK, &OldSet, nullptr);
-				}
-			;
-
-			fg_CancelRunDaemonStatusApp();
-		}
-
-		EActionResult f_RunAsProgram(bool _bDebug)
-		{
-			if (!_bDebug && !mp_pOwner->mp_Params.f_GetAlwaysRunStatusApp())
-				return f_Run();
-
-			auto fSigterm = NPlatform::fg_SetSignalHandler(SIGTERM, fs_CancelDaemonStatusHandler);
-			auto fSigint = NPlatform::fg_SetSignalHandler(SIGINT, fs_CancelDaemonStatusHandler);
-
-			auto Cleanup = g_OnScopeExit / [&]
-				{
-					NPlatform::fg_SetSignalHandler(SIGTERM, fSigterm);
-					NPlatform::fg_SetSignalHandler(SIGINT, fSigint);
-				}
-			;
-
-			fp_DaemonCreate();
-
-			NContainer::CByteVector IconData;
-			if (mp_pOwner->mp_Params.f_GetNativeHandle())
-			{
-				NContainer::CByteVector *pIconData = static_cast<NContainer::CByteVector *>(mp_pOwner->mp_Params.f_GetNativeHandle());
-				if (pIconData)
-					IconData = *pIconData;
-			}
-
-			if (mp_pOwner->mp_Params.f_GetCanPause())
-			{
-				fg_RunDaemonStatusApp
-					(
-						[&]()
-						{
-							fp_DaemonPause();
-						}
-						, [&]()
-						{
-							fp_DaemonResume();
-						}
-						, mp_pOwner->mp_Params.f_GetDaemonDisplayName()
-						, IconData
-						, NMib::fg_GetSys()->f_GetRunningAsDaemon()
-					)
-				;
-			}
-			else
-				fg_RunDaemonStatusApp(nullptr, nullptr, mp_pOwner->mp_Params.f_GetDaemonDisplayName(), IconData, NMib::fg_GetSys()->f_GetRunningAsDaemon());
-
-			fp_DaemonDestroy();
-
-			return EActionResult_Success;
-		}
-
-		EActionResult f_Start()
-		{
-			if (!fp_CheckParamsSupported())
-				return EActionResult_Failure;
-			bool bResult = false;
-			NStr::CStr Result;
-			NStr::CStr Error;
-
-			NStr::CStr LaunchFilePath = fs_GetPlistPath(mp_pOwner->mp_Params);
-			try
-			{
-				if (!NFile::CFile::fs_FileExists(LaunchFilePath, NFile::EFileAttrib_File))
-				{
-					f_ReportError(NStr::CStr::CFormat("Daemon file does not exist: {}") << fs_GetPlistPath(mp_pOwner->mp_Params));
-					return EActionResult_Failure;
-				}
-			}
-			catch (NFile::CExceptionFile const &_Exception)
-			{
-				f_ReportError(NStr::CStr::CFormat("Failed to check for existing daemon file: {}") << _Exception.f_GetErrorStr());
-				return EActionResult_Failure;
-			}
-
-			{
-				NStr::CStr ListResult;
-				NStr::CStr ListError;
-
-				NStr::CStr Command = NProcess::CProcessLaunchParams::fs_GetParams({"list", fs_GetFullDaemonName(mp_pOwner->mp_Params)});
-				fs_SystemCall("/bin/launchctl", Command, &ListResult, &ListError);
-
-				if (ListResult.f_Find("PID") != -1)
-				{
-					// The daemon is already loaded
-					return EActionResult_Success;
-				}
-			}
-
-			// .plist is set to automatically run when loaded
-			NStr::CStr Command = NProcess::CProcessLaunchParams::fs_GetParams({"load", LaunchFilePath});
-			bResult = fs_SystemCall("/bin/launchctl", Command, &Result, &Error) == 0;
-
-			Error = Error.f_Trim();
-
-			if (!Error.f_IsEmpty() && !Error.f_EndsWith("Operation now in progress"))
-			{
-				f_ReportError(Error);
-				return EActionResult_Failure;
-			}
-			else if (!bResult)
-			{
-				f_ReportError("Unknown error starting daemon");
-				return EActionResult_Failure;
-			}
-
-			return EActionResult_Success;
-		}
-
-		EActionResult f_Stop(bool _bWait)
-		{
-			using namespace NStr;
-
-			if (!fp_CheckParamsSupported())
-				return EActionResult_Failure;
-			if (mp_pOwner->mp_Params.f_GetKeepRunning())
-				return EActionResult_Success;
-
-			bool bResult = false;
-			NStr::CStr Result;
-			NStr::CStr Error;
-
-			{
-				NStr::CStr ListResult;
-				NStr::CStr ListError;
-
-				NStr::CStr DaemonName = fs_GetFullDaemonName(mp_pOwner->mp_Params);
-
-				NStr::CStr Command = NProcess::CProcessLaunchParams::fs_GetParams({"list", DaemonName});
-				fs_SystemCall("/bin/launchctl", Command, &ListResult, &ListError);
-
-				NStr::CStr ExpectedSessionType = "\"LimitLoadToSessionType\" = \"{}\";"_f << fs_GetLaunchdMode(mp_pOwner->mp_Params.f_GetDaemonMode());
-				NStr::CStr LoadedLabel = "\"Label\" = \"{}\";"_f << DaemonName;
-
-				bool bFoundLabel = false;
-				bool bFoundSessionType = false;
-				uint32 Pid = 0;
-
-				for (auto &Line : ListResult.f_SplitLine<true>())
-				{
-					auto TrimmedLine = Line.f_Trim();
-					if (TrimmedLine == LoadedLabel)
-						bFoundLabel = true;
-
-					if (TrimmedLine == ExpectedSessionType)
-						bFoundSessionType = true;
-
-					(NStr::CStr::CParse("\"PID\" = {};") >> Pid).f_Parse(TrimmedLine);
-				}
-
-				if ((Pid == 0 && !bFoundLabel) || !bFoundSessionType)
-				{
-					// The daemon is not loaded
-					return EActionResult_Success;
-				}
-			}
-
-			// unload command automatically stops the daemon
-			NStr::CStr Command = NProcess::CProcessLaunchParams::fs_GetParams({"unload", fs_GetPlistPath(mp_pOwner->mp_Params)});
-			bResult = fs_SystemCall("/bin/launchctl", Command, &Result, &Error) == 0;
-			Error = Error.f_Trim();
-
-			if (!Error.f_IsEmpty() && !Error.f_EndsWith("Operation now in progress"))
-			{
-				f_ReportError(Error);
-				return EActionResult_Failure;
-			}
-			else if (!bResult)
-			{
-				f_ReportError("Unknown error stopping daemon");
-				return EActionResult_Failure;
-			}
-
-			return EActionResult_Success;
-		}
-
-		EActionResult f_Restart(bool _bWait)
-		{
-			EActionResult Result = f_Stop(_bWait);
-			if (Result != EActionResult_Success)
-				return Result;
-			return f_Start();
-		}
-
-		void f_SetDictionaryValue(CFMutableDictionaryRef &_pDict, NStr::CStr const &_Key, int _Value)
-		{
-			CFStringRef pKeyStringRef = CFStringCreateWithCString(NULL, _Key.f_GetStr(), kCFStringEncodingUTF8);
-			CFNumberRef pValueIntegerRef = CFNumberCreate(NULL, kCFNumberIntType, &_Value);
-			CFDictionarySetValue(_pDict, pKeyStringRef, pValueIntegerRef);
-			CFRelease(pKeyStringRef);
-			CFRelease(pValueIntegerRef);
-		}
-
-		void f_SetDictionaryValue(CFMutableDictionaryRef &_pDict, NStr::CStr const &_Key, NStr::CStr const &_Value)
-		{
-			CFStringRef pKeyStringRef = CFStringCreateWithCString(NULL, _Key.f_GetStr(), kCFStringEncodingUTF8);
-			CFStringRef pValueStringRef = CFStringCreateWithCString(NULL, _Value.f_GetStr(), kCFStringEncodingUTF8);
-			CFDictionarySetValue(_pDict, pKeyStringRef, pValueStringRef);
-			CFRelease(pKeyStringRef);
-			CFRelease(pValueStringRef);
-		}
-
-		void f_SetDictionaryValue(CFMutableDictionaryRef &_pDict, NStr::CStr const &_Key, NContainer::TCVector<NStr::CStr> const &_Values)
-		{
-			CFStringRef pKeyStringRef = CFStringCreateWithCString(NULL, _Key.f_GetStr(), kCFStringEncodingUTF8);
-
-			CFMutableArrayRef pArrayRef = CFArrayCreateMutable(NULL, _Values.f_GetLen(), &kCFTypeArrayCallBacks);
-
-			for (NStr::CStr const &Value : _Values)
-			{
-				CFStringRef pValueStringRef = CFStringCreateWithCString(NULL, Value.f_GetStr(), kCFStringEncodingUTF8);
-				CFArrayAppendValue(pArrayRef, pValueStringRef);
-				CFRelease(pValueStringRef);
-			}
-
-			CFDictionarySetValue(_pDict, pKeyStringRef, pArrayRef);
-			CFRelease(pKeyStringRef);
-			CFRelease(pArrayRef);
-		}
-
-		CFDictionaryRef f_CreateDictionaryFromParams(CDaemonParams const &_Params, bool _bDisabled = false)
-		{
-			CFMutableDictionaryRef pDict = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-
-			f_SetDictionaryValue(pDict, "Label", NStr::CStr::CFormat(CDaemon::fs_GetUniquePrefix() + ".{}") << _Params.f_GetDaemonName());
-			NContainer::TCVector<NStr::CStr> ProgramArguments;
-			// We write executable as arguments as Launchd seems to be broken in this regard, it has to have executable as argument or none will be sent
-			ProgramArguments.f_Insert(_Params.f_GetExecutablePath());
-			ProgramArguments.f_Insert("-Service");
-			if (_Params.f_GetDisableWriteDaemon())
-				ProgramArguments.f_Insert(_Params.f_GetDaemonName());
-			f_SetDictionaryValue(pDict, "ProgramArguments", ProgramArguments);
-			CFDictionarySetValue(pDict, CFSTR("KeepAlive"), kCFBooleanTrue);
-			CFDictionarySetValue(pDict, CFSTR("RunAtLoad"), kCFBooleanTrue);
-			// f_SetDictionaryValue(pDict, "ExitTimeOut", 0);	// Disable timeout, this seems to have broken on Yosemite
-			f_SetDictionaryValue(pDict, "ExitTimeOut", _Params.f_GetMaxShutdownTime().f_ToInt());
-
-			int RelativePriority;
-			NStr::CStr ProcessType;
-			switch (NMib::NPlatform::fg_PriorityToQualityOfService(_Params.f_GetExecutionPriority(), RelativePriority))
-			{
-			case QOS_CLASS_USER_INTERACTIVE: ProcessType = "Interactive"; break;
-			case QOS_CLASS_USER_INITIATED: break;
-			case QOS_CLASS_DEFAULT: break;
-			case QOS_CLASS_UTILITY: break;
-			case QOS_CLASS_UNSPECIFIED: break;
-			case QOS_CLASS_BACKGROUND: ProcessType = "Background"; break;
-			}
-
-			if (ProcessType)
-				f_SetDictionaryValue(pDict, "ProcessType", ProcessType);
-
-			if (!_Params.f_GetRunAsUser().f_IsEmpty())
-				f_SetDictionaryValue(pDict, "UserName", _Params.f_GetRunAsUser());
-
-			if (!_Params.f_GetRunAsGroup().f_IsEmpty())
-				f_SetDictionaryValue(pDict, "GroupName", _Params.f_GetRunAsGroup());
-
-			if (_bDisabled)
-				CFDictionarySetValue(pDict, CFSTR("Disabled"), kCFBooleanTrue);
-
-			return pDict;
-		}
-
-		EActionResult f_Add(bool _bCheckForExisting)
-		{
-			if (!fp_CheckParamsSupported())
-				return EActionResult_Failure;
-			NStr::CStr LaunchFileDirectory = fs_GetPlistDirectory(mp_pOwner->mp_Params.f_GetDaemonMode());
-			NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetPlistFilename(mp_pOwner->mp_Params);
-
-			if (_bCheckForExisting)
-			{
-				try
-				{
-					if (NFile::CFile::fs_FileExists(LaunchFilePath, NFile::EFileAttrib_File))
-					{
-						EActionResult DaemonNameInUse = EActionResult_Failure;
-
-						NContainer::CByteVector LaunchFileContents = NFile::CFile::fs_ReadFile(LaunchFilePath);
-						CFDataRef pXmlData = CFDataCreate(NULL, LaunchFileContents.f_GetArray(), LaunchFileContents.f_GetLen());
-						DMibDeprecatedSuppressStart
-						CFPropertyListRef pPropertyList = CFPropertyListCreateFromXMLData(NULL, pXmlData, kCFPropertyListImmutable, NULL);
-						DMibDeprecatedSuppressStop
-						CFRelease(pXmlData);
-
-						if (pPropertyList)
-						{
-							CFArrayRef pArguments = (CFArrayRef)CFDictionaryGetValue((CFDictionaryRef)pPropertyList, CFSTR("ProgramArguments"));
-							if (pArguments)
-							{
-								CFStringRef pExec = (CFStringRef)CFArrayGetValueAtIndex(pArguments, 0);
-								if (pExec)
-								{
-									CFStringRef pExecPath = CFStringCreateWithCString(NULL, mp_pOwner->mp_Params.f_GetExecutablePath().f_GetStr(), kCFStringEncodingUTF8);
-
-									if (CFStringCompare(pExecPath, pExec, kCFCompareCaseInsensitive) == kCFCompareEqualTo)
-										DaemonNameInUse = EActionResult_Success;
-									else
-										f_ReportError(NStr::CStr::CFormat("Daemon name is already in use: {}") << LaunchFilePath);
-
-									CFRelease(pExecPath);
-								}
-								else
-									f_ReportError(NStr::CStr::CFormat("Invalid daemon file: {}") << LaunchFilePath);
-							}
-							else
-								f_ReportError(NStr::CStr::CFormat("Invalid daemon file: {}") << LaunchFilePath);
-
-							CFRelease(pPropertyList);
-						}
-						else
-							f_ReportError(NStr::CStr::CFormat("Invalid daemon file: {}") << LaunchFilePath);
-
-						if (DaemonNameInUse == EActionResult_Failure)
-							return EActionResult_Failure;
-						else
-							return EActionResult_Success;
-					}
-				}
-				catch (NFile::CExceptionFile const &_Exception)
-				{
-					f_ReportError(NStr::CStr::CFormat("Failed to check for existing file: {}") << _Exception.f_GetErrorStr());
-					return EActionResult_Failure;
-				}
-			}
-
-			bool bAlreadyExists = false;
-			EActionResult Result = f_Exists(bAlreadyExists);
-			if (Result != EActionResult_Success)
-				return Result;
-
-			if (bAlreadyExists)
-			{
-				mp_pOwner->f_ReportError("Daemon already exists, remove it manually with --daemon-remove before trying to add again.");
-				return EActionResult_Failure;
-			}
-
-			CFPropertyListRef pPropertyList = f_CreateDictionaryFromParams(mp_pOwner->mp_Params);
-			DMibDeprecatedSuppressStart
-			CFDataRef pXmlData = CFPropertyListCreateXMLData(NULL, pPropertyList);
-			DMibDeprecatedSuppressStop
-			NContainer::CByteVector Data;
-			Data.f_Insert((uint8 const *)CFDataGetBytePtr(pXmlData), CFDataGetLength(pXmlData));
-
-			CFRelease(pPropertyList);
-			CFRelease(pXmlData);
-
-			if ((!mp_pOwner->mp_Params.f_GetRunAsUser().f_IsEmpty() || !mp_pOwner->mp_Params.f_GetRunAsGroup().f_IsEmpty()) && !f_PrepareUserAndGroup(mp_pOwner->mp_Params))
-				return EActionResult_Failure;
-
-			try
-			{
-				NStr::CStr Error;
-				if (!mp_pOwner->mp_Params.f_GetDisableWriteDaemon() && !mp_pOwner->mp_Params.f_WriteDaemonModeFile(Error))
-					f_ReportError(NStr::CStr::CFormat("Failed to write daemon mode file: {}") << Error);
-
-				if (!NFile::CFile::fs_FileExists(LaunchFileDirectory, NFile::EFileAttrib_Directory))
-					NFile::CFile::fs_CreateDirectory(LaunchFileDirectory);
-
-				NFile::CFile PlistFile(LaunchFilePath, NFile::EFileOpen_Write);
-				PlistFile.f_Write(Data.f_GetArray(), Data.f_GetLen());
-				PlistFile.f_Close();
-
-				f_ReportInformation("Add Daemon", NStr::CStr::CFormat("Successfully installed daemon at {}") << LaunchFilePath);
-				return EActionResult_Success;
-			}
-			catch (NFile::CExceptionFile const &_Exception)
-			{
-				f_ReportError(NStr::CStr::CFormat("Failed to install daemon at {}: {}") << LaunchFilePath << _Exception.f_GetErrorStr());
-			}
-
-			return EActionResult_Failure;
-		}
-
-		EActionResult f_Remove()
-		{
-			if (!fp_CheckParamsSupported())
-				return EActionResult_Failure;
-
-			{
-				try
-				{
-					// This will set disabled to true, to prevent a situation where the daemon is unloaded
-					// but the plist is not deleted (eg with the helper config tool). This prevents a console warning when
-					// the user restarts their machine.
-
-					NStr::CStr LaunchFileDirectory = fs_GetPlistDirectory(mp_pOwner->mp_Params.f_GetDaemonMode());
-					NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetPlistFilename(mp_pOwner->mp_Params);
-
-					if (NFile::CFile::fs_FileExists(LaunchFilePath, NFile::EFileAttrib_File))
-					{
-						CFPropertyListRef pPropertyList = f_CreateDictionaryFromParams(mp_pOwner->mp_Params, true);
-						DMibDeprecatedSuppressStart
-						CFDataRef pXmlData = CFPropertyListCreateXMLData(NULL, pPropertyList);
-						DMibDeprecatedSuppressStop
-						NContainer::CByteVector Data;
-						Data.f_Insert((uint8 const *)CFDataGetBytePtr(pXmlData), CFDataGetLength(pXmlData));
-
-						CFRelease(pPropertyList);
-						CFRelease(pXmlData);
-
-						NFile::CFile PlistFile(LaunchFilePath, NFile::EFileOpen_Write);
-						PlistFile.f_Write(Data.f_GetArray(), Data.f_GetLen());
-						PlistFile.f_Close();
-					}
-				}
-				catch (NMib::NFile::CExceptionFile const &)
-				{
-					// Failure here doesn't matter, just continue.
-				}
-			}
-
-			if (f_Stop(true) == EActionResult_Failure)
-				return EActionResult_Failure;
-
-			NStr::CStr LaunchFileDirectory = fs_GetPlistDirectory(mp_pOwner->mp_Params.f_GetDaemonMode());
-			NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetPlistFilename(mp_pOwner->mp_Params);
-
-			try
-			{
-				if (!NFile::CFile::fs_FileExists(LaunchFilePath, NFile::EFileAttrib_File))
-				{
-					f_ReportInformation("Remove Daemon", NStr::CStr::CFormat("Daemon is not installed at '{}' so it has not been removed") << LaunchFilePath);
-					return EActionResult_Success;
-				}
-			}
-			catch (NFile::CExceptionFile const &_Exception)
-			{
-				f_ReportError(NStr::CStr::CFormat("Failed to check for existing file: {}") << _Exception.f_GetErrorStr());
-			}
-
-			try
-			{
-				NFile::CFile::fs_DeleteFile(LaunchFilePath);
-				NStr::CStr Error;
-				if (!mp_pOwner->mp_Params.f_RemoveDaemonModeFile(Error))
-					f_ReportError(NStr::CStr::CFormat("Failed to remove daemon mode file: {}") << Error);
-
-				f_ReportInformation("Remove Daemon", NStr::CStr::CFormat("Successfully removed daemon from {}") << LaunchFilePath);
-				return EActionResult_Success;
-			}
-			catch (NFile::CExceptionFile &_Exception)
-			{
-				f_ReportError(NStr::CStr::CFormat("Failed to remove daemon at {}: {}\nPerhaps you need to use sudo?") << LaunchFilePath << _Exception.f_GetErrorStr());
-			}
-
-			return EActionResult_Failure;
-		}
-
-		EActionResult f_Exists(bool &_bExists) const
-		{
-			if (!fp_CheckParamsSupported())
-				return EActionResult_Failure;
-			_bExists = false;
-			NStr::CStr LaunchFileDirectory = fs_GetPlistDirectory(mp_pOwner->mp_Params.f_GetDaemonMode());
-			NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetPlistFilename(mp_pOwner->mp_Params);
-
-			try
-			{
-				if (NFile::CFile::fs_FileExists(LaunchFilePath, NFile::EFileAttrib_File))
-					_bExists = true;
-				return EActionResult_Success;
-			}
-			catch (NFile::CExceptionFile const &_Exception)
-			{
-				f_ReportError(NStr::CStr::CFormat("Failed to check for existing file: {}") << _Exception.f_GetErrorStr());
-			}
-
-			return EActionResult_Failure;
-		}
-
-		bool f_IsShutdown() const
-		{
-			return false;
-		}
-
-		void f_ReportInformation(NStr::CStr const &_Heading, NStr::CStr const &_Message) const
-		{
-			mp_pOwner->f_GetDaemonParams().f_ReportInformation(_Heading, _Message);
-		}
-
-		void f_ReportError(NStr::CStr const &_Message) const
-		{
-			mp_pOwner->f_GetDaemonParams().f_ReportError(_Message);
-		}
-
-		EReportError f_ReportErrorYesNo(NStr::CStr const &_Message, EReportError _Default) const
-		{
-			return mp_pOwner->f_GetDaemonParams().f_ReportErrorYesNo(_Message, _Default);
-		}
+		CDetails(CDaemon *_pOwner);
+		~CDetails();
+
+		static NStr::CStr fs_GetFullDaemonName(CDaemonParams const &_Params);
+		static NStr::CStr fs_GetPlistFilename(CDaemonParams const &_Params);
+		static NStr::CStr fs_GetLaunchdMode(EDaemonMode _Mode);
+		static NStr::CStr fs_GetPlistDirectory(EDaemonMode _Mode);
+		static NStr::CStr fs_GetPlistPath(CDaemonParams const &_Params);
+		static int fs_SystemCall(NStr::CStr const &_Target, NStr::CStr const &_Parameters, NStr::CStr *_pResult = nullptr, NStr::CStr *_pError = nullptr);
+		static int fs_GetHighestSecondColumnValue(NStr::CStr &_Data);
+		bool f_PrepareUserAndGroup(CDaemonParams const &_Params);
+		static void fs_SigTermHandler(int const _Signal);
+		EActionResult f_Run();
+		static void fs_CancelDaemonStatusHandler(int const _Signal);
+		EActionResult f_RunAsProgram(bool _bDebug);
+		EActionResult f_Start();
+		EActionResult f_Stop(bool _bWait);
+		EActionResult f_Restart(bool _bWait);
+		void f_SetDictionaryValue(CFMutableDictionaryRef &_pDict, NStr::CStr const &_Key, int _Value);
+		void f_SetDictionaryValue(CFMutableDictionaryRef &_pDict, NStr::CStr const &_Key, NStr::CStr const &_Value);
+		void f_SetDictionaryValue(CFMutableDictionaryRef &_pDict, NStr::CStr const &_Key, NContainer::TCVector<NStr::CStr> const &_Values);
+		CFDictionaryRef f_CreateDictionaryFromParams(CDaemonParams const &_Params, bool _bDisabled = false);
+		EActionResult f_Add(bool _bCheckForExisting);
+		EActionResult f_Remove();
+		EActionResult f_Exists(bool &_bExists) const;
+		bool f_IsShutdown() const;
+		void f_ReportInformation(NStr::CStr const &_Heading, NStr::CStr const &_Message) const;
+		void f_ReportError(NStr::CStr const &_Message) const;
+		EReportError f_ReportErrorYesNo(NStr::CStr const &_Message, EReportError _Default) const;
 
 	protected:
-		void fp_DaemonResume()
-		{
-			if (mp_pImp)
-				mp_pImp->f_DaemonResume();
-		}
-
-		void fp_DaemonPause()
-		{
-			if (mp_pImp)
-				mp_pImp->f_DaemonPause();
-		}
-
-		void fp_DaemonCreate()
-		{
-			mp_pImp = mp_pOwner->f_GetDaemonParams().f_ImplementationFactory();
-		}
-
-		void fp_DaemonDestroy()
-		{
-			if (mp_pImp)
-				mp_pImp = nullptr;
-		}
+		void fp_DaemonResume();
+		void fp_DaemonPause();
+		void fp_DaemonCreate();
+		void fp_DaemonDestroy();
 
 		static CDetails *msp_pThis;
 
@@ -818,36 +77,814 @@ namespace NMib::NDaemon
 		NStorage::TCUniquePointer<CDaemonImp> mp_pImp;
 
 	private:
-		bool fp_CheckParamsSupported() const
-		{
-			auto &Params = mp_pOwner->mp_Params;
-			bool bRet = true;
-			if (!Params.f_GetDaemonGroup().f_IsEmpty())
-			{
-				mp_pOwner->f_ReportError("Daemon groups are not supported on this platform");
-				bRet = false;
-			}
-			if (Params.f_GetInteractive())
-			{
-				mp_pOwner->f_ReportError("Interactive services are not supported on this platform");
-				bRet = false;
-			}
-
-			if (!Params.f_GetDaemonDependencies().f_IsEmpty())
-			{
-				mp_pOwner->f_ReportError("Daemon dependencies are not supported on this platform");
-				bRet = false;
-			}
-
-			if (Params.f_GetDaemonMode() == EDaemonMode_LocalUser && !(fs_SessionSupportedFeatures() & EDaemonFeature_LocalUserDaemon))
-			{
-				mp_pOwner->f_ReportError("Local user services (-LocalUser) need the session that holds the graphical login");
-				bRet = false;
-			}
-
-			return bRet;
-		}
+		bool fp_CheckParamsSupported() const;
 	};
+
+	CDaemon::CDetails::CDetails(CDaemon *_pOwner)
+		: mp_pOwner(_pOwner)
+	{
+		if (msp_pThis)
+			DMibError("You cannot have two services running in the same process at once");
+		else
+			msp_pThis = this;
+	}
+
+	CDaemon::CDetails::~CDetails()
+	{
+		msp_pThis = nullptr;
+	}
+
+	NStr::CStr CDaemon::CDetails::fs_GetFullDaemonName(CDaemonParams const &_Params)
+	{
+		return NStr::CStr::CFormat(CDaemon::fs_GetUniquePrefix() + ".{}") << _Params.f_GetDaemonName();
+	}
+
+	NStr::CStr CDaemon::CDetails::fs_GetPlistFilename(CDaemonParams const &_Params)
+	{
+		return fs_GetFullDaemonName(_Params) + ".plist";
+	}
+
+	NStr::CStr CDaemon::CDetails::fs_GetLaunchdMode(EDaemonMode _Mode)
+	{
+		if (_Mode == EDaemonMode_LocalUser)
+			return "Aqua";
+		else if (_Mode == EDaemonMode_AllUsers)
+			return "Aqua";
+		else
+			return "System";
+	}
+
+	NStr::CStr CDaemon::CDetails::fs_GetPlistDirectory(EDaemonMode _Mode)
+	{
+		if (_Mode == EDaemonMode_LocalUser)
+			return NStr::CStr::CFormat("{}/Library/LaunchAgents") << NSys::NFile::fg_GetUserHomeDirectory();
+		else if (_Mode == EDaemonMode_AllUsers)
+			return NStr::CStr("/Library/LaunchAgents");
+		else
+			return NStr::CStr("/Library/LaunchDaemons");
+	}
+
+	NStr::CStr CDaemon::CDetails::fs_GetPlistPath(CDaemonParams const &_Params)
+	{
+		NStr::CStr LaunchFileDirectory = fs_GetPlistDirectory(_Params.f_GetDaemonMode());
+		return LaunchFileDirectory / fs_GetPlistFilename(_Params);
+	}
+
+	int CDaemon::CDetails::fs_SystemCall(NStr::CStr const &_Target, NStr::CStr const &_Parameters, NStr::CStr *_pResult, NStr::CStr *_pError)
+	{
+		uint32 ExitCode = 66;
+
+		NMib::NProcess::CProcessLaunchParams Params;
+		Params.m_Target = _Target;
+		Params.m_Parameters = _Parameters;
+
+		Params.m_bShowLaunched = false;
+		Params.m_bStdOutPID = true;
+		Params.m_bMergeEnvironment = false;
+		Params.m_Environment["Dummy"];
+
+		Params.m_bMakeEffectiveUserReal = true;
+		Params.m_bMakeEffectiveGroupReal = true;
+
+		Params.m_fOnStateChange = [&](NMib::NProcess::CProcessLaunchStateChangeVariant const &_State, fp64 _TimeSinceStart)
+			{
+				switch (_State.f_GetTypeID())
+				{
+				case NMib::NProcess::EProcessLaunchState_Exited:
+					{
+						NMib::fg_Volatile(ExitCode) = _State.f_Get<NMib::NProcess::EProcessLaunchState_Exited>();
+					}
+					break;
+				case NMib::NProcess::EProcessLaunchState_LaunchFailed:
+					{
+						*_pError += _State.f_Get<NMib::NProcess::EProcessLaunchState_LaunchFailed>();
+						*_pError += "\n";
+					}
+					break;
+				case NMib::NProcess::EProcessLaunchState_Launched: break;
+				}
+			}
+		;
+
+		Params.m_fOnOutput = [&](NMib::NProcess::EProcessLaunchOutputType _OutputType, NMib::NStr::CStr const &_Output)
+			{
+				if (_pResult && _OutputType == NMib::NProcess::EProcessLaunchOutputType_StdOut)
+					*_pResult += _Output;
+				else
+					*_pError += _Output;
+			}
+		;
+
+		{
+			if (_pResult)
+				_pResult->f_Clear();
+			if (_pError)
+				_pError->f_Clear();
+			NMib::NProcess::CProcessLaunch Launcher(Params, NMib::NProcess::EProcessLaunchCloseFlag_BlockOnExit);
+		}
+
+		return ExitCode;
+	}
+
+	int CDaemon::CDetails::fs_GetHighestSecondColumnValue(NStr::CStr &_Data)
+	{
+		int Value = 0;
+		while (!_Data.f_IsEmpty())
+		{
+			int NewLinePos = _Data.f_FindReverse("\n");
+			if (NewLinePos == -1)
+				break;
+			_Data = _Data.f_Left(NewLinePos);
+			int SpacePos = _Data.f_FindReverse(" ");
+			NStr::CStr ValueString = _Data.f_Right(_Data.f_GetLen() - SpacePos - 1);
+			int NewValue = ValueString.f_ToInt();
+			if (NewValue > Value)
+				Value = NewValue;
+		}
+		return Value;
+	}
+
+	bool CDaemon::CDetails::f_PrepareUserAndGroup(CDaemonParams const &_Params)
+	{
+		NStr::CStr StdOut, StdErr;
+		int GID, UID;
+
+		NStr::CStr GroupName = _Params.f_GetRunAsGroup();
+		NStr::CStr UserName = _Params.f_GetRunAsUser();
+
+		// Create group if not exists
+		if (GroupName.f_IsEmpty())
+			GroupName = "daemon";
+
+		if (UserName.f_IsEmpty())
+			UserName = "daemon";
+
+		NStr::CStr ReturnGID;
+
+		try
+		{
+			if (!NSys::fg_UserManagement_GroupExists(GroupName, ReturnGID))
+				NSys::fg_UserManagement_CreateGroup(GroupName, ReturnGID);
+		}
+		catch (NMib::NException::CException &_Exception)
+		{
+			f_ReportError(NStr::CStr::CFormat("Exception when creating group named {} error {}") << GroupName << _Exception.f_GetErrorStr());
+
+			return false;
+		}
+
+		GID = ReturnGID.f_ToInt(-1);
+
+		if (GID == -1)
+		{
+			f_ReportError(NStr::CStr::CFormat("Group {} is invalid") << GroupName);
+			return false;
+		}
+
+		// Create user if not exists
+
+		NStr::CStr ReturnUID;
+
+		try
+		{
+			if (!NSys::fg_UserManagement_UserExists(UserName, ReturnUID))
+				NSys::fg_UserManagement_CreateUser(GroupName, UserName, "", UserName, _Params.f_GetRootDirectory(), ReturnUID, NSys::EUserManagementCreateUserFlag_None);
+		}
+		catch (NMib::NException::CException &_Exception)
+		{
+			f_ReportError(NStr::CStr::CFormat("Unable to create user named {} error {}") << UserName << _Exception.f_GetErrorStr());
+			return false;
+		}
+
+		UID = ReturnUID.f_ToInt(-1);
+
+		if (UID == -1)
+		{
+			f_ReportError(NStr::CStr::CFormat("User {} is invalid") << UserName);
+			return false;
+		}
+
+		try
+		{
+			NFile::CFile::fs_SetOwner(_Params.f_GetRootDirectory(), UserName);
+			NFile::CFile::fs_SetGroup(_Params.f_GetRootDirectory(), GroupName);
+		}
+		catch (NFile::CExceptionFile const &_Exception)
+		{
+			mp_pOwner->f_ReportError(NStr::CStr::CFormat("Failed to set permissions on daemon directory: {}") << _Exception.f_GetErrorStr());
+			if (NMib::NProcess::NPlatform::fg_Process_GetElevation() == NMib::NProcess::EProcessElevation_IsNotElevated)
+				mp_pOwner->f_ReportError("Perhaps you need to use sudo?");
+			return false;
+		}
+
+		return true;
+	}
+
+	void CDaemon::CDetails::fs_SigTermHandler(int const _Signal)
+	{
+		sigset_t WaitSet;
+		sigset_t OldSet;
+		sigemptyset(&WaitSet);
+		sigaddset(&WaitSet, SIGTERM);
+		sigaddset(&WaitSet, SIGINT);
+		pthread_sigmask(SIG_BLOCK, &WaitSet, &OldSet);
+
+		auto Cleanup = g_OnScopeExit / [&]
+			{
+				pthread_sigmask(SIG_SETMASK, &OldSet, nullptr);
+			}
+		;
+
+		msp_pThis->mp_InterruptedEvent.f_SetSignaled();
+	}
+
+	EActionResult CDaemon::CDetails::f_Run()
+	{
+		if (mp_pOwner->mp_Params.f_GetAlwaysRunStatusApp())
+			return f_RunAsProgram(false);
+
+		mp_InterruptedEvent.f_ResetSignaled();
+
+		auto fSigterm = NPlatform::fg_SetSignalHandler(SIGTERM, fs_SigTermHandler);
+		auto fSigint = NPlatform::fg_SetSignalHandler(SIGINT, fs_SigTermHandler);
+
+		auto Cleanup = g_OnScopeExit / [&]
+			{
+				NPlatform::fg_SetSignalHandler(SIGTERM, fSigterm);
+				NPlatform::fg_SetSignalHandler(SIGINT, fSigint);
+			}
+		;
+
+		fp_DaemonCreate();
+
+		mp_InterruptedEvent.f_Wait();
+
+		fp_DaemonDestroy();
+
+		return EActionResult_Success;
+	}
+
+	void CDaemon::CDetails::fs_CancelDaemonStatusHandler(int const _Signal)
+	{
+		sigset_t WaitSet;
+		sigset_t OldSet;
+		sigemptyset(&WaitSet);
+		sigaddset(&WaitSet, SIGTERM);
+		sigaddset(&WaitSet, SIGINT);
+		pthread_sigmask(SIG_BLOCK, &WaitSet, &OldSet);
+
+		auto Cleanup = g_OnScopeExit / [&]
+			{
+				pthread_sigmask(SIG_SETMASK, &OldSet, nullptr);
+			}
+		;
+
+		fg_CancelRunDaemonStatusApp();
+	}
+
+	EActionResult CDaemon::CDetails::f_RunAsProgram(bool _bDebug)
+	{
+		if (!_bDebug && !mp_pOwner->mp_Params.f_GetAlwaysRunStatusApp())
+			return f_Run();
+
+		auto fSigterm = NPlatform::fg_SetSignalHandler(SIGTERM, fs_CancelDaemonStatusHandler);
+		auto fSigint = NPlatform::fg_SetSignalHandler(SIGINT, fs_CancelDaemonStatusHandler);
+
+		auto Cleanup = g_OnScopeExit / [&]
+			{
+				NPlatform::fg_SetSignalHandler(SIGTERM, fSigterm);
+				NPlatform::fg_SetSignalHandler(SIGINT, fSigint);
+			}
+		;
+
+		fp_DaemonCreate();
+
+		NContainer::CByteVector IconData;
+		if (mp_pOwner->mp_Params.f_GetNativeHandle())
+		{
+			NContainer::CByteVector *pIconData = static_cast<NContainer::CByteVector *>(mp_pOwner->mp_Params.f_GetNativeHandle());
+			if (pIconData)
+				IconData = *pIconData;
+		}
+
+		if (mp_pOwner->mp_Params.f_GetCanPause())
+		{
+			fg_RunDaemonStatusApp
+				(
+					[&]()
+					{
+						fp_DaemonPause();
+					}
+					, [&]()
+					{
+						fp_DaemonResume();
+					}
+					, mp_pOwner->mp_Params.f_GetDaemonDisplayName()
+					, IconData
+					, NMib::fg_GetSys()->f_GetRunningAsDaemon()
+				)
+			;
+		}
+		else
+			fg_RunDaemonStatusApp(nullptr, nullptr, mp_pOwner->mp_Params.f_GetDaemonDisplayName(), IconData, NMib::fg_GetSys()->f_GetRunningAsDaemon());
+
+		fp_DaemonDestroy();
+
+		return EActionResult_Success;
+	}
+
+	EActionResult CDaemon::CDetails::f_Start()
+	{
+		if (!fp_CheckParamsSupported())
+			return EActionResult_Failure;
+		bool bResult = false;
+		NStr::CStr Result;
+		NStr::CStr Error;
+
+		NStr::CStr LaunchFilePath = fs_GetPlistPath(mp_pOwner->mp_Params);
+		try
+		{
+			if (!NFile::CFile::fs_FileExists(LaunchFilePath, NFile::EFileAttrib_File))
+			{
+				f_ReportError(NStr::CStr::CFormat("Daemon file does not exist: {}") << fs_GetPlistPath(mp_pOwner->mp_Params));
+				return EActionResult_Failure;
+			}
+		}
+		catch (NFile::CExceptionFile const &_Exception)
+		{
+			f_ReportError(NStr::CStr::CFormat("Failed to check for existing daemon file: {}") << _Exception.f_GetErrorStr());
+			return EActionResult_Failure;
+		}
+
+		{
+			NStr::CStr ListResult;
+			NStr::CStr ListError;
+
+			NStr::CStr Command = NProcess::CProcessLaunchParams::fs_GetParams({"list", fs_GetFullDaemonName(mp_pOwner->mp_Params)});
+			fs_SystemCall("/bin/launchctl", Command, &ListResult, &ListError);
+
+			if (ListResult.f_Find("PID") != -1)
+			{
+				// The daemon is already loaded
+				return EActionResult_Success;
+			}
+		}
+
+		// .plist is set to automatically run when loaded
+		NStr::CStr Command = NProcess::CProcessLaunchParams::fs_GetParams({"load", LaunchFilePath});
+		bResult = fs_SystemCall("/bin/launchctl", Command, &Result, &Error) == 0;
+
+		Error = Error.f_Trim();
+
+		if (!Error.f_IsEmpty() && !Error.f_EndsWith("Operation now in progress"))
+		{
+			f_ReportError(Error);
+			return EActionResult_Failure;
+		}
+		else if (!bResult)
+		{
+			f_ReportError("Unknown error starting daemon");
+			return EActionResult_Failure;
+		}
+
+		return EActionResult_Success;
+	}
+
+	EActionResult CDaemon::CDetails::f_Stop(bool _bWait)
+	{
+		using namespace NStr;
+
+		if (!fp_CheckParamsSupported())
+			return EActionResult_Failure;
+		if (mp_pOwner->mp_Params.f_GetKeepRunning())
+			return EActionResult_Success;
+
+		bool bResult = false;
+		NStr::CStr Result;
+		NStr::CStr Error;
+
+		{
+			NStr::CStr ListResult;
+			NStr::CStr ListError;
+
+			NStr::CStr DaemonName = fs_GetFullDaemonName(mp_pOwner->mp_Params);
+
+			NStr::CStr Command = NProcess::CProcessLaunchParams::fs_GetParams({"list", DaemonName});
+			fs_SystemCall("/bin/launchctl", Command, &ListResult, &ListError);
+
+			NStr::CStr ExpectedSessionType = "\"LimitLoadToSessionType\" = \"{}\";"_f << fs_GetLaunchdMode(mp_pOwner->mp_Params.f_GetDaemonMode());
+			NStr::CStr LoadedLabel = "\"Label\" = \"{}\";"_f << DaemonName;
+
+			bool bFoundLabel = false;
+			bool bFoundSessionType = false;
+			uint32 Pid = 0;
+
+			for (auto &Line : ListResult.f_SplitLine<true>())
+			{
+				auto TrimmedLine = Line.f_Trim();
+				if (TrimmedLine == LoadedLabel)
+					bFoundLabel = true;
+
+				if (TrimmedLine == ExpectedSessionType)
+					bFoundSessionType = true;
+
+				(NStr::CStr::CParse("\"PID\" = {};") >> Pid).f_Parse(TrimmedLine);
+			}
+
+			if ((Pid == 0 && !bFoundLabel) || !bFoundSessionType)
+			{
+				// The daemon is not loaded
+				return EActionResult_Success;
+			}
+		}
+
+		// unload command automatically stops the daemon
+		NStr::CStr Command = NProcess::CProcessLaunchParams::fs_GetParams({"unload", fs_GetPlistPath(mp_pOwner->mp_Params)});
+		bResult = fs_SystemCall("/bin/launchctl", Command, &Result, &Error) == 0;
+		Error = Error.f_Trim();
+
+		if (!Error.f_IsEmpty() && !Error.f_EndsWith("Operation now in progress"))
+		{
+			f_ReportError(Error);
+			return EActionResult_Failure;
+		}
+		else if (!bResult)
+		{
+			f_ReportError("Unknown error stopping daemon");
+			return EActionResult_Failure;
+		}
+
+		return EActionResult_Success;
+	}
+
+	EActionResult CDaemon::CDetails::f_Restart(bool _bWait)
+	{
+		EActionResult Result = f_Stop(_bWait);
+		if (Result != EActionResult_Success)
+			return Result;
+		return f_Start();
+	}
+
+	void CDaemon::CDetails::f_SetDictionaryValue(CFMutableDictionaryRef &_pDict, NStr::CStr const &_Key, int _Value)
+	{
+		CFStringRef pKeyStringRef = CFStringCreateWithCString(NULL, _Key.f_GetStr(), kCFStringEncodingUTF8);
+		CFNumberRef pValueIntegerRef = CFNumberCreate(NULL, kCFNumberIntType, &_Value);
+		CFDictionarySetValue(_pDict, pKeyStringRef, pValueIntegerRef);
+		CFRelease(pKeyStringRef);
+		CFRelease(pValueIntegerRef);
+	}
+
+	void CDaemon::CDetails::f_SetDictionaryValue(CFMutableDictionaryRef &_pDict, NStr::CStr const &_Key, NStr::CStr const &_Value)
+	{
+		CFStringRef pKeyStringRef = CFStringCreateWithCString(NULL, _Key.f_GetStr(), kCFStringEncodingUTF8);
+		CFStringRef pValueStringRef = CFStringCreateWithCString(NULL, _Value.f_GetStr(), kCFStringEncodingUTF8);
+		CFDictionarySetValue(_pDict, pKeyStringRef, pValueStringRef);
+		CFRelease(pKeyStringRef);
+		CFRelease(pValueStringRef);
+	}
+
+	void CDaemon::CDetails::f_SetDictionaryValue(CFMutableDictionaryRef &_pDict, NStr::CStr const &_Key, NContainer::TCVector<NStr::CStr> const &_Values)
+	{
+		CFStringRef pKeyStringRef = CFStringCreateWithCString(NULL, _Key.f_GetStr(), kCFStringEncodingUTF8);
+
+		CFMutableArrayRef pArrayRef = CFArrayCreateMutable(NULL, _Values.f_GetLen(), &kCFTypeArrayCallBacks);
+
+		for (NStr::CStr const &Value : _Values)
+		{
+			CFStringRef pValueStringRef = CFStringCreateWithCString(NULL, Value.f_GetStr(), kCFStringEncodingUTF8);
+			CFArrayAppendValue(pArrayRef, pValueStringRef);
+			CFRelease(pValueStringRef);
+		}
+
+		CFDictionarySetValue(_pDict, pKeyStringRef, pArrayRef);
+		CFRelease(pKeyStringRef);
+		CFRelease(pArrayRef);
+	}
+
+	CFDictionaryRef CDaemon::CDetails::f_CreateDictionaryFromParams(CDaemonParams const &_Params, bool _bDisabled)
+	{
+		CFMutableDictionaryRef pDict = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+
+		f_SetDictionaryValue(pDict, "Label", NStr::CStr::CFormat(CDaemon::fs_GetUniquePrefix() + ".{}") << _Params.f_GetDaemonName());
+		NContainer::TCVector<NStr::CStr> ProgramArguments;
+		// We write executable as arguments as Launchd seems to be broken in this regard, it has to have executable as argument or none will be sent
+		ProgramArguments.f_Insert(_Params.f_GetExecutablePath());
+		ProgramArguments.f_Insert("-Service");
+		if (_Params.f_GetDisableWriteDaemon())
+			ProgramArguments.f_Insert(_Params.f_GetDaemonName());
+		f_SetDictionaryValue(pDict, "ProgramArguments", ProgramArguments);
+		CFDictionarySetValue(pDict, CFSTR("KeepAlive"), kCFBooleanTrue);
+		CFDictionarySetValue(pDict, CFSTR("RunAtLoad"), kCFBooleanTrue);
+		// f_SetDictionaryValue(pDict, "ExitTimeOut", 0);	// Disable timeout, this seems to have broken on Yosemite
+		f_SetDictionaryValue(pDict, "ExitTimeOut", _Params.f_GetMaxShutdownTime().f_ToInt());
+
+		int RelativePriority;
+		NStr::CStr ProcessType;
+		switch (NMib::NPlatform::fg_PriorityToQualityOfService(_Params.f_GetExecutionPriority(), RelativePriority))
+		{
+		case QOS_CLASS_USER_INTERACTIVE: ProcessType = "Interactive"; break;
+		case QOS_CLASS_USER_INITIATED: break;
+		case QOS_CLASS_DEFAULT: break;
+		case QOS_CLASS_UTILITY: break;
+		case QOS_CLASS_UNSPECIFIED: break;
+		case QOS_CLASS_BACKGROUND: ProcessType = "Background"; break;
+		}
+
+		if (ProcessType)
+			f_SetDictionaryValue(pDict, "ProcessType", ProcessType);
+
+		if (!_Params.f_GetRunAsUser().f_IsEmpty())
+			f_SetDictionaryValue(pDict, "UserName", _Params.f_GetRunAsUser());
+
+		if (!_Params.f_GetRunAsGroup().f_IsEmpty())
+			f_SetDictionaryValue(pDict, "GroupName", _Params.f_GetRunAsGroup());
+
+		if (_bDisabled)
+			CFDictionarySetValue(pDict, CFSTR("Disabled"), kCFBooleanTrue);
+
+		return pDict;
+	}
+
+	EActionResult CDaemon::CDetails::f_Add(bool _bCheckForExisting)
+	{
+		if (!fp_CheckParamsSupported())
+			return EActionResult_Failure;
+		NStr::CStr LaunchFileDirectory = fs_GetPlistDirectory(mp_pOwner->mp_Params.f_GetDaemonMode());
+		NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetPlistFilename(mp_pOwner->mp_Params);
+
+		if (_bCheckForExisting)
+		{
+			try
+			{
+				if (NFile::CFile::fs_FileExists(LaunchFilePath, NFile::EFileAttrib_File))
+				{
+					EActionResult DaemonNameInUse = EActionResult_Failure;
+
+					NContainer::CByteVector LaunchFileContents = NFile::CFile::fs_ReadFile(LaunchFilePath);
+					CFDataRef pXmlData = CFDataCreate(NULL, LaunchFileContents.f_GetArray(), LaunchFileContents.f_GetLen());
+					DMibDeprecatedSuppressStart
+					CFPropertyListRef pPropertyList = CFPropertyListCreateFromXMLData(NULL, pXmlData, kCFPropertyListImmutable, NULL);
+					DMibDeprecatedSuppressStop
+					CFRelease(pXmlData);
+
+					if (pPropertyList)
+					{
+						CFArrayRef pArguments = (CFArrayRef)CFDictionaryGetValue((CFDictionaryRef)pPropertyList, CFSTR("ProgramArguments"));
+						if (pArguments)
+						{
+							CFStringRef pExec = (CFStringRef)CFArrayGetValueAtIndex(pArguments, 0);
+							if (pExec)
+							{
+								CFStringRef pExecPath = CFStringCreateWithCString(NULL, mp_pOwner->mp_Params.f_GetExecutablePath().f_GetStr(), kCFStringEncodingUTF8);
+
+								if (CFStringCompare(pExecPath, pExec, kCFCompareCaseInsensitive) == kCFCompareEqualTo)
+									DaemonNameInUse = EActionResult_Success;
+								else
+									f_ReportError(NStr::CStr::CFormat("Daemon name is already in use: {}") << LaunchFilePath);
+
+								CFRelease(pExecPath);
+							}
+							else
+								f_ReportError(NStr::CStr::CFormat("Invalid daemon file: {}") << LaunchFilePath);
+						}
+						else
+							f_ReportError(NStr::CStr::CFormat("Invalid daemon file: {}") << LaunchFilePath);
+
+						CFRelease(pPropertyList);
+					}
+					else
+						f_ReportError(NStr::CStr::CFormat("Invalid daemon file: {}") << LaunchFilePath);
+
+					if (DaemonNameInUse == EActionResult_Failure)
+						return EActionResult_Failure;
+					else
+						return EActionResult_Success;
+				}
+			}
+			catch (NFile::CExceptionFile const &_Exception)
+			{
+				f_ReportError(NStr::CStr::CFormat("Failed to check for existing file: {}") << _Exception.f_GetErrorStr());
+				return EActionResult_Failure;
+			}
+		}
+
+		bool bAlreadyExists = false;
+		EActionResult Result = f_Exists(bAlreadyExists);
+		if (Result != EActionResult_Success)
+			return Result;
+
+		if (bAlreadyExists)
+		{
+			mp_pOwner->f_ReportError("Daemon already exists, remove it manually with --daemon-remove before trying to add again.");
+			return EActionResult_Failure;
+		}
+
+		CFPropertyListRef pPropertyList = f_CreateDictionaryFromParams(mp_pOwner->mp_Params);
+		DMibDeprecatedSuppressStart
+		CFDataRef pXmlData = CFPropertyListCreateXMLData(NULL, pPropertyList);
+		DMibDeprecatedSuppressStop
+		NContainer::CByteVector Data;
+		Data.f_Insert((uint8 const *)CFDataGetBytePtr(pXmlData), CFDataGetLength(pXmlData));
+
+		CFRelease(pPropertyList);
+		CFRelease(pXmlData);
+
+		if ((!mp_pOwner->mp_Params.f_GetRunAsUser().f_IsEmpty() || !mp_pOwner->mp_Params.f_GetRunAsGroup().f_IsEmpty()) && !f_PrepareUserAndGroup(mp_pOwner->mp_Params))
+			return EActionResult_Failure;
+
+		try
+		{
+			NStr::CStr Error;
+			if (!mp_pOwner->mp_Params.f_GetDisableWriteDaemon() && !mp_pOwner->mp_Params.f_WriteDaemonModeFile(Error))
+				f_ReportError(NStr::CStr::CFormat("Failed to write daemon mode file: {}") << Error);
+
+			if (!NFile::CFile::fs_FileExists(LaunchFileDirectory, NFile::EFileAttrib_Directory))
+				NFile::CFile::fs_CreateDirectory(LaunchFileDirectory);
+
+			NFile::CFile PlistFile(LaunchFilePath, NFile::EFileOpen_Write);
+			PlistFile.f_Write(Data.f_GetArray(), Data.f_GetLen());
+			PlistFile.f_Close();
+
+			f_ReportInformation("Add Daemon", NStr::CStr::CFormat("Successfully installed daemon at {}") << LaunchFilePath);
+			return EActionResult_Success;
+		}
+		catch (NFile::CExceptionFile const &_Exception)
+		{
+			f_ReportError(NStr::CStr::CFormat("Failed to install daemon at {}: {}") << LaunchFilePath << _Exception.f_GetErrorStr());
+		}
+
+		return EActionResult_Failure;
+	}
+
+	EActionResult CDaemon::CDetails::f_Remove()
+	{
+		if (!fp_CheckParamsSupported())
+			return EActionResult_Failure;
+
+		{
+			try
+			{
+				// This will set disabled to true, to prevent a situation where the daemon is unloaded
+				// but the plist is not deleted (eg with the helper config tool). This prevents a console warning when
+				// the user restarts their machine.
+
+				NStr::CStr LaunchFileDirectory = fs_GetPlistDirectory(mp_pOwner->mp_Params.f_GetDaemonMode());
+				NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetPlistFilename(mp_pOwner->mp_Params);
+
+				if (NFile::CFile::fs_FileExists(LaunchFilePath, NFile::EFileAttrib_File))
+				{
+					CFPropertyListRef pPropertyList = f_CreateDictionaryFromParams(mp_pOwner->mp_Params, true);
+					DMibDeprecatedSuppressStart
+					CFDataRef pXmlData = CFPropertyListCreateXMLData(NULL, pPropertyList);
+					DMibDeprecatedSuppressStop
+					NContainer::CByteVector Data;
+					Data.f_Insert((uint8 const *)CFDataGetBytePtr(pXmlData), CFDataGetLength(pXmlData));
+
+					CFRelease(pPropertyList);
+					CFRelease(pXmlData);
+
+					NFile::CFile PlistFile(LaunchFilePath, NFile::EFileOpen_Write);
+					PlistFile.f_Write(Data.f_GetArray(), Data.f_GetLen());
+					PlistFile.f_Close();
+				}
+			}
+			catch (NMib::NFile::CExceptionFile const &)
+			{
+				// Failure here doesn't matter, just continue.
+			}
+		}
+
+		if (f_Stop(true) == EActionResult_Failure)
+			return EActionResult_Failure;
+
+		NStr::CStr LaunchFileDirectory = fs_GetPlistDirectory(mp_pOwner->mp_Params.f_GetDaemonMode());
+		NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetPlistFilename(mp_pOwner->mp_Params);
+
+		try
+		{
+			if (!NFile::CFile::fs_FileExists(LaunchFilePath, NFile::EFileAttrib_File))
+			{
+				f_ReportInformation("Remove Daemon", NStr::CStr::CFormat("Daemon is not installed at '{}' so it has not been removed") << LaunchFilePath);
+				return EActionResult_Success;
+			}
+		}
+		catch (NFile::CExceptionFile const &_Exception)
+		{
+			f_ReportError(NStr::CStr::CFormat("Failed to check for existing file: {}") << _Exception.f_GetErrorStr());
+		}
+
+		try
+		{
+			NFile::CFile::fs_DeleteFile(LaunchFilePath);
+			NStr::CStr Error;
+			if (!mp_pOwner->mp_Params.f_RemoveDaemonModeFile(Error))
+				f_ReportError(NStr::CStr::CFormat("Failed to remove daemon mode file: {}") << Error);
+
+			f_ReportInformation("Remove Daemon", NStr::CStr::CFormat("Successfully removed daemon from {}") << LaunchFilePath);
+			return EActionResult_Success;
+		}
+		catch (NFile::CExceptionFile &_Exception)
+		{
+			f_ReportError(NStr::CStr::CFormat("Failed to remove daemon at {}: {}\nPerhaps you need to use sudo?") << LaunchFilePath << _Exception.f_GetErrorStr());
+		}
+
+		return EActionResult_Failure;
+	}
+
+	EActionResult CDaemon::CDetails::f_Exists(bool &_bExists) const
+	{
+		if (!fp_CheckParamsSupported())
+			return EActionResult_Failure;
+		_bExists = false;
+		NStr::CStr LaunchFileDirectory = fs_GetPlistDirectory(mp_pOwner->mp_Params.f_GetDaemonMode());
+		NStr::CStr LaunchFilePath = NStr::CStr::CFormat("{}/{}") << LaunchFileDirectory << fs_GetPlistFilename(mp_pOwner->mp_Params);
+
+		try
+		{
+			if (NFile::CFile::fs_FileExists(LaunchFilePath, NFile::EFileAttrib_File))
+				_bExists = true;
+			return EActionResult_Success;
+		}
+		catch (NFile::CExceptionFile const &_Exception)
+		{
+			f_ReportError(NStr::CStr::CFormat("Failed to check for existing file: {}") << _Exception.f_GetErrorStr());
+		}
+
+		return EActionResult_Failure;
+	}
+
+	bool CDaemon::CDetails::f_IsShutdown() const
+	{
+		return false;
+	}
+
+	void CDaemon::CDetails::f_ReportInformation(NStr::CStr const &_Heading, NStr::CStr const &_Message) const
+	{
+		mp_pOwner->f_GetDaemonParams().f_ReportInformation(_Heading, _Message);
+	}
+
+	void CDaemon::CDetails::f_ReportError(NStr::CStr const &_Message) const
+	{
+		mp_pOwner->f_GetDaemonParams().f_ReportError(_Message);
+	}
+
+	EReportError CDaemon::CDetails::f_ReportErrorYesNo(NStr::CStr const &_Message, EReportError _Default) const
+	{
+		return mp_pOwner->f_GetDaemonParams().f_ReportErrorYesNo(_Message, _Default);
+	}
+
+	void CDaemon::CDetails::fp_DaemonResume()
+	{
+		if (mp_pImp)
+			mp_pImp->f_DaemonResume();
+	}
+
+	void CDaemon::CDetails::fp_DaemonPause()
+	{
+		if (mp_pImp)
+			mp_pImp->f_DaemonPause();
+	}
+
+	void CDaemon::CDetails::fp_DaemonCreate()
+	{
+		mp_pImp = mp_pOwner->f_GetDaemonParams().f_ImplementationFactory();
+	}
+
+	void CDaemon::CDetails::fp_DaemonDestroy()
+	{
+		if (mp_pImp)
+			mp_pImp = nullptr;
+	}
+
+	bool CDaemon::CDetails::fp_CheckParamsSupported() const
+	{
+		auto &Params = mp_pOwner->mp_Params;
+		bool bRet = true;
+		if (!Params.f_GetDaemonGroup().f_IsEmpty())
+		{
+			mp_pOwner->f_ReportError("Daemon groups are not supported on this platform");
+			bRet = false;
+		}
+		if (Params.f_GetInteractive())
+		{
+			mp_pOwner->f_ReportError("Interactive services are not supported on this platform");
+			bRet = false;
+		}
+
+		if (!Params.f_GetDaemonDependencies().f_IsEmpty())
+		{
+			mp_pOwner->f_ReportError("Daemon dependencies are not supported on this platform");
+			bRet = false;
+		}
+
+		if (Params.f_GetDaemonMode() == EDaemonMode_LocalUser && !(fs_SessionSupportedFeatures() & EDaemonFeature_LocalUserDaemon))
+		{
+			mp_pOwner->f_ReportError("Local user services (-LocalUser) need the session that holds the graphical login");
+			bRet = false;
+		}
+
+		return bRet;
+	}
 
 	CDaemon::CDetails *CDaemon::CDetails::msp_pThis = nullptr;
 

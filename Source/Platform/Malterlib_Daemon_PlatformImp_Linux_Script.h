@@ -27,8 +27,6 @@ namespace NMib::NDaemon
 		virtual bool f_SupportsAutoRestart() const override;
 
 	private:
-		NStr::CStr mp_ScriptDirectory;
-
 		enum EScriptRegistrationMethod
 		{
 			EScriptRegistrationMethod_None = 0
@@ -36,13 +34,15 @@ namespace NMib::NDaemon
 			, EScriptRegistrationMethod_UpdateRcD
 		};
 
-		EScriptRegistrationMethod mp_ScriptRegistrationMethod;
-
 		NStr::CStr fp_GetScriptDirectory(EDaemonMode _Mode) const;
 		NStr::CStr fp_GetScriptPath(CDaemonParams const &_Params) const;
 		bool fp_IsScriptThisExecutable(CDaemonParams const &_Params) const;
 		NStr::CStr fp_CreateScriptFromParams(CDaemonParams const &_Params) const;
 		EActionResult fp_AddToRunlevels(CDaemonParams const &_Params) const;
 		EActionResult fp_RemoveFromRunlevels(CDaemonParams const &_Params) const;
+
+		NStr::CStr mp_ScriptDirectory;
+
+		EScriptRegistrationMethod mp_ScriptRegistrationMethod;
 	};
 }
