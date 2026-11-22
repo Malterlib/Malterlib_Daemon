@@ -5,6 +5,7 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <sys/signal.h>
 #include <bsm/audit.h>
+#include <bsm/audit_session.h> // The session flags of ai_flags, which SDKs before macOS 26 define here
 #include <ServiceManagement/ServiceManagement.h>
 #include <Mib/Process/ProcessLaunch>
 #include <Mib/Core/PlatformSpecific/MacOSQualityOfService>
