@@ -23,15 +23,6 @@ namespace NMib::NDaemon
 	;
 	void fg_CancelRunDaemonStatusApp();
 
-	NStr::CStr CDaemon::fs_GetUniquePrefix()
-	{
-#ifdef DProductCompanyUniqueIdentifier
-		return DMibStringize(DProductCompanyUniqueIdentifier);
-#else
-		return "com.malterlib";
-#endif
-	}
-
 	struct CDaemon::CDetails
 	{
 		CDetails(CDaemon *_pOwner);

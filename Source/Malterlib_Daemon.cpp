@@ -739,6 +739,15 @@ namespace NMib::NDaemon
 		return mp_Params;
 	}
 
+	NStr::CStr CDaemon::fs_GetUniquePrefix()
+	{
+#ifdef DProductCompanyUniqueIdentifier
+		return DMibStringize(DProductCompanyUniqueIdentifier);
+#else
+		return "com.malterlib";
+#endif
+	}
+
 	EActionResult CDaemon::f_ProcessCommand()
 	{
 		bool bHandled = false;

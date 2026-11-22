@@ -934,15 +934,6 @@ namespace NMib::NDaemon
 		return fs_SupportedFeatures();
 	}
 
-	NStr::CStr CDaemon::fs_GetUniquePrefix()
-	{
-#ifdef DProductCompanyUniqueIdentifier
-		return DMibStringize(DProductCompanyUniqueIdentifier);
-#else
-		return "com.malterlib";
-#endif
-	}
-
 	EActionResult CDaemon::f_Start()
 	{
 		return mp_pDetails->f_Start();
